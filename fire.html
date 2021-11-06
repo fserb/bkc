@@ -1,0 +1,266 @@
+<!doctype html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Better Know Canvas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Rock+Salt&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="bkc.css">
+
+<style>
+
+</style>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"></script>
+</head>
+<body>
+
+<div id="bkc">
+<aside><ol></ol></aside>
+<main>
+
+<h1>Better Know Canvas</h1>
+
+<h2>Fire filter</h2>
+<div class="author">by <a href="https://fserb.com">Fernando Serboncini</a> - November 2021</div>
+
+<p>A simple fire effect, inspired by this <a href="https://www.dwitter.net/d/21204">dwitter</a>.
+
+<h3>boilerplate</h3>
+
+<p>The code always assume that we have a <code>canvas</code> variable pointing to
+  a HTML Canvas element. This usually comes from a <code>getElementById("myCanvas")</code>
+  or from <code>document.createElement("canvas")</code> that is inserted into the DOM.
+
+<p>Start by creating the 2D context and setting the canvas size. Remember that the
+ <code>canvas</code> size (width and height) refers to the internal
+ canvas texture size. We are still allowed to layout the CSS of the canvas independently.
+
+<pre>
+const ctx = canvas.getContext("2d");
+const W = canvas.width = 1920;
+const H = canvas.height = 1080;
+</pre>
+
+<p>Create a <code>requestAnimationFrame</code> loop. This function will be called
+on every frame (usually 60 times per second). The function receives one parameter,
+which is a monotonically increasing time in miliseconds.
+
+<pre op="add">
+
+function frame(t) {
+  requestAnimationFrame(frame);
+}
+frame(0);
+</pre>
+
+
+<h3>rectangular fire</h3>
+
+<p>First, we reset the canvas and clear it black. To reset, we can use the new
+  <code>reset()</code> function of Canvas 2D.
+
+<pre op="ed:6">
+  ctx.reset();
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+
+</pre>
+
+<p>To simulate our fire effect, we are going to render rectangles particles.
+  The rectangles will end up forming the flame that we will see. They are
+  a better choice than circles or squares, because they will add some
+  verticality that will make the fire more beliveable.
+
+<pre op="ed:10">
+  ctx.fillStyle = `rgb(255, 0, 0)`;
+  ctx.fillRect(960, 1030, 30, 50);
+
+</pre>
+
+<p>We should have a bunch of them distributed on the canvas.
+
+<pre op="ed:10:2">
+  for (let i = 0; i < 2000; ++i) {
+    ctx.fillStyle = `rgb(255, 0, 0)`;
+    ctx.fillRect(960, 1030, 30, 50);
+  }
+</pre>
+
+
+<p>On the <code>x axis</code>, we want the flame concentrated on the center of the canvas. We can use a <code>sin()</code> function around the center and make the
+amplitude also vary for each square.
+
+<p>We don't want to use a random function, because we want the fire to be continuous
+over time. Random would make things jump all over the place and that's probably not very
+fire-like.
+
+<pre op="ed:12:1" spawn=2>
+    ctx.fillRect(
+      960 + Math.sin(i / 8) * i / 2,
+      1030,
+      30, 50);
+</pre>
+
+<p>On the <code>y axis</code> we want the flame to concentrate on the bottom, and
+then go up. To give a fire effect, we probably want something that goes faster the
+closer it is to the top. A <code>tan()</code> function will do that.
+
+<pre op="ed:12:4">
+    ctx.fillRect(
+      960 + Math.sin(i / 8) * i / 2,
+      1030 - i * Math.tan(i ** 4),
+      30, 50);
+</pre>
+
+<p>We can see what we got so far, and decide if the distribution looks reasonable.
+
+<pre op="add"></pre>
+<canvas-demo></canvas-demo>
+
+<p>It does. There's a concentration of particles on the center bottom (i.e., the source
+  of the fire), and it goes up still a bit concentrated in the middle.
+
+<p>Let's add some fire color to it. We should vary the color from
+  red (<code>rgb(255, 0, 0)</code>) to some tone of bright yellow (a lot of red,
+  a lot of green and the blue channel controlling the brightness).
+
+<p>We can also use the opportunity to make the yellow tones in the back, which
+  will add to the effect, as "bright red" flames will appear closer. We can do both
+  those things by parametrizing the color with the index.
+
+<pre op="ed:11:1" spawn=2>
+    ctx.fillStyle = `rgba(255, ${255 - i/8}, ${255 - i})`;
+</pre>
+
+<canvas-demo></canvas-demo>
+
+<p>Finally, we need to animate the fire. For this, we are going to change the position
+  of each rectangle with time. In general, we'd have to find a way for the particles
+  to come back, but since our <code>y</code> function has a periodic part (<code>tan</code>), we are probably fine.
+
+<p>Remember also that <code>requestAnimationFrame</code> passes the time in miliseconds.
+  This means, we need to divide by a big factor for the number to be in the same order of
+  magnitude as the index.
+
+<pre op="ed:14:1" spawn=2>
+      1030 - i * Math.tan(i ** 4 + t / 1000),
+</pre>
+
+<pre op="add"></pre>
+<canvas-demo></canvas-demo>
+
+<p>Ok. This looks enough like a lowpoly fire. We could improve it by make the top particles
+approach the middle as they go up, but let's leave at this for now and move on to make
+it look a bit nicer.
+
+<h3>Through the right lens</h3>
+
+<p>We need to apply some filters to make our rectangles look more like proper fire.
+But because we want to apply the filter on the whole image, we still need to do some work.
+
+<p>In the near future, Canvas2D will support <a href="https://github.com/fserb/canvas2D/blob/master/spec/layers.md">layers</a> which would make this super simple.
+
+
+<p>For now, we must create a temporary canvas to render this. There's nothing much here:
+  we create an <code>OffscreenCanvas</code> identical to the original canvas, and move all
+  our operations to it.
+
+<pre>
+const ctx = canvas.getContext("2d");
+const W = canvas.width = 1920;
+const H = canvas.height = 1080;
+
+const ofc = new OffscreenCanvas(W, H);
+const octx = ofc.getContext("2d");
+
+function frame(t) {
+  octx.reset();
+  octx.fillStyle = '#000';
+  octx.fillRect(0, 0, W, H);
+
+  for (let i = 0; i < 2000; ++i) {
+    octx.fillStyle = `rgba(255, ${255 - i/8}, ${255 - i})`;
+    octx.fillRect(
+      960 + Math.sin(i / 8) * (i) / 2,
+      1030 - i * Math.tan(i ** 4 + t / 1000),
+      30, 50);
+  }
+
+  requestAnimationFrame(frame);
+}
+frame(0);
+</pre>
+
+<p>We then need to draw the temporary canvas back into the main one. Because we will
+  be using some filters that may create transparent areas, we should also clear
+  the canvas to black before drawing.
+
+<p>With this, we should get the exact same effect we had before.
+
+<pre op="ed:21" spawn=2>
+  ctx.reset();
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0,0,W,H);
+  ctx.drawImage(ofc, 0, 0);
+
+</pre>
+
+<pre op=add></pre>
+<canvas-demo></canvas-demo>
+
+<p>Now we are ready to add some filters to the final image. We are going to use the
+  new <a href="https://github.com/fserb/canvas2D/blob/master/spec/filters.md">CanvasFilter</a> API.
+
+<pre op="ed:24">
+  ctx.filter = new CanvasFilter([
+  ]);
+</pre>
+
+<p>The first thing we will do is to blur the image. This will have the effect of
+  merging particles that are nearby and create little "fire areas".
+
+<pre op="ed:25">
+    {filter: "gaussianBlur", stdDeviation: 24},
+</pre>
+
+<canvas-demo></canvas-demo>
+
+<p>This already looks much better, in spite of being very, well, blurry. To address this
+  we can apply a color matrix correction to increase the contrast, i.e.,
+  force areas to be either colored or black.
+
+<p>Technically, the <code>colorMatrix</code> is a <code>5x4</code> matrix that gets
+  multiplied by <code>[r, g, b, a, 1]</code> and end up with an output
+  <code>[r, g, b, a]</code> value. For our purposes, we can simply think in terms of:
+  the diagonal will tell by how much each color component will be multiplied by, and
+  the right column will get added to all values.
+
+<p>The actual values here are not
+  very important: as long as make a negative overall
+  contribution and multiply RGB by some factor, we will get a similar result.
+
+
+<pre op="ed:26" spawn=2>
+    {filter:"colorMatrix", values: [
+      4, 0, 0, 0, -1.5,
+      0, 4, 0, 0, -1.5,
+      0, 0, 4, 0, -1.5,
+      0, 0, 0, 1, 0,
+    ]},
+</pre>
+
+<pre op=add></pre>
+<canvas-demo></canvas-demo>
+
+<p>And here it is. The final fire effect.
+
+</main>
+</div>
+
+<script type="module">
+import BKC from "./bkc.js";
+BKC();
+</script>
+</body>
+</html>
