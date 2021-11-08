@@ -19,7 +19,7 @@ h1 {
 
 h2 {
   font-size: 3em;
-  margin: 2em 0 0.5em 0;
+  margin: 2em 0 0 0;
 }
 
 h3 {
@@ -69,7 +69,7 @@ main pre {
   width: 100%;
   overflow-x: auto;
   box-sizing: border-box;
-  /*display: none;*/
+  display: none;
   background-color: #181923;
   color: #EEE;
   font-size: max(10px, min(13px, 1.8vw));
