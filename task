@@ -1,0 +1,29 @@
+#!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
+
+function dev {
+  lume --dev "$@"
+}
+
+function watch {
+  lume --dev --watch "$@"
+}
+
+function build {
+  lume "$@"
+}
+
+function sync {
+  build
+  rsync -a --partial --progress _site/ fserb.com:bkc/
+}
+
+function help {
+  echo "$0 <task> <args>"
+  echo "Tasks:"
+  compgen -A function | grep -v "^_" | cat -n
+}
+
+TIMEFORMAT="Task completed in %3lR"
+time "${@:-help}"

@@ -1,6 +1,6 @@
 // bkc.js
 
-import Tonic from "./tonic.min.esm.js";
+import Tonic from "./lib/tonic.min.esm.js";
 
 let cdid = 0;
 class CanvasDemo extends Tonic {
