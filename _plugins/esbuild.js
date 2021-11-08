@@ -2,8 +2,22 @@
 import * as esbuild from 'https://deno.land/x/esbuild@v0.13.12/mod.js'
 
 export default function (options) {
+  const built = new Set();
+
   return site => {
+    site.addEventListener("beforeUpdate", async ev => {
+      for (const filename of ev.files) {
+        if (!filename.endsWith(".js")) continue;
+        if (built.has(filename)) continue;
+
+        site.build();
+        return;
+      }
+    });
+
     site.loadAssets([".js"], async path => {
+      console.log("BUILDING", path);
+      built.add(path);
       const {outputFiles, warnings, errors} = await esbuild.build({
         bundle: true,
         format: 'esm',
