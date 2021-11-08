@@ -193,7 +193,7 @@ With this, we should get the exact same effect we had before.
 <canvas-demo></canvas-demo>
 
 Now we are ready to add some filters to the final image. We are going to use the
-new [CanvasFilter(https://github.com/fserb/canvas2D/blob/master/spec/filters.md) API.
+new [CanvasFilter](https://github.com/fserb/canvas2D/blob/master/spec/filters.md) API.
 
 ```op:24
   ctx.filter = new CanvasFilter([
