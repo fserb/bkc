@@ -1,0 +1,22 @@
+---
+layout: main.njk
+---
+
+<div id="bkc">
+<aside><ol></ol></aside>
+<main>
+
+<h1>Better Know Canvas</h1>
+
+<h2>{{ title }}</h2>
+<div class="author">by <a href="https://fserb.com">Fernando Serboncini</a> - November 2021</div>
+
+{{ content }}
+
+</main>
+</div>
+
+<script type="module">
+import BKC from "./{{rootPath}}/js/bkc.js";
+BKC();
+</script>

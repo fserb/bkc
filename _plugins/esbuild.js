@@ -1,23 +1,5 @@
 
-
 import * as esbuild from 'https://deno.land/x/esbuild@v0.13.12/mod.js'
-
-function ignoreESP(filters) {
-  return {
-    name: "ignoreESP",
-    setup(build) {
-      for (const f of filters) {
-        build.onResolve({filter: f}, args => ({
-          path: args.path, namespace: 'ignore'
-        }));
-
-        build.onLoad({filter: f, namespace: 'ignore'}, n => {
-          return { contents: '' };
-        });
-      }
-    }
-  }
-}
 
 export default function (options) {
   return site => {
@@ -36,11 +18,10 @@ export default function (options) {
         incremental: false,
         watch: false,
         metafile: false,
-        sourcemap: false,
+        sourcemap: site.options.dev ? "inline" : false,
         treeShaking: true,
         legalComments: 'none',
         entryPoints: [path],
-        plugins: [ignoreESP([/^\.\/package$/])],
       });
       esbuild.stop();
 

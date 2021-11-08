@@ -3,9 +3,14 @@ import relative from "lume/plugins/relative_urls.ts";
 import basePath from "lume/plugins/base_path.ts";
 import date from "lume/plugins/date.ts";
 import slugifyUrls from "lume/plugins/slugify_urls.ts";
+import codeHighlight from "lume/plugins/code_highlight.ts";
+
+import markdownItKatex from
+  "https://jspm.dev/@iktakahiro/markdown-it-katex@4.0.1";
 
 import basic from "./_plugins/basic.js";
 import esbuild from "./_plugins/esbuild.js";
+import forceJs from "./_plugins/force_js.js";
 
 const site = lume({
   watcher: {
@@ -14,14 +19,17 @@ const site = lume({
 }, {
   verbose: 2,
   nunjucks: {
-    options: {
+  options: {
       autoescape: false,
     },
     plugins: {
     },
   },
   markdown: {
-    options: { typographer: true },
+    options: {
+      typographer: true,
+    },
+    plugins: [markdownItKatex],
   }
 });
 
@@ -43,6 +51,9 @@ site.use(relative());
 site.use(date());
 // clean up URLS to ASCII.
 site.use(slugifyUrls());
+
+site.use(forceJs());
+site.use(codeHighlight());
 
 site.use(basic());
 site.use(esbuild());

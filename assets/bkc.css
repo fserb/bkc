@@ -61,18 +61,17 @@ main a:hover {
 
 main code, main pre {
   font-family: 'Inconsolata', monospace;
-  font-size: 16px;
   color: #000;
-  font-weight: bold;
-  line-height: 1.4em;
 }
 
 main pre {
+  max-width: 600px;
+  width: 100%;
+  overflow-x: auto;
   box-sizing: border-box;
-  display: none;
+  /*display: none;*/
   background-color: #181923;
   color: #EEE;
-  font-family: 'Inconsolata', monospace;
   font-size: max(10px, min(13px, 1.8vw));
   padding: 2em 2ch;
   line-height: 1.25em;
@@ -235,10 +234,6 @@ aside .low {
   }
   main pre {
     display: block;
-    max-width: 600px;
-    width: 100%;
-    overflow-x: auto;
-
   }
   aside {
     display: none;
