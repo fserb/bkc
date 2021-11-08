@@ -97,7 +97,14 @@ main {
   color: #333;
   padding: 50px;
   margin-left: 40%;
-  padding-bottom: 50vh;
+}
+
+main footer {
+  font-family: 'Rock Salt', cursive;
+  text-align: center;
+  margin: 50vh 0 1em 0;
+  max-width: 600px;
+  font-size: 22px;
 }
 
 main p {
