@@ -1,3 +1,56 @@
+html.nofont body {
+  font-size: 16px;
+  line-height: 1.75em;
+  letter-spacing: 0.4px;
+  word-spacing: -0.05px;
+  font-weight: 400;
+  font-family: arial;
+}
+
+html.nofont h1, html.nofont h2, html.nofont h3, html.nofont h4,
+html.nofont h5, html.nofont h6 {
+  font-family: arial;
+  font-weight: 600;
+  line-height: 1em;
+  letter-spacing: -0.36px;
+  word-spacing: 6.26px;
+}
+
+html.nofont h1 { font-size: 25px; }
+html.nofont h2 { font-size: 60px; margin: 1.6em 0 0 0; }
+html.nofont h3 { font-size: 35px; margin: 1.6em 0 0.8em 0; }
+
+html.nofont #home h1 { font-size: 52.5px; }
+
+html.nofont #home .entry {
+  font-family: arial;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 1.4em;
+  letter-spacing: 0.19px;
+  word-spacing: 3.24px;
+}
+
+html.nofont main code {
+  font-family: courier;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.6em;
+  letter-spacing: 0.15px;
+  word-spacing: 0.35px;
+}
+
+
+html.nofont main pre code, html.nofont aside {
+  font-size: max(8.45px, min(11px, 1.52vw));
+  font-weight: 600;
+  font-family: courier;
+  line-height: 1.5em;
+  letter-spacing: -0.0136em;
+  word-spacing: 0.02727em;
+}
+
+
 body {
   margin: 0;
   font-family: 'Open Sans', sans-serif;
@@ -8,7 +61,7 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Rock Salt', cursive;
+  font-family: 'Rock Salt', sans-serif;
   color: #181923;
   line-height: 1.25em;
 }
@@ -63,7 +116,7 @@ h3 {
   background-color: #FFF;
   box-shadow: 4px 4px 4px rgba(0,0,0,0.4);
   border-radius: 6px;
-  font-family: 'Rock Salt', cursive;
+  font-family: 'Rock Salt', sans-serif;
   display: inline-block;
 }
 
