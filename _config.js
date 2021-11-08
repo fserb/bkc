@@ -4,6 +4,7 @@ import basePath from "lume/plugins/base_path.ts";
 import date from "lume/plugins/date.ts";
 import slugifyUrls from "lume/plugins/slugify_urls.ts";
 import codeHighlight from "lume/plugins/code_highlight.ts";
+import binaryLoader from "lume/core/loaders/binary.ts";
 
 import markdownItKatex from
   "https://jspm.dev/@iktakahiro/markdown-it-katex@4.0.1";
@@ -42,6 +43,8 @@ if (site.options.dev) {
 site.ignore("_images", "_plugins", ".gitignore", ".git", "js/lib");
 
 site.copy("assets", "assets");
+site.loadAssets([".html"]);
+site.loadAssets([".png"], binaryLoader);
 
 // update relative paths to include URL path.
 site.use(basePath());

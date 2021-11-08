@@ -22,7 +22,7 @@ class EngineSquence {
 
 export default function() {
   return site => {
-    site.preprocess([".njk", ".md", ".html"], page => {
+    site.preprocess([".njk", ".md"], page => {
       // adds {{ rootPath }} that always point relative to the root of the site.
       page.data.rootPath =
         page.data.url.split('/').filter(x => x).map(_ => '..').join('/') || '.';

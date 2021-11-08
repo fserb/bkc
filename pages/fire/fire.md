@@ -183,7 +183,7 @@ With this, we should get the exact same effect we had before.
 ```op:21,spawn:2
   ctx.reset();
   ctx.fillStyle = '#000';
-  ctx.fillRect(0,0,W,H);
+  ctx.fillRect(0, 0, W, H);
   ctx.drawImage(ofc, 0, 0);
 
 ```
@@ -213,17 +213,33 @@ This already looks much better, in spite of being very, well, blurry. To address
   we can apply a color matrix correction to increase the contrast, i.e.,
   force areas to be either colored or black.
 
-Technically, the `colorMatrix` is a `5x4` matrix that gets
-multiplied by `[r, g, b, a, 1]` and end up with an output
-`[r, g, b, a]` value. For our purposes, we can simply think in terms of:
-the diagonal will tell by how much each color component will be multiplied by, and
-the right column will get added to all values.
+Technically, the `colorMatrix` is a $5x4$ matrix that gets applied as:
 
-The actual values here are not
-very important: as long as make a negative overall
-contribution and multiply RGB by some factor, we will get a similar result.
+$$
+\begin{bmatrix} r_1 \\ g_1 \\ b_1 \\ a_1 \end{bmatrix}
+ =
+\begin{bmatrix}
+m_{rr} & m_{gr} & m_{br} & m_{ar} &m_{pr} \\
+m_{rg} & m_{gg} & m_{bg} & m_{ag} &m_{pg} \\
+m_{rb} & m_{gb} & m_{bb} & m_{ab} &m_{pb} \\
+m_{ra} & m_{ga} & m_{ba} & m_{aa} &m_{pa} \\
+\end{bmatrix}
+\times
+\begin{bmatrix} r_0 \\ g_0 \\ b_0 \\ a_0 \\ 1 \end{bmatrix}
+$$
 
-```op:26,spawn:2
+where $r_0g_0b_0a_0$ is the original color
+and $r_1g_1b_1a_1$ is the final transformed
+color, all in the range $[0, 1]$.
+
+For our purposes, we can simply think in terms of:
+the diagonal ($m_{rr} \space m_{gg} \space m_{bb}$) will multiply each
+color component, while the right column ($m_{pr} \space m_{pg} \space m_{pb}$) will add a constant to each component.
+
+So how can we use this to get our desired effect? We want to increase
+contrast by saturating both ends of the spectrum. If we multiple the components by `4` (any number greater than $1$ would do) and subtract `1.5`, all values that are below $0.375$ (from $4x - 1.5 = 0$), will end up as $0$ and all values above $0.625$ (from $4x - 1.5 = 1$), will end up as $1$. This will fix the bluriness and make the fire pop out.
+
+```op:26,spawn:5
     {filter:"colorMatrix", values: [
       4, 0, 0, 0, -1.5,
       0, 4, 0, 0, -1.5,
@@ -236,5 +252,5 @@ contribution and multiply RGB by some factor, we will get a similar result.
 ```
 <canvas-demo></canvas-demo>
 
-And here it is. The final fire effect.
+And here it is. The final fire effect. You can see it in a standalone page [here](effect.html)
 

@@ -52,12 +52,12 @@ class CanvasDemo extends Tonic {
     this.#setContent(`
       <!doctype html>
       <html><head><style>
-      html, body { margin: 0; padding: 0; height: 100%; }
-      #c { width: 100%; height: 100%; }
+      html, body { background-color: #222; margin: 0; width: 100%; height: 100% }
+      canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
       </style></head><body>
-      <canvas id=c></canvas>
+      <canvas></canvas>
       <script type='module'>
-      const canvas = document.getElementById('c');
+      const canvas = document.querySelector("canvas");
       ${this.state.code}
       </script>
       </body></html>`);
@@ -123,6 +123,8 @@ iframe, #ph {
   max-width: 600px;
   height: 24px;
   vertical-align: top;
+  overflow: hidden;
+  display: none;
 }
 #r {
   float: right;

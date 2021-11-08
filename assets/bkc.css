@@ -17,6 +17,13 @@ h1 {
   font-size: 1.25em;
 }
 
+h1 a {
+  border: 0;
+}
+h1 a:hover {
+  background-color: transparent;
+}
+
 h2 {
   font-size: 3em;
   margin: 2em 0 0 0;
@@ -31,6 +38,55 @@ h3 {
   text-align: right;
   max-width: 600px;
   margin-bottom: 4em;
+}
+
+#home {
+  max-width: 980px;
+  margin: 50px auto;
+  text-align: center;
+  color: #181923;
+}
+
+#home h1 {
+  font-size: 42px;
+}
+
+#home #display {
+  margin-top: 60px;
+}
+
+#home .entry {
+  width: 300px;
+  padding: 20px;
+  margin: 10px;
+  box-sizing: border-box;
+  background-color: #FFF;
+  box-shadow: 4px 4px 4px rgba(0,0,0,0.4);
+  border-radius: 6px;
+  font-family: 'Rock Salt', cursive;
+  display: inline-block;
+}
+
+#home .entry a {
+  color: #000;
+  border-bottom: none;
+}
+
+#home .entry a:hover {
+  background-color: transparent;
+}
+
+#home .entry img {
+  display: block;
+  width: 260px;
+  height: 147px;
+  object-fit: contain;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+#home footer {
+  margin-top: 60px;
 }
 
 #bkc {
@@ -48,20 +104,24 @@ main p {
   max-width: 600px;
 }
 
-main a {
+a {
   color: #333;
   text-decoration: none;
   border-bottom: 1px dotted #999;
   transition: background-color 0.2s;
 }
 
-main a:hover {
+a:hover {
   background-color: rgba(0,0,0,0.05);
 }
 
 main code, main pre {
   font-family: 'Inconsolata', monospace;
   color: #000;
+}
+
+main code {
+  font-weight: 600;
 }
 
 main pre {
