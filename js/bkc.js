@@ -113,7 +113,7 @@ function applyOp(state) {
         o.classList.add("low");
       }
       o.classList.add("born");
-      o.style.top = `${1.25 * rel++}em`;
+      o.style.top = `${1.25 * (rel++ - 1)}em`;
       aside.insertBefore(o, aside.querySelectorAll(`li.alive`)[pos]);
       o.getBoundingClientRect();
       o.classList.remove("born");

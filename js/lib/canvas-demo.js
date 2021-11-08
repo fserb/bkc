@@ -23,9 +23,6 @@ class CanvasDemo extends Tonic {
       iframe.contentWindow.location.reload();
     } else {
       iframe.srcdoc = html;
-      // iframe.contentWindow.document.open();
-      // iframe.contentWindow.document.write(html);
-      // iframe.contentWindow.document.close();
     }
   }
 
@@ -124,7 +121,6 @@ iframe, #ph {
   height: 24px;
   vertical-align: top;
   overflow: hidden;
-  display: none;
 }
 #r {
   float: right;

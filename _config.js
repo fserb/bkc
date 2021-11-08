@@ -37,7 +37,7 @@ const site = lume({
 if (site.options.dev) {
   site.options.location = new URL("https://dev.metaphora.co/bkc/_site");
 } else {
-  site.options.location = new URL("https://bkc.fserb.com");
+  site.options.location = new URL("https://fserb.com/bkc");
 }
 
 site.ignore("_images", "_plugins", ".gitignore", ".git", "js/lib");
