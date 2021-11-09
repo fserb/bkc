@@ -26,7 +26,7 @@ export default function() {
       // adds {{ rootPath }} that always point relative to the root of the site.
       page.data.rootPath =
         page.data.url.split('/').filter(x => x).map(_ => '..').join('/') || '.';
-
+      page.data.srcFile = `${page.src.path}${page.src.ext}`;
 
       // appends .njk on layout
       if (page.data.layout) {

@@ -8,12 +8,14 @@ date: 6/11/2021
 <div id="bkc">
 <aside class="hljs"><ol></ol></aside>
 <main>
-
 <h1><a href="/">Better Know Canvas</a></h1>
 
 <h2>{{ title }}</h2>
 <div class="author">by <a href="{{ author_link }}">{{ author }}</a><br>
-{{ date | date("MMMM y") }}</div>
+{{ date | date("MMMM y") }}
+<a href='https://github.com/fserb/bkc/blob/master/{{ srcFile }}?plain=1'>
+<img class='github' src='/assets/github.png' width=14 height=14></a>
+</div>
 
 {{ content }}
 

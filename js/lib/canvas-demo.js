@@ -48,7 +48,9 @@ class CanvasDemo extends Tonic {
   start() {
     this.#setContent(`
       <!doctype html>
-      <html><head><style>
+      <html><head>
+      <meta http-equiv="origin-trial" content="AhLQm4ICiudjd0hChY39JD0RgNfBTsrra93PD/2pTGC05WgqUq//jwCDNVDQo0KVAPPjF/xi+IX4xeP8pn+bdA8AAABUeyJvcmlnaW4iOiJodHRwczovL2NhbnZhcy5yb2Nrczo0NDMiLCJmZWF0dXJlIjoiTmV3Q2FudmFzMkRBUEkiLCJleHBpcnkiOjE2NDU1NzQzOTl9">
+      <style>
       html, body { background-color: #222; margin: 0; width: 100%; height: 100% }
       canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
       </style>

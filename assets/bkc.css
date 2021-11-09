@@ -69,12 +69,11 @@ h1 {
   font-size: 1.25em;
 }
 
-h1 a {
-  border: 0;
+h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+  text-decoration: none;
+  color: #181923;
 }
-h1 a:hover {
-  background-color: transparent;
-}
+
 
 h2 {
   font-size: 3em;
@@ -88,6 +87,7 @@ h3 {
 
 .author {
   text-align: right;
+  line-height: 1.25em;
   max-width: 600px;
   margin-bottom: 4em;
 }
@@ -121,11 +121,7 @@ h3 {
 
 #home .entry a {
   color: #000;
-  border-bottom: none;
-}
-
-#home .entry a:hover {
-  background-color: transparent;
+  text-decoration: none;
 }
 
 #home .entry img {
@@ -159,19 +155,24 @@ main footer {
   font-size: 22px;
 }
 
+#home footer img {
+  display: inline-block;
+  vertical-align: baseline;
+}
+
 main p {
   max-width: 600px;
 }
 
 a {
-  color: #333;
-  text-decoration: none;
-  border-bottom: 1px dotted #999;
+  color: #666;
+  text-decoration: underline #666;
   transition: background-color 0.2s;
 }
 
 a:hover {
-  background-color: rgba(0,0,0,0.05);
+  color: #181923;
+  text-decoration: underline #181923;
 }
 
 main code, main pre {
@@ -234,8 +235,6 @@ canvas-demo {
   display: block;
   max-width: 600px;
 }
-
-
 
 main .ruler:nth-of-type(even) {
   background-color: #666;

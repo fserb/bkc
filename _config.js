@@ -41,7 +41,7 @@ if (site.options.dev) {
   site.options.location = new URL("https://canvas.rocks/");
 }
 
-site.ignore("_images", "_plugins", ".gitignore", ".git", "js/lib");
+site.ignore("_images", "_plugins", ".gitignore", ".git", "js/lib", "README.md");
 
 site.copy("assets", "assets");
 site.loadAssets([".html"]);
@@ -65,7 +65,7 @@ site.use(esbuild());
 // auto reload
 
 const hasReload = (await Deno.run({ cmd: ["which", "chrome-reload"],
-  tdout: null }).status()).success;
+  stdout: "null", stderr: "null" }).status()).success;
 if (hasReload) {
   console.log("has reload");
   site.addEventListener("afterUpdate", ev => {
