@@ -10,13 +10,17 @@ function watch {
   lume --dev --watch "$@"
 }
 
+function serve {
+  lume --dev --serve "$@"
+}
+
 function build {
   lume "$@"
 }
 
 function sync {
   build
-  rsync -a --partial --progress _site/ fserb.com:canvas/
+  rsync -a --partial --progress _site/ canvas.rocks:canvas/
 }
 
 function help {

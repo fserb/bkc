@@ -1,3 +1,4 @@
+
 import lume from "lume/mod.ts";
 import relative from "lume/plugins/relative_urls.ts";
 import basePath from "lume/plugins/base_path.ts";
@@ -62,9 +63,15 @@ site.use(basic());
 site.use(esbuild());
 
 // auto reload
-site.addEventListener("afterUpdate", ev => {
-  console.log("reload");
-  Deno.run({ cmd: ["chrome-reload", "reload"] });
-});
+
+const hasReload = (await Deno.run({ cmd: ["which", "chrome-reload"],
+  tdout: null }).status()).success;
+if (hasReload) {
+  console.log("has reload");
+  site.addEventListener("afterUpdate", ev => {
+    console.log("reload");
+    Deno.run({ cmd: ["chrome-reload", "reload"] });
+  });
+}
 
 export default site;
