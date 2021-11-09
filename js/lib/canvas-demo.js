@@ -51,7 +51,9 @@ class CanvasDemo extends Tonic {
       <html><head><style>
       html, body { background-color: #222; margin: 0; width: 100%; height: 100% }
       canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
-      </style></head><body>
+      </style>
+      <script type="module" src="../js/canvas-polyfill.js"></script>
+      </head><body>
       <canvas></canvas>
       <script type='module'>
       const canvas = document.querySelector("canvas");

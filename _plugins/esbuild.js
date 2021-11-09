@@ -1,23 +1,22 @@
 
 import * as esbuild from 'https://deno.land/x/esbuild@v0.13.12/mod.js'
+import * as path from "https://deno.land/std@0.113.0/path/mod.ts";
 
 export default function (options) {
   const built = new Set();
 
   return site => {
-    site.addEventListener("beforeUpdate", async ev => {
-      for (const filename of ev.files) {
-        if (!filename.endsWith(".js")) continue;
-        if (built.has(filename)) continue;
+    site.loadAssets([".js"]);
 
-        site.build();
-        return;
-      }
+    site.addEventListener("beforeSave", ev => {
+      esbuild.stop();
     });
 
-    site.loadAssets([".js"], async path => {
-      console.log("BUILDING", path);
-      built.add(path);
+    site.process([".js"], async page => {
+      const name = `${page.src.path}${page.src.ext}`;
+      const filename = path.relative(site.src(), path.join(site.src(), name));
+      console.log("📦", name);
+
       const {outputFiles, warnings, errors} = await esbuild.build({
         bundle: true,
         format: 'esm',
@@ -35,9 +34,8 @@ export default function (options) {
         sourcemap: site.options.dev ? "inline" : false,
         treeShaking: true,
         legalComments: 'none',
-        entryPoints: [path],
+        entryPoints: [filename],
       });
-      esbuild.stop();
 
       for (const e of errors) {
         console.error(e);
@@ -46,8 +44,7 @@ export default function (options) {
         console.warning(e);
       }
 
-      return {content: outputFiles[0].contents};
+      page.content = outputFiles[0].contents;
     });
-
   };
 }
