@@ -265,6 +265,7 @@ aside::after {
   content: "";
   position: fixed;
   left: 40%;
+  top: calc(50% - 12px);
   width: 0;
   height: 0;
   border-top: 12px solid transparent;

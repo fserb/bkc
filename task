@@ -16,7 +16,7 @@ function build {
 
 function sync {
   build
-  rsync -a --partial --progress _site/ fserb.com:fserb/bkc/
+  rsync -a --partial --progress _site/ fserb.com:canvas/
 }
 
 function help {
