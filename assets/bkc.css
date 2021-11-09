@@ -249,7 +249,7 @@ aside {
   color: #EEE;
   font-family: 'Inconsolata', monospace;
   font-size: min(13px, 0.9vw);
-  line-height: 1.25em;
+  line-height: 1.1em;
   white-space: pre;
   display: grid;
   justify-content: center;
@@ -286,7 +286,7 @@ aside ol {
 aside li {
   transition: filter 1s;
   transition: all 0.5s ease-in-out;
-  height: 1.25em;
+  height: 1.1em;
   overflow: visible;
   position: relative;
 }

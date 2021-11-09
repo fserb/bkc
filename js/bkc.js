@@ -53,6 +53,8 @@ function clearLine(s) {
     .replaceAll('&#x60;', '`');
 }
 
+const LINE_HEIGHT = 1.1;
+
 function applyOp(state) {
   const aside = document.querySelector("aside ol");
 
@@ -100,7 +102,7 @@ function applyOp(state) {
       linedelta--;
       o.classList.add("dead");
       o.classList.remove("alive");
-      o.style.top = `${1.25 * relsub++}em`;
+      o.style.top = `${LINE_HEIGHT * relsub++}em`;
     }
     if (op == "+") {
       linedelta++;
@@ -113,7 +115,7 @@ function applyOp(state) {
         o.classList.add("low");
       }
       o.classList.add("born");
-      o.style.top = `${1.25 * (rel++ - 1)}em`;
+      o.style.top = `${LINE_HEIGHT * (rel++ - 1)}em`;
       aside.insertBefore(o, aside.querySelectorAll(`li.alive`)[pos]);
       o.getBoundingClientRect();
       o.classList.remove("born");
@@ -123,7 +125,7 @@ function applyOp(state) {
     }
   }
 
-  aside.style.height = `${aside.querySelectorAll('li.alive').length * 1.25}em`;
+  aside.style.height = `${aside.querySelectorAll('li.alive').length * LINE_HEIGHT}em`;
 }
 
 function calcOp(state, op, code) {
