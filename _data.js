@@ -1,6 +1,7 @@
 import { posix } from "https://deno.land/std@0.113.0/path/mod.ts";
 
 export function url(page) {
+  const orig = page.dest;
   let path = page.dest.path.replace(/^\/pages\//, '/');
 
   const sp = path.split("/");
