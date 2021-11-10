@@ -97,7 +97,7 @@ We can see what we got so far, and decide if the distribution looks reasonable.
 
 ```op:+
 ```
-<canvas-demo></canvas-demo>
+@[canvas-demo]
 
 It does. There's a concentration of particles on the center bottom (i.e., the
 source of the fire), and it goes up still a bit concentrated in the middle.
@@ -114,7 +114,7 @@ those things by parametrizing the color with the index.
     ctx.fillStyle = `rgba(255, ${255 - i/8}, ${255 - i})`;
 ```
 
-<canvas-demo></canvas-demo>
+@[canvas-demo]
 
 Finally, we need to animate the fire. For this, we are going to make the
 position of each rectangle dependent of time. In general, we'd have to find a
@@ -131,7 +131,7 @@ for the number to be in the same order of magnitude as the index.
 
 ```op:+
 ```
-<canvas-demo></canvas-demo>
+@[canvas-demo]
 
 Okey. This looks like a nice low poly fire. We could improve it by making the
 top particles approach the middle as they go up, but let's leave at this for
@@ -193,7 +193,7 @@ With this, we should get the exact same effect we had before.
 
 ```op:+
 ```
-<canvas-demo></canvas-demo>
+@[canvas-demo]
 
 Now we are ready to add some filters to the final image. We are going to use the
 new [CanvasFilter](https://github.com/fserb/canvas2D/blob/master/spec/filters.md)
@@ -211,7 +211,7 @@ merging particles that are nearby and create little "fire areas".
     {filter: "gaussianBlur", stdDeviation: 24},
 ```
 
-<canvas-demo></canvas-demo>
+@[canvas-demo]
 
 This already looks much better, in spite of being very, well, blurry. To address
 this we can apply a color matrix correction to increase the contrast, i.e.,
@@ -258,7 +258,7 @@ up as $1$. This will fix the bluriness and make the fire pop out.
 
 ```op:+
 ```
-<canvas-demo></canvas-demo>
+@[canvas-demo]
 
 And here it is. The final fire effect with filters. You can see it [here in a standalone page with all the source code](effect.html).
 

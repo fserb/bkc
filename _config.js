@@ -13,6 +13,8 @@ import markdownItKatex from
 import basic from "./_plugins/basic.js";
 import esbuild from "./_plugins/esbuild.js";
 import forceJs from "./_plugins/force_js.js";
+import markdownItComponent from
+  "./_plugins/markdown-it-component.js";
 
 const site = lume({
   watcher: {
@@ -31,7 +33,10 @@ const site = lume({
     options: {
       typographer: true,
     },
-    plugins: [markdownItKatex],
+    plugins: [
+      markdownItKatex,
+      markdownItComponent(),
+    ]
   }
 });
 
