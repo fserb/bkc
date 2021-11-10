@@ -12,14 +12,15 @@ date: 6/11/2021
 
 <h2>{{ title }}</h2>
 <div class="author">by <a href="{{ author_link }}">{{ author }}</a><br>
-{{ date | date("MMMM y") }}
-<a href='https://github.com/fserb/bkc/blob/master/{{ srcFile }}?plain=1'>
-<img class='github' src='/assets/github.png' width=14 height=14></a>
-</div>
+{{ date | date("MMMM y") }}<br></div>
 
 {{ content }}
 
-<footer>Ø</footer>
+<footer><span>Ø</span>
+<p><a href='https://github.com/fserb/bkc/blob/master/{{ srcFile }}?plain=1'>
+<img class='github' src='/assets/github.png' width=14 height=14></a>
+
+</footer>
 </main>
 </div>
 
@@ -27,3 +28,9 @@ date: 6/11/2021
 import BKC from "./{{rootPath}}/js/bkc.js";
 BKC();
 </script>
+
+<script type="module" src="../js/canvas-polyfill.js"></script>
+<script type="module">
+polyfillWarning(document.querySelector("main"));
+</script>
+

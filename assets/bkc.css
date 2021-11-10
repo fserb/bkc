@@ -148,14 +148,20 @@ main {
 }
 
 main footer {
-  font-family: 'Rock Salt', cursive;
-  text-align: center;
   margin: 50vh 0 1em 0;
   max-width: 600px;
+  font-size: 12px;
+  text-align: right;
+}
+
+main footer span {
+  display: block;
+  text-align: center;
+  font-family: 'Rock Salt', cursive;
   font-size: 22px;
 }
 
-#home footer img {
+#home footer img, main footer img {
   display: inline-block;
   vertical-align: baseline;
 }
@@ -359,7 +365,22 @@ aside .low {
   }
 }
 
+#polyfillWarning {
+  border-radius: 2px;
+  background-color: #F4D4CD;
+  border: 1px solid #C90000;
+  padding: 1.2em 1.2em;
+  max-width: 600px;
+  box-sizing: border-box;
+  font-size: 12px;
+  line-height: 1.2em;
+  color: #200;
+  margin-bottom: 50px;
+}
 
+#polyfillWarning p {
+  margin: 0;
+}
 
 
 /* Syntax highlight */

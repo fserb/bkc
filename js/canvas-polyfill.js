@@ -5,6 +5,65 @@ import boxBlurCanvasRGBA from "./lib/canvasFastBoxBlur.js";
 
 const polyfilled = globalThis.canvasPolyfill = new Set();
 
+window.polyfillWarning = function(target) {
+  if (polyfilled.size == 0) return;
+
+  const d = document.createElement("div");
+  d.id = "polyfillWarning";
+
+  const polys = [];
+  for (const v of polyfilled) {
+
+    if (v == "OffscreenCanvas") {
+      polys.push(`<a href='https://caniuse.com/mdn-api_offscreencanvasrenderingcontext2d'>OffscreenCanvas</a>`);
+    } else if (v == 'CanvasFilter') {
+      polys.push(`CanvasFilter`);
+    } else if (v == 'roundRect') {
+      polys.push(`Canvas2D.roundRect`);
+    } else if (v == 'reset') {
+      polys.push(`Canvas2D.reset`);
+    } else if (v == 'filter') {
+      polys.push(`<a href='https://caniuse.com/mdn-api_canvasrenderingcontext2d_filter'>Canvas2D.filter</a>`);
+    } else {
+      polys.push(v);
+    }
+  }
+
+  let browser = "";
+  if (navigator.userAgent.indexOf("Safari") > -1) browser = "Safari";
+  if (navigator.userAgent.indexOf("Chrome") > -1) browser = "Chrome";
+  if (navigator.userAgent.indexOf("Firefox") > -1) browser = "Firefox";
+  if (navigator.userAgent.indexOf("MSIE") > -1) browser = "Internet Explorer";
+
+  let html = `
+<p>The following features are not supported by your browser and were
+<a href='https://developer.mozilla.org/en-US/docs/Glossary/Polyfill'>polyfilled</a>:
+${polys.join(", ")}.
+<br><br>
+<p>Because of this, performance may degrade and some features may not fully work.
+<br><br>
+`;
+
+  if (browser == "Safari") {
+    html += `<p>Consider <a href='https://www.apple.com/feedback/safari.html'>leaving feedback for the Safari team</a> to implement them.`;
+  } else if (browser == "Firefox") {
+    html += `<p>Consider <a href='https://bugzilla.mozilla.org/enter_bug.cgi?product=Firefox'>leaving feedback for the Firefox team</a> to implement them.`;
+  } else if (browser == 'Chrome') {
+    html += `<p>Consider <a href='https://www.google.com/chrome/update/'>upgrading Google Chrome</a>.`;
+  } else {
+    html += `<p>Consider <a href='https://www.google.com/intl/en_ca/chrome/'>upgrading to a more modern browser</a>.`;
+  }
+
+  if (browser != 'Chrome') {
+    html += `<p>Meanwhile, you can check these features using the latest <a href='https://www.google.com/intl/en_ca/chrome/'>Google Chrome</a>.`;
+  }
+  console.log(browser);
+
+  d.innerHTML = html;
+
+  target.insertBefore(d, target.firstElementChild);
+};
+
 let has2DOffscreenCanvas = true;
 try {
   (new OffscreenCanvas(0, 0)).getContext("2d");
