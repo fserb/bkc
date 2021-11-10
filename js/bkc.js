@@ -215,7 +215,7 @@ function setup() {
     if (el.tagName == "CANVAS-DEMO") {
       const doc = new DOMParser().parseFromString(
         state.code.join('\n'), 'text/html');
-      el.state.code = doc.body.textContent ?? "";
+      el.code = doc.body.textContent ?? "";
       el.reRender();
       continue;
     }

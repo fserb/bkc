@@ -1,15 +1,12 @@
 import Tonic from "./tonic.js";
 
-let cdid = 0;
 class CanvasDemo extends Tonic {
   constructor() {
     super();
-    if (!this.id) {
-      this.id = `canvas-demo-${cdid++}`;
-    }
     this.visible = false;
     this.io = null;
     this.rafid = 0;
+    this.code = "";
   }
 
   connected() {
@@ -59,7 +56,7 @@ class CanvasDemo extends Tonic {
       <canvas></canvas>
       <script type='module'>
       const canvas = document.querySelector("canvas");
-      ${this.state.code}
+      ${this.code}
       </script>
       </body></html>`);
     this.lastts = -1;
@@ -75,7 +72,7 @@ class CanvasDemo extends Tonic {
     if (nv == this.visible) return;
     this.visible = nv;
     this.reRender();
-    if (!this.visible || !this.state.code) {
+    if (!this.visible || !this.code) {
       this.#setContent();
       return;
     }
