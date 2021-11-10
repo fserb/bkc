@@ -5,7 +5,7 @@ import boxBlurCanvasRGBA from "./lib/canvasFastBoxBlur.js";
 
 const polyfilled = globalThis.canvasPolyfill = new Set();
 
-window.polyfillWarning = function(target) {
+export default function polyfillWarning(target) {
   if (polyfilled.size == 0) return;
 
   const d = document.createElement("div");
@@ -13,7 +13,6 @@ window.polyfillWarning = function(target) {
 
   const polys = [];
   for (const v of polyfilled) {
-
     if (v == "OffscreenCanvas") {
       polys.push(`<a href='https://caniuse.com/mdn-api_offscreencanvasrenderingcontext2d'>OffscreenCanvas</a>`);
     } else if (v == 'CanvasFilter') {

@@ -27,10 +27,7 @@ date: 6/11/2021
 <script type="module">
 import BKC from "./{{rootPath}}/js/bkc.js";
 BKC();
-</script>
 
-<script type="module" src="../js/canvas-polyfill.js"></script>
-<script type="module">
+import polyfillWarning from "./{{rootPath}}/js/canvas-polyfill.js";
 polyfillWarning(document.querySelector("main"));
 </script>
-
