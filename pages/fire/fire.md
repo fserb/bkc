@@ -260,5 +260,5 @@ up as $1$. This will fix the bluriness and make the fire pop out.
 ```
 @[canvas-demo]
 
-And here it is. The final fire effect with filters. You can see it [here in a standalone page with all the source code](effect.html).
+And here it is. The final fire effect with filters. You can see it [here in a standalone page with all the source code]({{relativePath}}/effect.html).
 

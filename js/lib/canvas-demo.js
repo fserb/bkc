@@ -1,5 +1,24 @@
 import Tonic from "./tonic.js";
 
+const SRC = code => `<!doctype html>
+<html><head>
+<meta http-equiv="origin-trial" content="AhLQm4ICiudjd0hChY39JD0RgNfBTsrra93PD/\
+2pTGC05WgqUq//jwCDNVDQo0KVAPPjF/xi+IX4xeP8pn+bdA8AAABUeyJvcmlnaW4iOiJodHRwczovL\
+2NhbnZhcy5yb2Nrczo0NDMiLCJmZWF0dXJlIjoiTmV3Q2FudmFzMkRBUEkiLCJleHBpcnkiOjE2NDU1\
+NzQzOTl9">
+<style>
+html, body { background-color: #222; margin: 0; width: 100%; height: 100% }
+canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
+</style>
+<script type="module" src="js/canvas-polyfill.js"></script>
+</head><body>
+<canvas></canvas>
+<script type='module'>
+const canvas = document.querySelector("canvas");
+${code}
+</script>
+</body></html>`;
+
 class CanvasDemo extends Tonic {
   constructor() {
     super();
@@ -32,24 +51,10 @@ class CanvasDemo extends Tonic {
   // start loads the iframe code and starts the FPS counter.
   start() {
     if (!this.visible) return;
-    this.querySelector("iframe").srcdoc = `
-      <!doctype html>
-      <html><head>
-      <meta http-equiv="origin-trial" content="AhLQm4ICiudjd0hChY39JD0RgNfBTsrra93PD/2pTGC05WgqUq//jwCDNVDQo0KVAPPjF/xi+IX4xeP8pn+bdA8AAABUeyJvcmlnaW4iOiJodHRwczovL2NhbnZhcy5yb2Nrczo0NDMiLCJmZWF0dXJlIjoiTmV3Q2FudmFzMkRBUEkiLCJleHBpcnkiOjE2NDU1NzQzOTl9">
-      <style>
-      html, body { background-color: #222; margin: 0; width: 100%; height: 100% }
-      canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
-      </style>
-      <script type="module" src="../js/canvas-polyfill.js"></script>
-      </head><body>
-      <canvas></canvas>
-      <script type='module'>
-      const canvas = document.querySelector("canvas");
-      ${this.code}
-      </script>
-      </body></html>`;
+
+    this.querySelector("iframe").srcdoc = SRC(this.code);
+
     this.lastts = -1;
-    this.buffer = [];
     if (this.rafid) {
       cancelAnimationFrame(this.rafid);
     }
@@ -66,6 +71,7 @@ class CanvasDemo extends Tonic {
   // FPS counter.
   frame(t) {
     if (this.lastts == -1) {
+      this.buffer = [];
       this.lastts = t;
       this.rafid = requestAnimationFrame(t => this.frame(t));
       return;

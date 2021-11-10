@@ -1,7 +1,5 @@
 
 import lume from "lume/mod.ts";
-import relative from "lume/plugins/relative_urls.ts";
-import basePath from "lume/plugins/base_path.ts";
 import date from "lume/plugins/date.ts";
 import slugifyUrls from "lume/plugins/slugify_urls.ts";
 import codeHighlight from "lume/plugins/code_highlight.ts";
@@ -41,7 +39,7 @@ const site = lume({
 });
 
 if (site.options.dev) {
-  site.options.location = new URL("https://dev.metaphora.co/bkc/_site");
+  site.options.location = new URL("https://dev.metaphora.co/bkc/_site/");
 } else {
   site.options.location = new URL("https://canvas.rocks/");
 }
@@ -52,10 +50,6 @@ site.copy("assets", "assets");
 site.loadAssets([".html"]);
 site.loadAssets([".png"], binaryLoader);
 
-// update relative paths to include URL path.
-site.use(basePath());
-// replace URLs on output page that finish with "/" to use relative path.
-site.use(relative());
 // register `date` plugin.
 site.use(date());
 // clean up URLS to ASCII.

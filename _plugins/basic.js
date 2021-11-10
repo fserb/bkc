@@ -25,8 +25,11 @@ export default function() {
     site.preprocess([".njk", ".md"], page => {
       // adds {{ rootPath }} that always point relative to the root of the site.
       page.data.rootPath =
-        page.data.url.split('/').filter(x => x).map(_ => '..').join('/') || '.';
+        page.data.url.split('/')
+        .slice(0, -1).filter(x => x).map(_ => '..').join('/') || '.';
       page.data.srcFile = `${page.src.path}${page.src.ext}`;
+      page.data.baseURL = site.options.location.toString();
+      page.data.relativePath = page.data.url.split('/').slice(1, -1).join('/');
 
       // appends .njk on layout
       if (page.data.layout) {

@@ -8,7 +8,7 @@ date: 6/11/2021
 <div id="bkc">
 <aside class="hljs"><ol></ol></aside>
 <main>
-<h1><a href="/">Better Know Canvas</a></h1>
+<h1><a href="">Better Know Canvas</a></h1>
 
 <h2>{{ title }}</h2>
 <div class="author">by <a href="{{ author_link }}">{{ author }}</a><br>
@@ -18,16 +18,16 @@ date: 6/11/2021
 
 <footer><span>Ø</span>
 <p><a href='https://github.com/fserb/bkc/blob/master/{{ srcFile }}?plain=1'>
-<img class='github' src='/assets/github.png' width=14 height=14></a>
+<img class='github' src='assets/github.png' width=14 height=14></a>
 
 </footer>
 </main>
 </div>
 
 <script type="module">
-import BKC from "./{{rootPath}}/js/bkc.js";
+import BKC from "./js/bkc.js";
 BKC();
 
-import polyfillWarning from "./{{rootPath}}/js/canvas-polyfill.js";
+import polyfillWarning from "./js/canvas-polyfill.js";
 polyfillWarning(document.querySelector("main"));
 </script>

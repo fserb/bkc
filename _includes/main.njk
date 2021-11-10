@@ -4,6 +4,7 @@ title: ""
 <!doctype html>
 <html lang="en" class="nofont">
 <head>
+  <base href="{{ baseURL }}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>{{ tile }}{{ " &middot; " if title }}Better Know Canvas</title>
@@ -15,10 +16,10 @@ title: ""
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;600;700&family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Rock+Salt&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" type="text/css" href="/assets/katex/katex.min.css">
-  <link rel="stylesheet" type="text/css" href="/assets/bkc.css">
+  <link rel="stylesheet" type="text/css" href="assets/katex/katex.min.css">
+  <link rel="stylesheet" type="text/css" href="assets/bkc.css">
 
-  <script type="module" src="/js/bkc.js"></script>
+  <script type="module" src="js/bkc.js"></script>
 </head>
 <body>
 {{ content }}
