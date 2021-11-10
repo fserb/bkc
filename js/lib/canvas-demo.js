@@ -1,6 +1,6 @@
 import Tonic from "./tonic.js";
 
-const SRC = code => `<!doctype html>
+const BASE = content => `<!doctype html>
 <html><head>
 <meta http-equiv="origin-trial" content="AhLQm4ICiudjd0hChY39JD0RgNfBTsrra93PD/\
 2pTGC05WgqUq//jwCDNVDQo0KVAPPjF/xi+IX4xeP8pn+bdA8AAABUeyJvcmlnaW4iOiJodHRwczovL\
@@ -8,16 +8,39 @@ const SRC = code => `<!doctype html>
 NzQzOTl9">
 <style>
 html, body { background-color: #222; margin: 0; width: 100%; height: 100% }
-canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
+#c { display: block; width: 100%; height: 100%; object-fit: contain; }
 </style>
-<script type="module" src="js/canvas-polyfill.js"></script>
 </head><body>
-<canvas></canvas>
-<script type='module'>
-const canvas = document.querySelector("canvas");
+<canvas id=c></canvas>
+${content}
+</body></html>`
+
+const SAFE_SRC = code => BASE(`<script type='module'>
+import "./js/canvas-polyfill.js";
+function run(canvas) {
 ${code}
+}
+run(document.getElementById("c"));
+</script>`);
+
+const WORKER_SRC = code => BASE(`<script type='worker-module'>
+function run(canvas) {
+${code}
+}
+
+self.addEventListener('message', ev => {
+  run(ev.data);
+});
 </script>
-</body></html>`;
+
+ <script type='module'>
+const script = document.querySelector('[type="worker-module"]').textContent;
+const blob = new Blob([script], {type: 'application/javascript'});
+const worker = new Worker(URL.createObjectURL(blob));
+
+const ofc = document.getElementById("c").transferControlToOffscreen();
+worker.postMessage(ofc, [ofc]);
+ </script>`);
 
 class CanvasDemo extends Tonic {
   constructor() {
@@ -52,7 +75,9 @@ class CanvasDemo extends Tonic {
   start() {
     if (!this.visible) return;
 
-    this.querySelector("iframe").srcdoc = SRC(this.code);
+    this.querySelector("iframe").srcdoc =
+      HTMLCanvasElement.prototype.transferControlToOffscreen ?
+        WORKER_SRC(this.code) : SAFE_SRC(this.code);
 
     this.lastts = -1;
     if (this.rafid) {
