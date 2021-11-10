@@ -70,42 +70,39 @@ function applyOp(state) {
   }
 
   const input = [];
+  const alives = [];
   for (const li of aside.querySelectorAll("li.alive")) {
     input.push(clearLine(li.innerHTML));
+    alives.push(li);
   }
-
 
   let pos = 0;
   let rel = 0;
   let relsub = 0;
-  let linedelta = 0;
+  const pendingAlive = [];
   for (const [op, line] of diff(input, output)) {
     if (op == "=") {
-      const o = aside.querySelectorAll(`li.alive`)[pos];
+      const o = alives[pos];
       if (high.has(pos)) {
         o.classList.remove("low");
       } else {
         o.classList.add("low");
       }
       pos++;
-      linedelta++;
       rel = relsub = 0;
-    }
-    if (op == "-") {
+    } else if (op == "-") {
       rel = 0;
-      const o = aside.querySelectorAll(`li.alive`)[pos];
+      const o = alives[pos];
       if (!o) continue;
       o.addEventListener("transitionend", () => {
         o.replaceWith();
       });
 
-      linedelta--;
       o.classList.add("dead");
       o.classList.remove("alive");
+      alives.splice(pos, 1);
       o.style.top = `${LINE_HEIGHT * relsub++}em`;
-    }
-    if (op == "+") {
-      linedelta++;
+    } else if (op == "+") {
       const o = document.createElement("li");
       o.classList.add("alive");
       o.innerHTML = output[line];
@@ -116,16 +113,23 @@ function applyOp(state) {
       }
       o.classList.add("born");
       o.style.top = `${LINE_HEIGHT * (rel++ - 1)}em`;
-      aside.insertBefore(o, aside.querySelectorAll(`li.alive`)[pos]);
-      o.getBoundingClientRect();
-      o.classList.remove("born");
-      o.style.top = `0px`;
+      aside.insertBefore(o, alives[pos]);
+      alives.splice(pos, 0, o);
+      pendingAlive.push(o);
       relsub = 0;
       pos++;
     }
   }
 
-  aside.style.height = `${aside.querySelectorAll('li.alive').length * LINE_HEIGHT}em`;
+  if (pendingAlive.length > 0) {
+    pendingAlive[0].getBoundingClientRect();
+    for (const o of pendingAlive) {
+      o.classList.remove("born");
+      o.style.top = `0px`;
+    }
+  }
+  const h = Math.ceil(aside.querySelectorAll('li.alive').length * LINE_HEIGHT);
+  aside.style.height = `${h}em`;
 }
 
 function calcOp(state, op, code) {
@@ -162,10 +166,12 @@ function calcOp(state, op, code) {
 }
 
 function intersect(entries) {
+  // const begin = performance.now();
   for (const e of entries) {
     if (!e.isIntersecting) continue;
     applyOp(JSON.parse(e.target.getAttribute('bkc-state')));
   }
+  // console.log("apply:", (performance.now() - begin));
 }
 
 function resizeRulers() {

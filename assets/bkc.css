@@ -282,11 +282,13 @@ aside ol {
   counter-reset: code-line;
   list-style: none;
   width: 84ch;
-  padding: 50px 0;
+  padding: 25px 0;
   margin: auto;
+  top: 0;
   height: 0;
-  transition: height 0.5s;
+  transition: height 0.5s, top 0.5s;
   display: block;
+  position: relative;
 }
 
 aside li {
@@ -314,6 +316,10 @@ aside li.dead {
   transform: translate(-100%, 0);
   opacity: 0;
   height: 0;
+}
+
+aside li.dead:before {
+  counter-increment: none;
 }
 
 aside li.born {
