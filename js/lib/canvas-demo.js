@@ -9,21 +9,8 @@ class CanvasDemo extends Tonic {
     this.code = "";
   }
 
-  connected() {
-    // this.updated();
-  }
-
-  #setContent(html='') {
-    if (!this.visible) return;
-    const iframe = this.querySelector("iframe");
-    if (!html.length) {
-      iframe.contentWindow.location.reload();
-    } else {
-      iframe.srcdoc = html;
-    }
-  }
-
   updated() {
+    // IO to only start the iframe when we are in the middle of the screen.
     if (!this.io) {
       this.io = new IntersectionObserver(en => this.intersect(en), {
         rootMargin: '-50% 0% -50% 0%',
@@ -34,16 +21,18 @@ class CanvasDemo extends Tonic {
 
     if (!this.visible) return;
 
+    // When pressing on reload, we simply rebuild the internal DOM, which
+    // will create a new iframe and restart the code.
     this.querySelector('#r').addEventListener('click', ev => {
       this.reRender();
     });
-    if (this.visible) {
-      this.start();
-    }
+    this.start();
   }
 
+  // start loads the iframe code and starts the FPS counter.
   start() {
-    this.#setContent(`
+    if (!this.visible) return;
+    this.querySelector("iframe").srcdoc = `
       <!doctype html>
       <html><head>
       <meta http-equiv="origin-trial" content="AhLQm4ICiudjd0hChY39JD0RgNfBTsrra93PD/2pTGC05WgqUq//jwCDNVDQo0KVAPPjF/xi+IX4xeP8pn+bdA8AAABUeyJvcmlnaW4iOiJodHRwczovL2NhbnZhcy5yb2Nrczo0NDMiLCJmZWF0dXJlIjoiTmV3Q2FudmFzMkRBUEkiLCJleHBpcnkiOjE2NDU1NzQzOTl9">
@@ -58,7 +47,7 @@ class CanvasDemo extends Tonic {
       const canvas = document.querySelector("canvas");
       ${this.code}
       </script>
-      </body></html>`);
+      </body></html>`;
     this.lastts = -1;
     this.buffer = [];
     if (this.rafid) {
@@ -72,12 +61,9 @@ class CanvasDemo extends Tonic {
     if (nv == this.visible) return;
     this.visible = nv;
     this.reRender();
-    if (!this.visible || !this.code) {
-      this.#setContent();
-      return;
-    }
   }
 
+  // FPS counter.
   frame(t) {
     if (this.lastts == -1) {
       this.lastts = t;
@@ -137,10 +123,6 @@ iframe, #ph {
   font-size: 12px;
 }
     `;
-  }
-
-  load(ev) {
-    console.log(ev);
   }
 
   render() {
