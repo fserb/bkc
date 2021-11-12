@@ -1,7 +1,7 @@
 :root {
-  --split-size: min(max(40vw, 550px), 50vw);
+  --split-size: clamp(40vw, 550px, 50vw);
   --main-size: calc(100vw - var(--split-size));
-  --aside-font-size: calc(2 * (min(max(40vw, 550px), 50vw) - 40px) / 84);
+  --aside-font-size: calc(2 * (clamp(40vw, 550px, 50vw) - 40px) / 84);
   --arrow-size: 0.75vw;
 }
 
