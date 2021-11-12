@@ -44,7 +44,7 @@ if (site.options.dev) {
   site.options.location = new URL("https://canvas.rocks/");
 }
 
-site.ignore("_images", "_plugins", ".gitignore", ".git", "js/lib", "README.md");
+site.ignore("_images", "_plugins", "orig", ".gitignore", ".git", "js/lib", "README.md");
 
 site.copy("assets", "assets");
 site.loadAssets([".html"]);

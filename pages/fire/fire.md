@@ -20,6 +20,7 @@ effect, we are going to use `1080p`.
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
 const H = canvas.height = 1080;
+// dsfasdfasfdsafasfasfddsafasdgasdgdsfsdafasdfasdfasdfdsafsdafdsafdasfdsafadss!
 ```
 
 Create a `requestAnimationFrame` loop. The callback function will be called once

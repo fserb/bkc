@@ -74,7 +74,6 @@ class CanvasDemo extends Tonic {
   // start loads the iframe code and starts the FPS counter.
   start() {
     if (!this.visible) return;
-
     this.querySelector("iframe").srcdoc =
       HTMLCanvasElement.prototype.transferControlToOffscreen ?
         WORKER_SRC(this.code) : SAFE_SRC(this.code);

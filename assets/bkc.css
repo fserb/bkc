@@ -1,3 +1,10 @@
+:root {
+  --split-size: min(max(40vw, 550px), 50vw);
+  --main-size: calc(100vw - var(--split-size));
+  --aside-font-size: calc(2 * (min(max(40vw, 550px), 50vw) - 40px) / 84);
+  --arrow-size: 0.75vw;
+}
+
 html.nofont body {
   font-size: 16px;
   line-height: 1.75em;
@@ -144,7 +151,7 @@ h3 {
 main {
   color: #333;
   padding: 50px;
-  margin-left: 40%;
+  margin-left: var(--split-size);
 }
 
 main footer {
@@ -248,13 +255,13 @@ main .ruler:nth-of-type(even) {
 
 aside {
   position: fixed;
-  width: 40%;
+  width: var(--split-size);
   box-sizing: border-box;
   height: 100vh;
   background-color: #181923;
   color: #EEE;
   font-family: 'Inconsolata', monospace;
-  font-size: min(13px, 0.9vw);
+  font-size: var(--aside-font-size);
   line-height: 1.1em;
   white-space: pre;
   display: grid;
@@ -269,13 +276,13 @@ aside {
 aside::after {
   content: "";
   position: fixed;
-  left: 40%;
-  top: calc(50% - 12px);
+  left: var(--split-size);
+  top: calc(50% - var(--arrow-size));
   width: 0;
   height: 0;
-  border-top: 12px solid transparent;
-  border-bottom: 12px solid transparent;
-  border-left: 12px solid #181923;
+  border-top: var(--arrow-size) solid transparent;
+  border-bottom: var(--arrow-size) solid transparent;
+  border-left: var(--arrow-size) solid #181923;
 }
 
 aside ol {
@@ -341,24 +348,13 @@ aside .low {
   filter: opacity(0.5) contrast(0.5);
 }
 
-
-@media only screen and (max-width: 1100px) {
-  main {
-    margin-left: 50%;
-  }
-  aside {
-    font-size: 1.13vw;
-    width: 50%;
-  }
-  aside:after {
-    left: 50%;
-    border-top: 6px solid transparent;
-    border-bottom: 6px solid transparent;
-    border-left: 6px solid #181923;
-  }
+p.katex-block {
+  object-fit: contain;
+  width: 100%;
+  font-size: min(16px, max(11px, 1.4vw));
 }
 
-@media only screen and (max-width: 800px) {
+@media only screen and (max-width: 860px) {
   main {
     margin: 0 auto;
     max-width: 600px;
@@ -368,6 +364,9 @@ aside .low {
   }
   aside {
     display: none;
+  }
+  p.katex-block {
+    font-size: 16px;
   }
 }
 
