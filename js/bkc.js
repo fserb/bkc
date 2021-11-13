@@ -1,6 +1,7 @@
 // bkc.js
 
 import "./lib/canvas-demo.js";
+import "./lib/color-show.js";
 
 function diff(a, b) {
   const frontier = {1: [0, []]};
