@@ -228,27 +228,35 @@ function setup() {
     }
 
     if (el.tagName != "CODE") continue;
-    state = calcOp(state, el.getAttribute('op') ?? "", el.innerHTML);
+    const op = el.getAttribute('op') ?? "";
+    state = calcOp(state, op, el.innerHTML);
 
     const spawn = Number.parseInt(el.getAttribute('spawn') ?? 1);
 
     let touse = el.innerHTML;
     if (touse.length == 0) touse = state.code.join("\n");
     const out = touse.split("\n");
-    el.innerHTML = "";
 
+    let firstLine = op == "" ? 0 : state.highlight[0];
+
+    // clean up empty lines at the beginning and end.
     while (out.length > 0 && out[0].length == 0) {
       out.shift();
+      firstLine++;
     }
     while (out.length > 0 && out[out.length - 1].length == 0) {
       out.pop();
     }
 
+    console.log(firstLine);
+
+    el.innerHTML = "";
     for (const l of out) {
       const o = document.createElement("li");
       o.innerHTML = l;
       el.appendChild(o);
     }
+    el.firstElementChild.style.counterSet = `code-line ${firstLine}`;
 
     let target = el.parentNode;
     for (let i = 0; i < spawn; ++i) {

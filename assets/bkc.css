@@ -209,7 +209,7 @@ main pre {
   display: none;
   background-color: #181923;
   color: #EEE;
-  font-size: calc(2 * (min(100vw, 60ch) - 100px) / 67);
+  font-size: calc(2 * (min(100vw, 63ch) - 2ch) / 84);
   padding: 2em 1ch;
   line-height: 1.25em;
   white-space: pre;
