@@ -248,8 +248,6 @@ function setup() {
       out.pop();
     }
 
-    console.log(firstLine);
-
     el.innerHTML = "";
     for (const l of out) {
       const o = document.createElement("li");
