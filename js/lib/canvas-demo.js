@@ -10,16 +10,47 @@ NzQzOTl9">
 html, body { background-color: #222; margin: 0; width: 100%; height: 100% }
 #c { display: block; width: 100%; height: 100%; object-fit: contain; }
 </style>
+<script>
+function sendFPS(fps) {
+  window.frameElement.updateFPS(fps);
+}
+</script>
 </head><body>
 <canvas id=c></canvas>
 ${content}
 </body></html>`
+
+const FPS = `
+const buffer = [];
+let last = -1;
+function frame(t) {
+  if (last == -1) {
+    last = t;
+    requestAnimationFrame(frame);
+    return;
+  }
+  const dt = (t - last) / 1000;
+  last = t;
+  buffer.push(dt);
+  while (buffer.length > 30) buffer.shift();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+setInterval(() => {
+  let s = 0;
+  for (const v of buffer) s += v;
+  s /= buffer.length;
+  sendFPS(Math.round(1 / s));
+}, 1000);
+`;
 
 const SAFE_SRC = code => BASE(`<script type='module'>
 import "./js/canvas-polyfill.js";
 function run(canvas) {
 ${code}
 }
+${FPS}
 run(document.getElementById("c"));
 </script>`);
 
@@ -31,6 +62,10 @@ ${code}
 self.addEventListener('message', ev => {
   run(ev.data);
 });
+function sendFPS(fps) {
+  self.postMessage(fps);
+}
+${FPS}
 </script>
 
  <script type='module'>
@@ -39,6 +74,9 @@ const blob = new Blob([script], {type: 'application/javascript'});
 const worker = new Worker(URL.createObjectURL(blob));
 
 const ofc = document.getElementById("c").transferControlToOffscreen();
+worker.addEventListener("message", ev => {
+  sendFPS(ev.data);
+});
 worker.postMessage(ofc, [ofc]);
  </script>`);
 
@@ -49,6 +87,11 @@ class CanvasDemo extends Tonic {
     this.io = null;
     this.rafid = 0;
     this.code = "";
+  }
+
+  updateFPS(fps) {
+    if (!this.visible) return;
+    this.querySelector('#f').innerText = `${fps} fps`;
   }
 
   updated() {
@@ -62,6 +105,8 @@ class CanvasDemo extends Tonic {
     this.io.observe(this);
 
     if (!this.visible) return;
+
+    this.querySelector('iframe').updateFPS = this.updateFPS.bind(this);
 
     // When pressing on reload, we simply rebuild the internal DOM, which
     // will create a new iframe and restart the code.
@@ -109,14 +154,6 @@ class CanvasDemo extends Tonic {
     let s = 0;
     for (const v of this.buffer) s += v;
     s /= this.buffer.length;
-
-    if (this.visible) {
-      this.querySelector('#f').innerText = `${Math.round(1 / s)} fps`;
-      this.rafid = requestAnimationFrame(t => this.frame(t));
-    } else {
-      cancelAnimationFrame(this.rafid);
-      this.rafid = 0;
-    }
   }
 
   stylesheet() {
@@ -149,6 +186,7 @@ iframe, #ph {
 #r:hover { opacity: 1.0; }
 #f {
   opacity: 0.5;
+  line-height: 24px;
   float: left;
   font-size: 12px;
 }
