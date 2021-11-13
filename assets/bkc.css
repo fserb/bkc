@@ -1,12 +1,19 @@
 :root {
+  /* main doc font size */
+  --font-size: max(16px, 0.9vw);
+  /* size of the aside panel */
   --split-size: clamp(40vw, 550px, 50vw);
-  --main-size: calc(100vw - var(--split-size));
-  --aside-font-size: calc(2 * (clamp(40vw, 550px, 50vw) - 40px) / 84);
+  /* size of the aside PRE font */
+  --aside-font-size: min(20px, calc(2 * (clamp(40vw, 550px, 50vw) - 40px) / 84));
+  /* size of the aside arrow */
   --arrow-size: 0.75vw;
+
+  /* auto: remaining size of the page */
+  --main-size: calc(100vw - var(--split-size));
 }
 
 html.nofont body {
-  font-size: 16px;
+  font-size: var(--font-size);
   line-height: 1.75em;
   letter-spacing: 0.4px;
   word-spacing: -0.05px;
@@ -23,33 +30,33 @@ html.nofont h5, html.nofont h6 {
   word-spacing: 6.26px;
 }
 
-html.nofont h1 { font-size: 25px; }
-html.nofont h2 { font-size: 60px; margin: 1.6em 0 0 0; }
-html.nofont h3 { font-size: 35px; margin: 1.6em 0 0.8em 0; }
+html.nofont h1 { font-size: 1.5625em; }
+html.nofont h2 { font-size: 3.75em; margin: 1.6em 0 0 0; }
+html.nofont h3 { font-size: 2.1875em; margin: 1.6em 0 0.8em 0; }
 
-html.nofont #home h1 { font-size: 52.5px; }
+html.nofont #home h1 { font-size: 3.28125em; }
 
 html.nofont #home .entry {
   font-family: arial;
   font-weight: 400;
-  font-size: 20px;
+  font-size: 1.25em;
   line-height: 1.4em;
-  letter-spacing: 0.19px;
-  word-spacing: 3.24px;
+  letter-spacing: 0.0095em;
+  word-spacing: 0.162em;
 }
 
 html.nofont main code {
   font-family: courier;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 0.8125em;
   line-height: 1.6em;
-  letter-spacing: 0.15px;
-  word-spacing: 0.35px;
+  letter-spacing: 0.01153846em;
+  word-spacing: 0.02692308em;
 }
 
 
 html.nofont main pre code, html.nofont aside {
-  font-size: max(8.45px, min(11px, 1.52vw));
+  font-size: clamp(0.528125em, 1.52vw, 0.6875em);
   font-weight: 600;
   font-family: courier;
   line-height: 1.5em;
@@ -60,7 +67,7 @@ html.nofont main pre code, html.nofont aside {
 body {
   margin: 0;
   font-family: 'Open Sans', sans-serif;
-  font-size: 16px;
+  font-size: var(--font-size);
   font-weight: 400;
   line-height: 1.75em;
   background-color: #F4EFE7;
@@ -95,7 +102,6 @@ h3 {
 .author {
   text-align: right;
   line-height: 1.25em;
-  max-width: 600px;
   margin-bottom: 4em;
 }
 
@@ -107,7 +113,7 @@ h3 {
 }
 
 #home h1 {
-  font-size: 42px;
+  font-size: 2.625em;
 }
 
 #home #display {
@@ -149,15 +155,15 @@ h3 {
 }
 
 main {
+  max-width: 63ch;
   color: #333;
-  padding: 50px;
+  padding: 3.125em;
   margin-left: var(--split-size);
 }
 
 main footer {
   margin: 50vh 0 1em 0;
-  max-width: 600px;
-  font-size: 12px;
+  font-size: 0.75em;
   text-align: right;
 }
 
@@ -165,16 +171,12 @@ main footer span {
   display: block;
   text-align: center;
   font-family: 'Rock Salt', cursive;
-  font-size: 22px;
+  font-size: 1.375em;
 }
 
 #home footer img, main footer img {
   display: inline-block;
   vertical-align: baseline;
-}
-
-main p {
-  max-width: 600px;
 }
 
 a {
@@ -193,20 +195,21 @@ main code, main pre {
   color: #000;
 }
 
-main code {
+main p code {
   font-weight: 600;
+  color: #000;
+  white-space: nowrap;
 }
 
 main pre {
-  max-width: 600px;
   width: 100%;
   overflow-x: auto;
   box-sizing: border-box;
   display: none;
   background-color: #181923;
   color: #EEE;
-  font-size: max(10px, min(13px, 1.8vw));
-  padding: 2em 2ch;
+  font-size: calc(2 * (min(100vw, 60ch) - 100px) / 67);
+  padding: 2em 1ch;
   line-height: 1.25em;
   white-space: pre;
   counter-reset: code-line;
@@ -246,7 +249,6 @@ main .ruler {
 
 canvas-demo {
   display: block;
-  max-width: 600px;
 }
 
 main .ruler:nth-of-type(even) {
@@ -351,22 +353,18 @@ aside .low {
 p.katex-block {
   object-fit: contain;
   width: 100%;
-  font-size: min(16px, max(11px, 1.4vw));
+  font-size: clamp(0.68em, 1.4vw, 1em);
 }
 
 @media only screen and (max-width: 860px) {
   main {
     margin: 0 auto;
-    max-width: 600px;
   }
   main pre {
     display: block;
   }
   aside {
     display: none;
-  }
-  p.katex-block {
-    font-size: 16px;
   }
 }
 
@@ -375,9 +373,8 @@ p.katex-block {
   background-color: #F4D4CD;
   border: 1px solid #C90000;
   padding: 1.2em 1.2em;
-  max-width: 600px;
   box-sizing: border-box;
-  font-size: 12px;
+  font-size: 0.75em;
   line-height: 1.2em;
   color: #200;
   margin-bottom: 50px;

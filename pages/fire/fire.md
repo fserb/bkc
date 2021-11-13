@@ -236,7 +236,7 @@ where $r_0g_0b_0a_0$ is the original color and $r_1g_1b_1a_1$ is the final
 transformed color, all in the range $[0, 1]$ (instead of the more usual CSS
 representation of $[0, 255]$).
 
-For our purposes, we only need to focus on two things: the diagonal ($m_
+For our purposes, we only need to focus on two aspects of it: the matrix diagonal ($m_
 {rr} \space m_{gg} \space m_{bb}$) will multiply each color component, while
 the right column ($m_{pr} \space m_{pg} \space m_{pb}$) will add a constant to
 each component.
@@ -260,5 +260,5 @@ up as $1$. This will fix the bluriness and make the fire pop out.
 ```
 @[canvas-demo]
 
-And here it is. The final fire effect with filters. You can see it [here in a standalone page with all the source code]({{relativePath}}/effect.html).
+And here it is. The final fire effect with filters. You can also see it [here in a standalone page with all the source code]({{relativePath}}/effect.html).
 
