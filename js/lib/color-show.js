@@ -19,9 +19,6 @@ class ColorShow extends Tonic {
 
     s.classList.add('grad');
     s.style.backgroundImage = `linear-gradient(to right, ${this.props.grad})`;
-
-
-    console.log(this.props);
   }
 
   stylesheet() {
