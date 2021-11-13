@@ -104,10 +104,11 @@ source of the fire), and it goes up still a bit concentrated in the middle.
 
 Let's add some fire color to it. We should vary the color from red <color-show
 color='red'></color-show> `rgb(255, 0, 0)` to some tone of bright yellow
-<color-show color='#FFF3A2'></color-show>. This will give us a nice fire-like
-gradient <color-show grad='red,#FFF3A2'></color-show>.
+<color-show color='#FFF3A2'></color-show> `rgb(255, 243, 162)`. This will give
+us a nice fire-like gradient <color-show grad='red,#FFF3A2'></color-show>. We can achieve this by varying the green channel slowly (to go from yellow to red) and the blue channel very
+fast (to go from white to colorful).
 
-We can also use the opportunity to make the yellow tones farther away, which will
+We can also use the opportunity to make the white/yellow tones farther away, which will
 add to the effect, as "bright red" flames will appear closer. We can do both
 those things by parametrizing the color with the index.
 
