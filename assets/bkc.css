@@ -157,12 +157,12 @@ h3 {
 main {
   max-width: 63ch;
   color: #333;
-  padding: 3.125em;
+  padding: 3.125em 3.125em 1em 3.125em;
   margin-left: var(--split-size);
 }
 
 main footer {
-  margin: 50vh 0 1em 0;
+  margin: 50vh 0 0 0;
   font-size: 0.75em;
   text-align: right;
 }
@@ -172,6 +172,7 @@ main footer span {
   text-align: center;
   font-family: 'Rock Salt', cursive;
   font-size: 1.375em;
+  margin-bottom: 3.125em;
 }
 
 #home footer img, main footer img {
@@ -382,6 +383,12 @@ p.katex-block {
 
 #polyfillWarning p {
   margin: 0;
+}
+
+.github {
+  width: 1em;
+  height: 1em;
+  vertical-align: baseline;
 }
 
 
