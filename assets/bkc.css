@@ -12,6 +12,18 @@
   --main-size: calc(100vw - var(--split-size));
 }
 
+
+#switch {
+  position:fixed;
+  background-color:green;
+  padding: 2px 10px;
+  cursor: pointer;
+  user-select: none;
+}
+html.nofont #switch {
+  background-color:red;
+}
+
 html.nofont body {
   font-size: var(--font-size);
   line-height: 1.75em;
@@ -50,16 +62,22 @@ html.nofont main code {
   font-size: 0.8125em;
   line-height: 1.6em;
   letter-spacing: 0.01153846em;
-  word-spacing: 0.02692308em;
 }
 
 
 html.nofont main pre code, html.nofont aside {
-  font-size: calc(2 * (min(100vw, 63ch) - 2ch) / 84);
+  font-size: calc(2.34 * (min(100vw, 63ch) - 2ch) / 84);
   font-family: courier;
   font-weight: 300;
-  letter-spacing: -0.1em;
-  word-spacing: 0;
+  line-height: 1.4625em;
+  letter-spacing: 0em;
+
+  /*letter-spacing: -0.1em;*/
+  /*word-spacing: 0;*/
+}
+
+html.nofont main pre li {
+  height: 1.4625em;
 }
 
 body {
