@@ -4,6 +4,7 @@ export default function() {
       page.document.querySelectorAll("pre code").forEach(el => {
         for (const c of el.classList) {
           if (!c.startsWith("language-")) continue;
+
           for (const cmd of c.substr(9).split(',')) {
             const s = cmd.indexOf(':');
             if (s == -1) continue;

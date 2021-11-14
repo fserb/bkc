@@ -113,7 +113,7 @@ add to the effect, as "bright red" flames will appear closer. We can do both
 those things by parametrizing the color with the index.
 
 ```op:11:1,spawn:2
-    ctx.fillStyle = `rgba(255, ${255 - i/8}, ${255 - i})`;
+    ctx.fillStyle = `rgba(255, ${255 - i / 8}, ${255 - i})`;
 ```
 
 @[canvas-demo]
@@ -167,7 +167,7 @@ function frame(t) {
   octx.fillRect(0, 0, W, H);
 
   for (let i = 0; i < 2000; ++i) {
-    octx.fillStyle = `rgba(255, ${255 - i/8}, ${255 - i})`;
+    octx.fillStyle = `rgba(255, ${255 - i / 8}, ${255 - i})`;
     octx.fillRect(
       960 + Math.sin(i / 8) * i / 2,
       1030 - i * Math.tan(i ** 4 + t / 1000),

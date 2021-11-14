@@ -38,10 +38,10 @@ export default function (options) {
       });
 
       for (const e of errors) {
-        console.error(e);
+        console.warning("esbuild error", e);
       }
       for (const e of warnings) {
-        console.warning(e);
+        console.warning("esbuild warning", e);
       }
 
       page.content = outputFiles[0].contents;

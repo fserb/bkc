@@ -2,7 +2,7 @@
 layout: effect
 title: Fire Filter
 ---
-<script>
+<script type="module">
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
@@ -17,7 +17,7 @@ function frame(t) {
   octx.fillRect(0, 0, W, H);
 
   for (let i = 0; i < 2000; ++i) {
-    octx.fillStyle = `rgba(255, ${255 - i/8}, ${255 - i})`;
+    octx.fillStyle = `rgba(255, ${255 - i / 8}, ${255 - i})`;
     octx.fillRect(
       960 + Math.sin(i / 8) * (i) / 2,
       1030 - i * Math.tan(i ** 4 + t / 1000),

@@ -2,7 +2,6 @@
 import lume from "lume/mod.ts";
 import date from "lume/plugins/date.ts";
 import slugifyUrls from "lume/plugins/slugify_urls.ts";
-import codeHighlight from "lume/plugins/code_highlight.ts";
 import binaryLoader from "lume/core/loaders/binary.ts";
 
 import markdownItKatex from
@@ -10,7 +9,9 @@ import markdownItKatex from
 
 import basic from "./_plugins/basic.js";
 import esbuild from "./_plugins/esbuild.js";
+import prism from "./_plugins/prism.js";
 import forceJs from "./_plugins/force_js.js";
+
 import markdownItComponent from
   "./_plugins/markdown-it-component.js";
 
@@ -44,19 +45,20 @@ if (site.options.dev) {
   site.options.location = new URL("https://canvas.rocks/");
 }
 
-site.ignore("_images", "_plugins", "orig", ".gitignore", ".git", "js/lib", "README.md");
+site.ignore("_images", "_plugins", "orig", "3rdp", ".gitignore", ".git",
+  "js/lib", "README.md");
 
 site.copy("assets", "assets");
 site.loadAssets([".html"]);
 site.loadAssets([".png"], binaryLoader);
 
-// register `date` plugin.
+// register `date` primitive on NJK.
 site.use(date());
-// clean up URLS to ASCII.
+// clean up URLS to ASCII only.
 site.use(slugifyUrls());
 
 site.use(forceJs());
-site.use(codeHighlight());
+site.use(prism());
 
 site.use(basic());
 site.use(esbuild());
