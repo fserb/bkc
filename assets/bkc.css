@@ -15,24 +15,23 @@
 html.nofont body {
   font-size: var(--font-size);
   line-height: 1.75em;
-  letter-spacing: 0.4px;
-  word-spacing: -0.05px;
-  font-weight: 400;
+  letter-spacing: 0.011em;
+  word-spacing: 0;
   font-family: arial;
 }
 
 html.nofont h1, html.nofont h2, html.nofont h3, html.nofont h4,
 html.nofont h5, html.nofont h6 {
   font-family: arial;
-  font-weight: 600;
-  line-height: 1em;
-  letter-spacing: -0.36px;
-  word-spacing: 6.26px;
+  font-weight: 500;
+  line-height: 0.94em;
+  letter-spacing: 0em;
+  word-spacing: 0.25em;
 }
 
-html.nofont h1 { font-size: 1.5625em; }
-html.nofont h2 { font-size: 3.75em; margin: 1.6em 0 0 0; }
-html.nofont h3 { font-size: 2.1875em; margin: 1.6em 0 0.8em 0; }
+html.nofont h1 { font-size: calc(var(--font-size) * 1.25 * 1.3125); }
+html.nofont h2 { font-size: calc(var(--font-size) * 3 * 1.3125); margin: 1.524em 0 0 0; }
+html.nofont h3 { font-size: calc(var(--font-size) * 1.75 * 1.3125); margin: 1.524em 0 0.762em 0; }
 
 html.nofont #home h1 { font-size: 3.28125em; }
 
@@ -56,12 +55,11 @@ html.nofont main code {
 
 
 html.nofont main pre code, html.nofont aside {
-  font-size: clamp(0.528125em, 1.52vw, 0.6875em);
-  font-weight: 600;
+  font-size: calc(2 * (min(100vw, 63ch) - 2ch) / 84);
   font-family: courier;
-  line-height: 1.5em;
-  letter-spacing: -0.0136em;
-  word-spacing: 0.02727em;
+  font-weight: 300;
+  letter-spacing: -0.1em;
+  word-spacing: 0;
 }
 
 body {
@@ -232,8 +230,6 @@ main pre li:before {
   display: inline-block;
   text-align: right;
   margin-right: 1ch;
-  transition: all 0s ease-in-out 0.5s;
-  opacity: 1.0;
 }
 
 
