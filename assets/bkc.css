@@ -335,6 +335,10 @@ aside li.born:before {
   opacity: 0.0;
 }
 
+aside li.hidden {
+  display: none;
+}
+
 aside *::selection {
   color: #959DCB !important;
   background-color: #343851 !important;

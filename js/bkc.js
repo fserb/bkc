@@ -23,14 +23,6 @@ function applyOp(state) {
   const high = new Set(state.highlight);
   const output = clearLine(state.code.join("\n")).split("\n");
 
-  // drop empty lines at the beginning/end.
-  // while (output.length > 0 && output[0].length == 0) {
-  //   output.shift();
-  // }
-  // while (output.length > 0 && output[output.length - 1].length == 0) {
-  //   output.pop();
-  // }
-
   const input = [];
   const alives = [];
   for (const li of aside.querySelectorAll("li.alive")) {
@@ -38,21 +30,17 @@ function applyOp(state) {
     alives.push(li);
   }
 
+  // if (state.lens) {
+  //   output.splice(0, state.lens[0] - 1);
+  //   output.splice(state.lens[1]);
+  // }
+
   let pos = 0;
   let rel = 0;
   let relsub = 0;
   const pendingAlive = [];
   for (const [op, line] of diff(input, output)) {
-    if (op == "=") {
-      const o = alives[pos];
-      if (high.has(pos)) {
-        o.classList.remove("low");
-      } else {
-        o.classList.add("low");
-      }
-      pos++;
-      rel = relsub = 0;
-    } else if (op == "-") {
+    if (op == "-") {
       rel = 0;
       const o = alives[pos];
       if (!o) continue;
@@ -64,6 +52,15 @@ function applyOp(state) {
       o.classList.remove("alive");
       alives.splice(pos, 1);
       o.style.top = `${LINE_HEIGHT * relsub++}em`;
+    } else if (op == "=") {
+      const o = alives[pos];
+      if (high.has(pos)) {
+        o.classList.remove("low");
+      } else {
+        o.classList.add("low");
+      }
+      pos++;
+      rel = relsub = 0;
     } else if (op == "+") {
       const o = document.createElement("li");
       o.classList.add("alive");
@@ -90,7 +87,21 @@ function applyOp(state) {
       o.style.top = `0px`;
     }
   }
-  const h = Math.ceil(aside.querySelectorAll('li.alive').length * LINE_HEIGHT);
+
+  let cnt = 0;
+  for (let i = 0; i < alives.length; ++i) {
+    if (state.lens && (i < state.lens[0] - 1 || i >= state.lens[0] + state.lens[1])) {
+      alives[i].classList.add("hidden");
+    } else {
+      alives[i].classList.remove("hidden");
+      if (cnt == 0) {
+        alives[i].style.counterSet = `code-line ${i}`;
+      }
+      cnt++;
+    }
+  }
+
+  const h = Math.ceil(cnt * LINE_HEIGHT);
   aside.style.height = `${h}em`;
 }
 
@@ -101,13 +112,16 @@ function intersect(entries) {
   }
 }
 
-function place(input, state) {
-  console.log(input, state.labels);
+function place(input, state, rel) {
   const int = Number.parseInt(input);
-  if (Number.isFinite(int)) return int;
-  const p = /(?<name>[^+]+)(\+(?<delta>\d+))?/.exec(input).groups;
+  if (Number.isFinite(int)) {
+    if (input[0] == '+' || input[1] == '-') {
+      return rel + int;
+    }
+    return int;
+  }
+  const p = /(?<name>[^+]+)(?<delta>[\+\-]\d+)?/.exec(input).groups;
   let delta = Number.parseInt(p.delta ?? 0);
-  console.log("RES", state.labels[p.name][0] + delta);
   return state.labels[p.name][0] + delta;
 }
 
@@ -126,7 +140,7 @@ function buildState(state, code, opts) {
     const ed = lines;
     lines = [...old];
     const s = op.split(':');
-    const start = place(s[0], state) - 1;
+    const start = place(s[0], state, lines.length) - 1;
     const length = s.length >= 2 ? Number.parseInt(s[1]) : 0;
     lines.splice(start, length, ...ed);
     topline = start;
@@ -134,16 +148,21 @@ function buildState(state, code, opts) {
 
   // generate new label.
   const labels = {};
+  const range = [topline, addedlines];
   if (opts.label) {
     // label:name+<start>+<length>
-    const order = /(?<name>[^+]+)(\+(?<delta>\d+)(\+(?<len>\d+))?)?/
+    const order = /(?<name>[^+]+)(\+(?<delta>\d+)(,(?<len>\d+))?)?/
       .exec(opts.label).groups;
 
-    const delta = Number.parseInt(order.delta ?? 0);
-    let start = topline + delta;
-    let length = Number.parseInt(order.end ?? addedlines - delta);
-
-    labels[order.name] = [start, length];
+    if (order.delta) {
+      const delta = Number.parseInt(order.delta);
+      range[0] += delta;
+      range[1] -= delta;
+    }
+    if (order.end) {
+      range[1] = Number.parseInt(order.end);
+    }
+    labels[order.name] = range;
   }
 
   // propagate older labels.
@@ -156,6 +175,27 @@ function buildState(state, code, opts) {
     }
 
     labels[k] = [start, len];
+  }
+
+  // calculate lens.
+  let lens = state.lens;
+  if (opts.lens) {
+    if (opts.lens == "") {
+      lens = null;
+    } else if (opts.lens.startsWith("this")) {
+      const p = /this(?<delta>[\+\-]\d+)?/.exec(opts.lens).groups;
+      let delta = Number.parseInt(p.delta ?? 0);
+      lens = [range[0] + delta, range[1] - delta];
+    } else if (opts.lens != "") {
+      const t = labels[opts.lens];
+      lens = [t[0], t[1]];
+    }
+  } else if (lens) {
+    if (lens[0] > topline) {
+      lens[0] += addedlines;
+    } else if (topline >= lens[0] && topline < lens[0] + lens[1]) {
+      lens[1] += addedlines;
+    }
   }
 
   // calculate highlighted area.
@@ -174,7 +214,7 @@ function buildState(state, code, opts) {
     }
   }
 
-  return {code: lines, highlight, labels};
+  return {code: lines, highlight, labels, lens};
 }
 
 function resizeRulers() {
@@ -216,7 +256,7 @@ function setup() {
     rootMargin: '-50% 0% -50% 0%',
   });
 
-  let state = {code: [], highlight: [], labels: {}};
+  let state = {code: [], highlight: [], labels: {}, lens: null};
 
   main.insertBefore(createRuler(io, state), main.firstElementChild);
 

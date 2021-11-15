@@ -117,7 +117,8 @@ Math.SQRT3 = Math.sqrt(3);
 
 ```
 
-It will be convenient to have a `clamp` function.
+It will be convenient to have a simple `clamp` function that limits an input `x`
+to stay inside the `[lower, upper]` range.
 
 ```op:+
 
@@ -138,11 +139,11 @@ function rgb(r, g, b) {
 ```
 
 Finally, we will need a method to filter an `Array` in place. The algorithm is:
-keep a index `j` that is the position after the last valid element. When we
-find a valid element, we copy it the `j`position and increment `j`. In the end,
+keep a index `j` of the position after the last valid element. When we find a
+valid element, we copy it to the `j`th position and increment `j`. In the end,
 resize the array to only contain `j` elements.
 
-```op:+,label:infilter+1
+```op:+,lens:this+1
 
 function infilter(arr, cond) {
   let j = 0;
@@ -159,21 +160,19 @@ function infilter(arr, cond) {
 
 #### Boilerplate
 
-We will do our [usual boilerplate](fire), where we assume there's a `canvas` variable pointing to a valid canvas and.
+We will do our [usual boilerplate](fire), where we assume there's a `canvas`
+variable pointing to a valid canvas and initialize it to `1080p`.
 
-```op:+
+```op:+,label:raf+1,lens:this
 
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
 const H = canvas.height = 1080;
 
 function frame(ts) {
-
   requestAnimationFrame(frame);
 }
 frame(0);
 ```
 
-```op:infilter+1
-  // ADDED!
-```
+
