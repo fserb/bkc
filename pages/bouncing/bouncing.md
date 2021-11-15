@@ -4,7 +4,9 @@ layout: article
 draft: true
 ---
 
-This crystal effect with particles is inspired by [pixel's bouncing demo](https://github.com/faiface/pixel-examples/tree/master/community/bouncing) and it's actually pretty simple.
+This crystal effect with particles is inspired by
+[pixel's bouncing demo](https://github.com/faiface/pixel-examples/tree/master/community/bouncing)
+and it's actually pretty simple.
 
 The mechanics of this effect are based on bouncing balls. The trick is that we
 are going to calculate the physics of balls, but we are not going to render
@@ -20,7 +22,7 @@ allows to match colors two-by-two instead of having a fully consistent
 palette.
 
 
-### as good as your tool
+### as good as your tools
 
 Before we start, let's spend some time writing support functions, mostly for
 `Math` and `Array`.
@@ -56,35 +58,36 @@ Z_0 = x = R\cos(\Theta) && Z_1 = y = R\sin(\Theta)
 \end{aligned}
 $$
 
-where $Z_0$ and $Z_1$ are our independent normal distribution that we are
-using as $(x, y)$ coordinates. We can then build:
+where $Z_0$ and $Z_1$ are independent normal distribution that we are using as $
+(x, y)$ coordinates. We can then build:
 
 $$
 \begin{aligned}
-R^2&= -2 \ln U_1 \\
+R^2&= -2 \ln(U_1) \\
 \Theta&= 2\pi U_2
 \end{aligned}
 $$
 
-where $U_1$ and $U_2$ will be uniformly distributed variables. Proving this will
-be even more beyond the scope here, so I'll skip.
+where $U_1$ and $U_2$ will be uniformly distributed variables. Proving this
+would be even more beyond the scope here. But let's take this as is.
 
 The importance of the transform for us is that it must also works in reverse:
-given two uniform distributions of $U_1$ and $U_2$ we can grab two normal
+given two uniform distributions of $U_1$ and $U_2$, we can grab two normal
 distributions for $Z_0$ and $Z_1$. Mind. Blown:
 
 $$
 \begin{aligned}
-&Z_0 = \sqrt{-2\ln U_1}\cos(2\pi U_2) \\
-&Z_1 = \sqrt{-2\ln U_1}\sin(2\pi U_2)
+&Z_0 = \sqrt{-2\ln(U_1)}\cos(2\pi U_2) \\
+&Z_1 = \sqrt{-2\ln(U_1)}\sin(2\pi U_2)
 \end{aligned}
 $$
 
 One thing we must be careful of is that the point $(0, 0)$ doesn't really have
 an angle. As a convention, people use $\Theta = 0$, but that won't work for us,
-so we need to change our uniform distribution to not include the zero.
+as $\ln(0)$ is undefined. So we change our uniform distribution to not include
+the zero.
 
-Detour gone. Back to code.
+As always, we also get to use $\tau = 2\pi$. Detour gone. Back to code.
 
 #### Back to code
 
@@ -100,14 +103,14 @@ function normal() {
 }
 ```
 
-Now we simply calculate the normal as above. Since we only care about one
-result, we will ignore the other variable.
+Now we simply calculate the normal distribution variable as described above.
+Since we only care about one result, we ignore the other variable.
 
 ```op:5
   return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(Math.TAU * v);
 ```
 
-You might have noticed the use of `Math.TAU`, which is
+We use of `Math.TAU`, which is
 [the correct circle constant](https://tauday.com/tau-manifesto) and defined as
 $\tau = 2\pi$. And since we are at it, let's add another useful constant.
 
@@ -135,7 +138,6 @@ And a convenient way to convert `RGB` values into a string, while we can't use
 function rgb(r, g, b) {
   return `rgb(${r}, ${g}, ${b})`;
 }
-
 ```
 
 Finally, we will need a method to filter an `Array` in place. The algorithm is:
@@ -175,4 +177,27 @@ function frame(ts) {
 frame(0);
 ```
 
+We are going to set up our `requestAnimationFrame` with an `update` and a
+`render` function. The first one will also receive the time elapsed and total
+time. The second is supposed to do no state change. Also, remember that
+`requestAnimationFrame` returns the time in milliseconds.
+
+```op:raf+4:5,spawn:2
+let last = 0;
+function frame(ts) {
+  ts /= 1000;
+  const dt = (ts - last);
+  last = ts;
+
+  update(dt, ts);
+  render();
+
+  requestAnimationFrame(frame);
+}
+frame(0);
+```
+
+Okey. We got this.
+
+### it's balls all the way down
 

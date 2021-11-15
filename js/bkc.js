@@ -30,11 +30,6 @@ function applyOp(state) {
     alives.push(li);
   }
 
-  // if (state.lens) {
-  //   output.splice(0, state.lens[0] - 1);
-  //   output.splice(state.lens[1]);
-  // }
-
   let pos = 0;
   let rel = 0;
   let relsub = 0;
@@ -46,8 +41,7 @@ function applyOp(state) {
       if (!o) continue;
       o.addEventListener("transitionend", () => {
         o.replaceWith();
-      });
-
+      }, {once: true});
       o.classList.add("dead");
       o.classList.remove("alive");
       alives.splice(pos, 1);
@@ -80,27 +74,41 @@ function applyOp(state) {
     }
   }
 
+  // we need a re-layout before setting .born animation, so we group them
+  // into a single place.
   if (pendingAlive.length > 0) {
     pendingAlive[0].getBoundingClientRect();
     for (const o of pendingAlive) {
       o.classList.remove("born");
-      o.style.top = `0px`;
+      o.style.top = "0px";
     }
   }
 
+  // remove all lines that are not supposed to be in the current view.
   let cnt = 0;
+  let pass = 0;
   for (let i = 0; i < alives.length; ++i) {
-    if (state.lens && (i < state.lens[0] - 1 || i >= state.lens[0] + state.lens[1])) {
-      alives[i].classList.add("hidden");
+    if (state.lens !== null &&
+      (i < state.lens[0] - 1 || i >= state.lens[0] + state.lens[1])) {
+      if (!alives[i].classList.contains("hidden")) {
+        alives[i].classList.add("hidden");
+        alives[i].style.top = `${pass++ * LINE_HEIGHT}em`;
+        alives[i].addEventListener("transitionend", ev => {
+          ev.target.style.display = "none";
+        }, {once: true});
+      }
     } else {
-      alives[i].classList.remove("hidden");
+      if (alives[i].classList.contains("hidden")) {
+        alives[i].classList.remove("hidden");
+        alives[i].style.display = null;
+        alives[i].style.top = "0px";
+      }
       if (cnt == 0) {
         alives[i].style.counterSet = `code-line ${i}`;
       }
-      cnt++;
+      cnt++; pass++;
     }
   }
-
   const h = Math.ceil(cnt * LINE_HEIGHT);
   aside.style.height = `${h}em`;
 }
@@ -120,18 +128,17 @@ function place(input, state, rel) {
     }
     return int;
   }
-  const p = /(?<name>[^+]+)(?<delta>[\+\-]\d+)?/.exec(input).groups;
-  let delta = Number.parseInt(p.delta ?? 0);
+  const p = /(?<name>[^+]+)(?<delta>[+-]\d+)?/.exec(input).groups;
+  const delta = Number.parseInt(p.delta ?? 0);
   return state.labels[p.name][0] + delta;
 }
 
 function buildState(state, code, opts) {
-
   // apply op and generate new code.
   const op = opts.op;
   const old = state.code;
   let lines = code.split('\n').slice(0, -1);
-  let addedlines = lines.length;
+  const addedlines = lines.length;
   let topline = 1;
   if (op === "+") {
     lines = [...old, ...lines];
@@ -179,18 +186,18 @@ function buildState(state, code, opts) {
 
   // calculate lens.
   let lens = state.lens;
-  if (opts.lens) {
+  if (opts.lens !== null) {
     if (opts.lens == "") {
       lens = null;
     } else if (opts.lens.startsWith("this")) {
-      const p = /this(?<delta>[\+\-]\d+)?/.exec(opts.lens).groups;
-      let delta = Number.parseInt(p.delta ?? 0);
+      const p = /this(?<delta>[+-]\d+)?/.exec(opts.lens).groups;
+      const delta = Number.parseInt(p.delta ?? 0);
       lens = [range[0] + delta, range[1] - delta];
     } else if (opts.lens != "") {
       const t = labels[opts.lens];
       lens = [t[0], t[1]];
     }
-  } else if (lens) {
+  } else if (lens !== null) {
     if (lens[0] > topline) {
       lens[0] += addedlines;
     } else if (topline >= lens[0] && topline < lens[0] + lens[1]) {
@@ -201,10 +208,10 @@ function buildState(state, code, opts) {
   // calculate highlighted area.
   const highlight = [];
   let pos = 0;
-  for (const [op, line] of diff(old, lines)) {
-    if (op == '+') {
+  for (const [oper, _] of diff(old, lines)) {
+    if (oper == '+') {
       highlight.push(pos++);
-    } else if (op == '=') {
+    } else if (oper == '=') {
       pos++;
     }
   }
@@ -272,7 +279,7 @@ function setup() {
     if (el.tagName != "CODE") continue;
     const op = el.getAttribute('op') ?? "";
     const label = el.getAttribute('label') ?? "";
-    const lens = el.getAttribute('lens') ?? "";
+    const lens = el.getAttribute('lens') ?? null;
     state = buildState(state, el.innerHTML, {op, label, lens});
 
     const spawn = Number.parseInt(el.getAttribute('spawn') ?? 1);
@@ -298,7 +305,9 @@ function setup() {
       o.innerHTML = l;
       el.appendChild(o);
     }
-    el.firstElementChild.style.counterSet = `code-line ${firstLine}`;
+    if (el.firstElementChild) {
+      el.firstElementChild.style.counterSet = `code-line ${firstLine}`;
+    }
 
     let target = el.parentNode;
     for (let i = 0; i < spawn; ++i) {
@@ -320,5 +329,5 @@ function onReady() {
 }
 
 export default function BKC() {
-  document.addEventListener("readystatechange", onReady);
+  document.addEventListener("readystatechange", onReady, {passive: true});
 }
