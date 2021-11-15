@@ -101,6 +101,16 @@ function intersect(entries) {
   }
 }
 
+function place(input, state) {
+  console.log(input, state.labels);
+  const int = Number.parseInt(input);
+  if (Number.isFinite(int)) return int;
+  const p = /(?<name>[^+]+)(\+(?<delta>\d+))?/.exec(input).groups;
+  let delta = Number.parseInt(p.delta ?? 0);
+  console.log("RES", state.labels[p.name][0] + delta);
+  return state.labels[p.name][0] + delta;
+}
+
 function buildState(state, code, opts) {
 
   // apply op and generate new code.
@@ -116,7 +126,7 @@ function buildState(state, code, opts) {
     const ed = lines;
     lines = [...old];
     const s = op.split(':');
-    const start = Number.parseInt(s[0]) - 1;
+    const start = place(s[0], state) - 1;
     const length = s.length >= 2 ? Number.parseInt(s[1]) : 0;
     lines.splice(start, length, ...ed);
     topline = start;
