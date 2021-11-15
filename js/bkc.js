@@ -33,6 +33,8 @@ function applyOp(state) {
   let pos = 0;
   let rel = 0;
   let relsub = 0;
+  const begin = (alives.length == 0 && state.lens ? state.lens[0] : 0) + 1;
+
   const pendingAlive = [];
   for (const [op, line] of diff(input, output)) {
     if (op == "-") {
@@ -65,7 +67,7 @@ function applyOp(state) {
         o.classList.add("low");
       }
       o.classList.add("born");
-      o.style.top = `${LINE_HEIGHT * (rel++ - 1)}em`;
+      o.style.top = `${LINE_HEIGHT * (rel++ - begin)}em`;
       aside.insertBefore(o, alives[pos]);
       alives.splice(pos, 0, o);
       pendingAlive.push(o);
@@ -78,6 +80,7 @@ function applyOp(state) {
   // into a single place.
   if (pendingAlive.length > 0) {
     pendingAlive[0].getBoundingClientRect();
+
     for (const o of pendingAlive) {
       o.classList.remove("born");
       o.style.top = "0px";
@@ -329,5 +332,5 @@ function onReady() {
 }
 
 export default function BKC() {
-  document.addEventListener("readystatechange", onReady, {passive: true});
+  document.addEventListener("readystatechange", onReady);
 }
