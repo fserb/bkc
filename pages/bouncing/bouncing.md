@@ -44,11 +44,11 @@ it's not necessary for the rest of the article.
 
 #### the Box-Muller transform
 
-Image that we *have* a normal distribution availble and used that to plot points
-in a 2D graph (grabbing $x$ and $y$ from two independent normal distributions).
-If we transform those points into polar coordinates $(R, \Theta)$, then we could
-produce uniformly distributed variables based on those polar coordinates.
-Mathematically:
+Image that we *have* a normal distribution available and used that to plot
+points in a 2D graph (grabbing $x$ and $y$ from two independent normal
+distributions). If we transform those points into polar coordinates
+$(R, \Theta)$, then there's a way to produce uniformly distributed variables
+based on those polar coordinates. Mathematically:
 
 $$
 \begin{aligned}
@@ -142,7 +142,7 @@ keep a index `j` that is the position after the last valid element. When we
 find a valid element, we copy it the `j`position and increment `j`. In the end,
 resize the array to only contain `j` elements.
 
-```op:+
+```op:+,label:infilter+1
 
 function infilter(arr, cond) {
   let j = 0;
@@ -173,7 +173,4 @@ function frame(ts) {
 }
 frame(0);
 ```
-
-
-
 

@@ -17,34 +17,38 @@ export default function (options) {
       const filename = path.relative(site.src(), path.join(site.src(), name));
       console.log("📦", name);
 
-      const {outputFiles, warnings, errors} = await esbuild.build({
-        bundle: true,
-        format: 'esm',
-        minify: true,
-        keepNames: true,
-        platform: 'browser',
-        target: 'esnext',
-        banner: {
-          js: `// source code available at https://github.com/fserb/bkc
-`},
-        write: false,
-        incremental: false,
-        watch: false,
-        metafile: false,
-        sourcemap: site.options.dev ? "inline" : false,
-        treeShaking: true,
-        legalComments: 'none',
-        entryPoints: [filename],
-      });
+      try {
+        const {outputFiles, warnings, errors} = await esbuild.build({
+          bundle: true,
+          format: 'esm',
+          minify: true,
+          keepNames: true,
+          platform: 'browser',
+          target: 'esnext',
+          banner: {
+            js: `// source code available at https://github.com/fserb/bkc
+  `},
+          write: false,
+          incremental: false,
+          watch: false,
+          metafile: false,
+          sourcemap: site.options.dev ? "inline" : false,
+          treeShaking: true,
+          legalComments: 'none',
+          entryPoints: [filename],
+        });
+        for (const e of errors) {
+          console.warn("esbuild error", e);
+        }
+        for (const e of warnings) {
+          console.warn("esbuild warning", e);
+        }
 
-      for (const e of errors) {
-        console.warning("esbuild error", e);
-      }
-      for (const e of warnings) {
-        console.warning("esbuild warning", e);
-      }
+        page.content = outputFiles[0].contents;
 
-      page.content = outputFiles[0].contents;
+      } catch (e) {
+        console.warn('esbuild throw', e);
+      }
     });
   };
 }

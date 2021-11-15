@@ -1,3 +1,5 @@
+const FUNCTIONS = new Set(["op", "spawn", "label", "lens"]);
+
 export default function() {
   return site => {
     site.process([".html"], page => {
@@ -11,7 +13,7 @@ export default function() {
             const f = cmd.substr(0, s);
             const r = cmd.substr(s + 1);
 
-            if (f != "op" && f != "spawn") continue;
+            if (!FUNCTIONS.has(f)) continue;
 
             el.classList.remove(c);
             el.setAttribute(f, r);

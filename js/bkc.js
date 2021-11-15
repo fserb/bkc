@@ -24,12 +24,12 @@ function applyOp(state) {
   const output = clearLine(state.code.join("\n")).split("\n");
 
   // drop empty lines at the beginning/end.
-  while (output.length > 0 && output[0].length == 0) {
-    output.shift();
-  }
-  while (output.length > 0 && output[output.length - 1].length == 0) {
-    output.pop();
-  }
+  // while (output.length > 0 && output[0].length == 0) {
+  //   output.shift();
+  // }
+  // while (output.length > 0 && output[output.length - 1].length == 0) {
+  //   output.pop();
+  // }
 
   const input = [];
   const alives = [];
@@ -101,12 +101,17 @@ function intersect(entries) {
   }
 }
 
-function calcOp(state, op, code) {
+function buildState(state, code, opts) {
+
+  // apply op and generate new code.
+  const op = opts.op;
   const old = state.code;
   let lines = code.split('\n').slice(0, -1);
-
+  let addedlines = lines.length;
+  let topline = 1;
   if (op === "+") {
     lines = [...old, ...lines];
+    topline = old.length + 1;
   } else if (op !== "") {
     const ed = lines;
     lines = [...old];
@@ -114,8 +119,36 @@ function calcOp(state, op, code) {
     const start = Number.parseInt(s[0]) - 1;
     const length = s.length >= 2 ? Number.parseInt(s[1]) : 0;
     lines.splice(start, length, ...ed);
+    topline = start;
   }
 
+  // generate new label.
+  const labels = {};
+  if (opts.label) {
+    // label:name+<start>+<length>
+    const order = /(?<name>[^+]+)(\+(?<delta>\d+)(\+(?<len>\d+))?)?/
+      .exec(opts.label).groups;
+
+    const delta = Number.parseInt(order.delta ?? 0);
+    let start = topline + delta;
+    let length = Number.parseInt(order.end ?? addedlines - delta);
+
+    labels[order.name] = [start, length];
+  }
+
+  // propagate older labels.
+  for (const k of Object.keys(state.labels)) {
+    let [start, len] = state.labels[k];
+    if (start > topline) {
+      start += addedlines;
+    } else if (topline >= start && topline < start + len) {
+      len += addedlines;
+    }
+
+    labels[k] = [start, len];
+  }
+
+  // calculate highlighted area.
   const highlight = [];
   let pos = 0;
   for (const [op, line] of diff(old, lines)) {
@@ -131,7 +164,7 @@ function calcOp(state, op, code) {
     }
   }
 
-  return {code: lines, highlight};
+  return {code: lines, highlight, labels};
 }
 
 function resizeRulers() {
@@ -173,7 +206,7 @@ function setup() {
     rootMargin: '-50% 0% -50% 0%',
   });
 
-  let state = {code: [], highlight: []};
+  let state = {code: [], highlight: [], labels: {}};
 
   main.insertBefore(createRuler(io, state), main.firstElementChild);
 
@@ -188,7 +221,9 @@ function setup() {
 
     if (el.tagName != "CODE") continue;
     const op = el.getAttribute('op') ?? "";
-    state = calcOp(state, op, el.innerHTML);
+    const label = el.getAttribute('label') ?? "";
+    const lens = el.getAttribute('lens') ?? "";
+    state = buildState(state, el.innerHTML, {op, label, lens});
 
     const spawn = Number.parseInt(el.getAttribute('spawn') ?? 1);
 
