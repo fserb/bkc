@@ -1,0 +1,278 @@
+---
+layout: effect
+title: Bouncing Crystal
+---
+
+<script type="module">
+const canvas = document.querySelector("canvas");
+
+Math.TAU = Math.PI * 2;
+Math.SQRT3 = Math.sqrt(3);
+
+function normal() {
+  let u = 0, v = 0;
+  while(u === 0) u = Math.random();
+  while(v === 0) v = Math.random();
+  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(Math.TAU * v);
+}
+
+function clamp(x, lower, upper) {
+  return x <= lower ? lower : (x >= upper ? upper : x);
+}
+
+function rgb(r, g, b) {
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+function infilter(arr, cond) {
+  let j = 0;
+  arr.forEach((e, i) => {
+    if (cond(e)) {
+      if (i !== j) arr[j] = e;
+      j++;
+    }
+  });
+  arr.length = j;
+  return arr;
+}
+
+const ctx = canvas.getContext("2d");
+const W = canvas.width = 1920;
+const H = canvas.height = 1080;
+const BG = [16, 16, 16];
+
+const COLORS = [
+  [190, 38, 51],
+  [224, 111, 139],
+  [73, 60, 43],
+  [164, 100, 34],
+  [235, 137, 49],
+  [247, 226, 107],
+  [47, 72, 78],
+  [68, 137, 26],
+  [163, 206, 39],
+  [0, 87, 132],
+  [49, 162, 242],
+  [178, 220, 239],
+]
+let CC = Math.floor(Math.random() * COLORS.length);
+function nextColor() {
+  CC = (CC + 1) % COLORS.length;
+  return CC;
+}
+
+const diamond = {
+  control: [],
+  pulse: 1.0,
+};
+let shaking = 0.0;
+let shakemag = 1.0;
+const particles = [];
+
+for (let i = 0; i < 2; ++i) {
+  const speed = 600 + 400 * Math.random();
+  const vdir = Math.TAU * Math.random();
+  diamond.control.push({
+    pos: {x: W * Math.random(), y: H * Math.random() },
+    vel: {x: speed * Math.cos(vdir), y: speed * Math.sin(vdir)},
+    radius: 64,
+    bounced: false,
+    color: nextColor(),
+  });
+}
+
+function bounce(obj) {
+  let bounced = false;
+  if (obj.pos.y <= obj.radius || obj.pos.y >= H - obj.radius) {
+    obj.vel.y = -obj.vel.y;
+    bounced = true;
+    obj.pos.y = clamp(obj.pos.y, obj.radius, H - obj.radius);
+  }
+  if (obj.pos.x <= obj.radius || obj.pos.x >= W - obj.radius) {
+    obj.vel.x = -obj.vel.x;
+    bounced = true;
+    obj.pos.x = clamp(obj.pos.x, obj.radius, W - obj.radius);
+  }
+  return bounced;
+}
+
+function newParticle(pos, vel, color) {
+  const speed = Math.hypot(vel.x, vel.y) * (0.25 + 1.25 * Math.random());
+  const vangle = Math.TAU * Math.random();
+
+  return {
+    pos: {x: pos.x, y: pos.y },
+    vel: { x: speed * Math.cos(vangle), y: speed * Math.sin(vangle)},
+    angle: Math.TAU * Math.random(),
+    dir: 4 * normal(),
+    color: color,
+    life: Math.random() * 1,
+    radius: 0,
+  };
+}
+
+function updateParticles(dt) {
+  for (const p of particles) {
+    p.pos.x += p.vel.x * dt;
+    p.pos.y += p.vel.y * dt;
+    p.angle += p.life * p.dir * dt;
+    bounce(p);
+    p.life -= dt;
+    p.radius = 125 * p.life;
+  }
+  infilter(particles, e => e.life > 0);
+}
+
+function updateCollision(a, b) {
+  const con = { x: a.pos.x - b.pos.x, y: a.pos.y - b.pos.y};
+  const distance = Math.hypot(con.x, con.y);
+  if (distance > a.radius + b.radius) return;
+
+  if (distance > 0) {
+    con.x /= distance;
+    con.y /= distance;
+  } else {
+    con.x = 1;
+    con.y = 0;
+  }
+
+  const p = a.radius + b.radius - distance;
+  const pen = { x: con.x * p, y: con.y * p };
+
+  a.pos.x += pen.x * 0.5;
+  a.pos.y += pen.y * 0.5;
+  b.pos.x -= pen.x * 0.5;
+  b.pos.y -= pen.y * 0.5;
+
+  const velad = con.x * a.vel.x + con.y * a.vel.y;
+  const velbd = con.x * b.vel.x + con.y * b.vel.y;
+
+  const v = 2 * (velad - velbd);
+
+  a.vel.x -= con.x * v * 0.5;
+  a.vel.y -= con.y * v * 0.5;
+  b.vel.x += con.x * v * 0.5;
+  b.vel.y += con.y * v * 0.5;
+  a.bounced = true;
+  b.bounced = true;
+}
+
+function update(dt, t) {
+  diamond.pulse = Math.sin(t * 5);
+
+  for (const c of diamond.control) {
+    c.pos.x += c.vel.x * dt;
+    c.pos.y += c.vel.y * dt;
+    if (bounce(c)) {
+      c.bounced = true;
+    }
+  }
+  updateCollision(diamond.control[0], diamond.control[1]);
+
+  for (const c of diamond.control) {
+    if (!c.bounced) continue;
+    c.bounced = false;
+    shaking = Math.min(0.4, shaking + 0.2);
+    shakemag = Math.hypot(c.vel.x, c.vel.y) / 15;
+    c.color = nextColor();
+    updateBGWith(...COLORS[c.color]);
+
+    for (let i = 0; i < 50; ++i) {
+      particles.push(newParticle(c.pos, c.vel, c.color));
+    }
+  }
+
+  updateParticles(dt);
+
+  for (let i = 0; i < 3; ++i) {
+    BG[i] = Math.max(16, BG[i] - 16 * dt);
+  }
+
+  shaking = Math.max(0, shaking - dt);
+}
+
+function updateBGWith(r, g, b) {
+  BG[0] = 16 + 16 * (r / 255);
+  BG[1] = 16 + 16 * (g / 255);
+  BG[2] = 16 + 16 * (b / 255);
+}
+
+function renderDiamond(a, b, scale, colora, colorb) {
+  const dir = {x: a.x - b.x, y: a.y - b.y};
+  const dv = Math.hypot(dir.x, dir.y);
+  if (dv == 0) return;
+  dir.x /= dv;
+  dir.y /= dv;
+  const nor = {x: -dir.y, y: dir.x};
+
+  const g = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
+  g.addColorStop(0, colora);
+  g.addColorStop(1, colorb);
+  ctx.fillStyle = g;
+
+  ctx.beginPath();
+  ctx.moveTo(a.x + dir.x * scale, a.y + dir.y * scale);
+  ctx.lineTo(a.x - nor.x * scale, a.y - nor.y * scale);
+  ctx.lineTo(b.x - nor.x * scale, b.y - nor.y * scale);
+  ctx.lineTo(b.x - dir.x * scale, b.y - dir.y * scale);
+  ctx.lineTo(b.x + nor.x * scale, b.y + nor.y * scale);
+  ctx.lineTo(a.x + nor.x * scale, a.y + nor.y * scale);
+  ctx.fill();
+}
+
+function renderParticles() {
+  for (const p of particles) {
+    ctx.fillStyle = rgb(...COLORS[p.color]);
+    ctx.save();
+    ctx.translate(p.pos.x, p.pos.y);
+    ctx.scale(p.radius, p.radius);
+    ctx.rotate(p.angle);
+    ctx.beginPath();
+    ctx.moveTo(0, -1);
+    ctx.lineTo(Math.SQRT3 / 2, 0.5);
+    ctx.lineTo(-Math.SQRT3 / 2, 0.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function render() {
+  ctx.reset();
+  ctx.fillStyle = rgb(...BG);
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalCompositeOperation = "screen";
+
+  if (shaking > 0) {
+    ctx.translate(
+      shakemag * shaking * (2 * Math.random() - 1),
+      shakemag * shaking * (2 * Math.random() - 1));
+  }
+
+  renderParticles();
+
+  ctx.globalAlpha = 0.5;
+  const colora = rgb(...COLORS[diamond.control[0].color]);
+  const colorb = rgb(...COLORS[diamond.control[1].color]);
+  const outer = 60 + 20 * (1 + diamond.pulse);
+  renderDiamond(diamond.control[0].pos, diamond.control[1].pos,
+    outer, colora, colorb);
+  ctx.globalAlpha = diamond.pulse;
+  renderDiamond(diamond.control[0].pos, diamond.control[1].pos,
+    outer * Math.abs(diamond.pulse), colora, colorb);
+}
+
+let last = 0;
+function frame(ts) {
+  ts /= 1000;
+  const dt = (ts - last);
+  last = ts;
+
+  update(dt, ts);
+  render();
+
+  requestAnimationFrame(frame);
+}
+frame(0);
+
+</script>
