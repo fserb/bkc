@@ -96,7 +96,7 @@ frame(0);
 
 We are going to set up our `requestAnimationFrame` with an `update` and a
 `render` function. The first one will also receive the time elapsed and total
-time. The second is supposed to do no state change. Also, remember that
+time. The second is supposed to not change any state. Also, remember that
 `requestAnimationFrame` returns the time in milliseconds.
 
 ```op:raf+4:5,spawn:2

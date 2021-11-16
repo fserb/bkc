@@ -31,16 +31,17 @@ const svgoOptions = {
   ]
 };
 
-function render(tex, options) {
-  const o = renderMath(tex, options);
-  // console.log(o);
+function render(tex, display, options) {
+  const o = renderMath(tex, {display});
+
+  if (options.quick) {
+    return o;
+  }
+
   let single = svgo.optimize(o, {multipass: false, ...svgoOptions}).data;
   let multi = svgo.optimize(o, {multipass: true, ...svgoOptions}).data;
 
-  const data = single.length < multi.length ? single : multi;
-
-  console.log(o.length, single.length, multi.length);
-  return data;
+  return single.length < multi.length ? single : multi;
 }
 
 // Test if potential opening or closing delimieter
@@ -131,7 +132,7 @@ function math_inline(state, silent) {
   return true;
 }
 
-function math_block(state, start, end, silent){
+function math_block(state, start, end, silent) {
   var firstLine, lastLine, next, lastPos, found = false, token,
     pos = state.bMarks[start] + state.tShift[start],
     max = state.eMarks[start]
@@ -189,12 +190,10 @@ export default function(options={}) {
       alt: [ 'paragraph', 'reference', 'blockquote', 'list' ]
     });
     md.renderer.rules.math_inline = function (tokens, idx) {
-      options.display = false;
-      return render(tokens[idx].content, options)
+      return render(tokens[idx].content, false, options)
     };
     md.renderer.rules.math_block = function (tokens, idx) {
-      options.display = true;
-      return render(tokens[idx].content, options)
+      return render(tokens[idx].content, true, options)
     };
   };
 }

@@ -4,6 +4,7 @@ import date from "lume/plugins/date.ts";
 import slugifyUrls from "lume/plugins/slugify_urls.ts";
 import binaryLoader from "lume/core/loaders/binary.ts";
 import postcss from "lume/plugins/postcss.ts";
+import markdown from "lume/plugins/markdown.ts";
 
 import basic from "./_plugins/basic.js";
 import esbuild from "./_plugins/esbuild.js";
@@ -36,10 +37,19 @@ const site = lume({
     },
     plugins: [
       markdownItComponent(),
-      markdownItMathJaxTexSvg(),
     ]
   }
 });
+
+site.use(markdown({
+    options: {
+      typographer: true,
+    },
+    plugins: [
+      markdownItComponent(),
+      markdownItMathJaxTexSvg({quick: site.options.dev}),
+    ]
+  }));
 
 if (site.options.dev) {
   site.options.location = new URL("https://dev.metaphora.co/bkc/_site/");
