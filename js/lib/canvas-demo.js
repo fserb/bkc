@@ -180,12 +180,12 @@ iframe, #ph {
   float: right;
   line-height: 16px;
   font-size: 32px;
-  opacity: 0.5;
+  opacity: 0.75;
   cursor: pointer;
 }
 #r:hover { opacity: 1.0; }
 #f {
-  opacity: 0.5;
+  opacity: 0.75;
   line-height: 24px;
   float: left;
   font-size: 12px;
@@ -198,7 +198,7 @@ iframe, #ph {
       return this.html`<div id=ph></div><div id=bar></div>`;
     }
 
-    return this.html`<iframe></iframe>
+    return this.html`<iframe title="canvas demo"></iframe>
 <div id=bar><div id=f>-</div><div id=r>⟳</div></div>`;
   }
 }

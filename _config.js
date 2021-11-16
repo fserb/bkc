@@ -3,6 +3,7 @@ import lume from "lume/mod.ts";
 import date from "lume/plugins/date.ts";
 import slugifyUrls from "lume/plugins/slugify_urls.ts";
 import binaryLoader from "lume/core/loaders/binary.ts";
+import postcss from "lume/plugins/postcss.ts";
 
 import markdownItKatex from
   "https://jspm.dev/@iktakahiro/markdown-it-katex@4.0.1";
@@ -11,6 +12,8 @@ import basic from "./_plugins/basic.js";
 import esbuild from "./_plugins/esbuild.js";
 import prism from "./_plugins/prism.js";
 import forceJs from "./_plugins/force_js.js";
+
+import postcssCSSO from "https://esm.sh/postcss-csso";
 
 import markdownItComponent from
   "./_plugins/markdown-it-component.js";
@@ -51,6 +54,7 @@ site.ignore("_images", "_plugins", "orig", "3rdp", ".gitignore", ".git",
 site.copy("assets", "assets");
 site.loadAssets([".html"]);
 site.loadAssets([".png"], binaryLoader);
+site.loadAssets([".webp"], binaryLoader);
 
 // register `date` primitive on NJK.
 site.use(date());
@@ -59,6 +63,12 @@ site.use(slugifyUrls());
 
 site.use(forceJs());
 site.use(prism());
+
+site.use(postcss({
+  plugins: [postcssCSSO()],
+  keepDefaultPlugins: true,
+  sourceMap: site.options.dev ? {inline: true} : false,
+  }));
 
 site.use(basic());
 site.use(esbuild());
