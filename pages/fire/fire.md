@@ -219,7 +219,7 @@ This already looks much better, in spite of being very, well, blurry. To address
 this we can apply a color matrix correction to increase the contrast, i.e.,
 force areas to be either background or fire.
 
-Technically, the `colorMatrix` is a $5x4$ matrix that gets applied as:
+Technically, the `colorMatrix` is a $5\times4$ matrix that gets applied as:
 
 $$
 \begin{bmatrix} r_1 \\ g_1 \\ b_1 \\ a_1 \end{bmatrix}

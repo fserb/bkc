@@ -1,0 +1,19 @@
+{
+  "name": "mathjax3",
+  "version": "3.0.0-0",
+  "description": "",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "esbuild": "^0.13.14",
+    "juice": "^8.0.0",
+    "mathjax-full": "^3.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.4.2"
+  },
+  "scripts": {
+    "build": "tsc",
+    "bundle": "tsc && esbuild --bundle index.js --format=esm --minify --legal-comments=none --target=esnext --outfile=mathjax.js"
+  }
+}

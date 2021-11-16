@@ -350,7 +350,7 @@ aside .low {
   filter: opacity(0.5) contrast(0.5);
 }
 
-p.katex-block {
+main svg[display=true] {
   object-fit: contain;
   width: 100%;
   font-size: clamp(0.68em, 1.4vw, 1em);

@@ -5,9 +5,6 @@ import slugifyUrls from "lume/plugins/slugify_urls.ts";
 import binaryLoader from "lume/core/loaders/binary.ts";
 import postcss from "lume/plugins/postcss.ts";
 
-import markdownItKatex from
-  "https://jspm.dev/@iktakahiro/markdown-it-katex@4.0.1";
-
 import basic from "./_plugins/basic.js";
 import esbuild from "./_plugins/esbuild.js";
 import prism from "./_plugins/prism.js";
@@ -15,6 +12,8 @@ import forceJs from "./_plugins/force_js.js";
 
 import postcssCSSO from "https://esm.sh/postcss-csso";
 
+import markdownItMathJaxTexSvg from
+  "./_plugins/markdown-it-mathjax-texsvg.js";
 import markdownItComponent from
   "./_plugins/markdown-it-component.js";
 
@@ -36,8 +35,8 @@ const site = lume({
       typographer: true,
     },
     plugins: [
-      markdownItKatex,
       markdownItComponent(),
+      markdownItMathJaxTexSvg(),
     ]
   }
 });
