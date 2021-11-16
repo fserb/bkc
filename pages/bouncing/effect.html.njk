@@ -9,13 +9,6 @@ const canvas = document.querySelector("canvas");
 Math.TAU = Math.PI * 2;
 Math.SQRT3 = Math.sqrt(3);
 
-function normal() {
-  let u = 0, v = 0;
-  while(u === 0) u = Math.random();
-  while(v === 0) v = Math.random();
-  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(Math.TAU * v);
-}
-
 function clamp(x, lower, upper) {
   return x <= lower ? lower : (x >= upper ? upper : x);
 }
@@ -61,7 +54,7 @@ function nextColor() {
   return CC;
 }
 
-const diamond = {
+const crystal = {
   control: [],
   pulse: 1.0,
 };
@@ -72,7 +65,7 @@ const particles = [];
 for (let i = 0; i < 2; ++i) {
   const speed = 600 + 400 * Math.random();
   const vdir = Math.TAU * Math.random();
-  diamond.control.push({
+  crystal.control.push({
     pos: {x: W * Math.random(), y: H * Math.random() },
     vel: {x: speed * Math.cos(vdir), y: speed * Math.sin(vdir)},
     radius: 64,
@@ -104,7 +97,7 @@ function newParticle(pos, vel, color) {
     pos: {x: pos.x, y: pos.y },
     vel: { x: speed * Math.cos(vangle), y: speed * Math.sin(vangle)},
     angle: Math.TAU * Math.random(),
-    dir: 4 * normal(),
+    dir: -4 + 8 * Math.random(),
     color: color,
     life: Math.random() * 1,
     radius: 0,
@@ -158,18 +151,18 @@ function updateCollision(a, b) {
 }
 
 function update(dt, t) {
-  diamond.pulse = Math.sin(t * 5);
+  crystal.pulse = Math.sin(t * 5);
 
-  for (const c of diamond.control) {
+  for (const c of crystal.control) {
     c.pos.x += c.vel.x * dt;
     c.pos.y += c.vel.y * dt;
     if (bounce(c)) {
       c.bounced = true;
     }
   }
-  updateCollision(diamond.control[0], diamond.control[1]);
+  updateCollision(crystal.control[0], crystal.control[1]);
 
-  for (const c of diamond.control) {
+  for (const c of crystal.control) {
     if (!c.bounced) continue;
     c.bounced = false;
     shaking = Math.min(0.4, shaking + 0.2);
@@ -197,7 +190,7 @@ function updateBGWith(r, g, b) {
   BG[2] = 16 + 16 * (b / 255);
 }
 
-function renderDiamond(a, b, scale, colora, colorb) {
+function rendercrystal(a, b, scale, colora, colorb) {
   const dir = {x: a.x - b.x, y: a.y - b.y};
   const dv = Math.hypot(dir.x, dir.y);
   if (dv == 0) return;
@@ -252,14 +245,14 @@ function render() {
   renderParticles();
 
   ctx.globalAlpha = 0.5;
-  const colora = rgb(...COLORS[diamond.control[0].color]);
-  const colorb = rgb(...COLORS[diamond.control[1].color]);
-  const outer = 60 + 20 * (1 + diamond.pulse);
-  renderDiamond(diamond.control[0].pos, diamond.control[1].pos,
+  const colora = rgb(...COLORS[crystal.control[0].color]);
+  const colorb = rgb(...COLORS[crystal.control[1].color]);
+  const outer = 60 + 20 * (1 + crystal.pulse);
+  rendercrystal(crystal.control[0].pos, crystal.control[1].pos,
     outer, colora, colorb);
-  ctx.globalAlpha = diamond.pulse;
-  renderDiamond(diamond.control[0].pos, diamond.control[1].pos,
-    outer * Math.abs(diamond.pulse), colora, colorb);
+  ctx.globalAlpha = crystal.pulse;
+  rendercrystal(crystal.control[0].pos, crystal.control[1].pos,
+    outer * Math.abs(crystal.pulse), colora, colorb);
 }
 
 let last = 0;

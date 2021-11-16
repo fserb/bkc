@@ -92,7 +92,7 @@ function applyOp(state) {
   let pass = 0;
   for (let i = 0; i < alives.length; ++i) {
     if (state.lens !== null &&
-      (i < state.lens[0] - 1 || i >= state.lens[0] + state.lens[1])) {
+      (i < state.lens[0] || i >= state.lens[0] + state.lens[1])) {
       if (!alives[i].classList.contains("hidden")) {
         alives[i].classList.add("hidden");
         alives[i].style.top = `${pass++ * LINE_HEIGHT}em`;
@@ -133,7 +133,7 @@ function place(input, state, rel) {
   }
   const p = /(?<name>[^+]+)(?<delta>[+-]\d+)?/.exec(input).groups;
   const delta = Number.parseInt(p.delta ?? 0);
-  return state.labels[p.name][0] + delta;
+  return state.labels[p.name][0] + delta + 1;
 }
 
 function buildState(state, code, opts) {
@@ -142,10 +142,10 @@ function buildState(state, code, opts) {
   const old = state.code;
   let lines = code.split('\n').slice(0, -1);
   const addedlines = lines.length;
-  let topline = 1;
+  let topline = 0;
   if (op === "+") {
     lines = [...old, ...lines];
-    topline = old.length + 1;
+    topline = old.length;
   } else if (op !== "") {
     const ed = lines;
     lines = [...old];
@@ -160,19 +160,22 @@ function buildState(state, code, opts) {
   const labels = {};
   const range = [topline, addedlines];
   if (opts.label) {
-    // label:name+<start>+<length>
-    const order = /(?<name>[^+]+)(\+(?<delta>\d+)(,(?<len>\d+))?)?/
-      .exec(opts.label).groups;
-
-    if (order.delta) {
-      const delta = Number.parseInt(order.delta);
-      range[0] += delta;
-      range[1] -= delta;
+    for (const l of opts.label.split(':')) {
+      range[0] = topline;
+      range[1] = addedlines;
+      // label:name+<start>+<length>
+      const order = /(?<name>[^+]+)(\+(?<delta>\d+)(\+(?<len>\d+))?)?/
+        .exec(l).groups;
+      if (order.delta) {
+        const delta = Number.parseInt(order.delta);
+        range[0] += delta;
+        range[1] -= delta;
+      }
+      if (order.len) {
+        range[1] = Number.parseInt(order.len);
+      }
+      labels[order.name] = [range[0], range[1]];
     }
-    if (order.end) {
-      range[1] = Number.parseInt(order.end);
-    }
-    labels[order.name] = range;
   }
 
   // propagate older labels.
@@ -197,8 +200,19 @@ function buildState(state, code, opts) {
       const delta = Number.parseInt(p.delta ?? 0);
       lens = [range[0] + delta, range[1] - delta];
     } else if (opts.lens != "") {
-      const t = labels[opts.lens];
-      lens = [t[0], t[1]];
+      lens = null;
+      for (const l of opts.lens.split('+')) {
+        const t = labels[l];
+        console.log(l, t, lens);
+        if (lens === null) {
+          lens = [t[0], t[1]];
+          continue;
+        }
+        const start = Math.min(lens[0], t[0]);
+        const end = Math.max(lens[0] + lens[1], t[0] + t[1]);
+        lens = [start, end - start];
+      }
+      console.log("final", lens);
     }
   } else if (lens !== null) {
     if (lens[0] > topline) {

@@ -289,6 +289,7 @@ aside ol {
   margin: auto;
   top: 0;
   height: 0;
+  max-width: calc(var(--split-size) - 50px);
   transition: height 0.5s, top 0.5s;
   display: block;
   position: relative;
