@@ -76,15 +76,15 @@ for (let i = 0; i < 2; ++i) {
 
 function bounce(obj) {
   let bounced = false;
-  if (obj.pos.y <= obj.radius || obj.pos.y >= H - obj.radius) {
-    obj.vel.y = -obj.vel.y;
-    bounced = true;
-    obj.pos.y = clamp(obj.pos.y, obj.radius, H - obj.radius);
-  }
   if (obj.pos.x <= obj.radius || obj.pos.x >= W - obj.radius) {
     obj.vel.x = -obj.vel.x;
     bounced = true;
     obj.pos.x = clamp(obj.pos.x, obj.radius, W - obj.radius);
+  }
+  if (obj.pos.y <= obj.radius || obj.pos.y >= H - obj.radius) {
+    obj.vel.y = -obj.vel.y;
+    bounced = true;
+    obj.pos.y = clamp(obj.pos.y, obj.radius, H - obj.radius);
   }
   return bounced;
 }
@@ -117,35 +117,32 @@ function updateParticles(dt) {
 }
 
 function updateCollision(a, b) {
-  const con = { x: a.pos.x - b.pos.x, y: a.pos.y - b.pos.y};
-  const distance = Math.hypot(con.x, con.y);
+  const col = { x: a.pos.x - b.pos.x, y: a.pos.y - b.pos.y};
+  const distance = Math.hypot(col.x, col.y);
   if (distance > a.radius + b.radius) return;
-
   if (distance > 0) {
-    con.x /= distance;
-    con.y /= distance;
+    col.x /= distance;
+    col.y /= distance;
   } else {
-    con.x = 1;
-    con.y = 0;
+    col.x = 1;
+    col.y = 0;
   }
 
   const p = a.radius + b.radius - distance;
-  const pen = { x: con.x * p, y: con.y * p };
-
+  const pen = { x: col.x * p, y: col.y * p };
   a.pos.x += pen.x * 0.5;
   a.pos.y += pen.y * 0.5;
   b.pos.x -= pen.x * 0.5;
   b.pos.y -= pen.y * 0.5;
 
-  const velad = con.x * a.vel.x + con.y * a.vel.y;
-  const velbd = con.x * b.vel.x + con.y * b.vel.y;
-
+  const velad = col.x * a.vel.x + col.y * a.vel.y;
+  const velbd = col.x * b.vel.x + col.y * b.vel.y;
   const v = 2 * (velad - velbd);
+  a.vel.x -= col.x * v * 0.5;
+  a.vel.y -= col.y * v * 0.5;
+  b.vel.x += col.x * v * 0.5;
+  b.vel.y += col.y * v * 0.5;
 
-  a.vel.x -= con.x * v * 0.5;
-  a.vel.y -= con.y * v * 0.5;
-  b.vel.x += con.x * v * 0.5;
-  b.vel.y += con.y * v * 0.5;
   a.bounced = true;
   b.bounced = true;
 }

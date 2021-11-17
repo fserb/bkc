@@ -145,8 +145,8 @@ for (let i = 0; i < 2; ++i) {
 
 Each of our control points will start with a velocity. Because we have a
 physical system that will conserve energy, this will end up defining how fast
-the system will be, as no new energy will be introduced. Because of this, we
-force the initial velocity to be within $[600,1000]$ in any direction.
+the system will be, as no new energy will be introduced. We force the initial
+velocity to be within $[600,1000]$ in any direction.
 
 ```op:crystal+5
   const speed = 600 + 400 * Math.random();
@@ -168,15 +168,19 @@ state to track whether they have bounced at something this frame.
     bounced: false,
 ```
 
-For now, we will render them as circles, so we can have a good grasp of what's
+For now, we will render them as circles, so we can have some idea of what's
 happening.
 
-```op:+render+1,lens:render
+```op:render+1,lens:render
   ctx.reset();
+  ctx.fillStyle = "#222";
+  ctx.fillRect(0, 0, W, H);
   for (const c of crystal.control) {
-    ctx.strokeStyle = 'red';
+    ctx.strokeStyle = '#F00';
+    ctx.fillStyle = '#700';
     ctx.beginPath();
     ctx.arc(c.pos.x, c.pos.y, c.radius, 0, Math.TAU);
+    ctx.fill();
     ctx.stroke();
   }
 ```
@@ -185,12 +189,85 @@ happening.
 ```
 @[canvas-demo]
 
+Cool. Now let's do some moving. The first obvious thing to do is to update the
+position given the velocity. Given that we have no acceleration, the proper
+integration is trivial.
 
+```op:update+1
+  for (const c of crystal.control) {
+    c.pos.x += c.vel.x * dt;
+    c.pos.y += c.vel.y * dt;
+  }
+```
 
+We should make sure that our balls actually bounce on the borders. For this, we
+can create a generic function that bounce any circle inside the screen area.
 
+```op:update-1,label:bounce+1
+
+function bounce(obj) {
+}
+```
+
+For each dimension, we check if the circle is touching each side of the screen,
+and if it is, we move it in and invert the velocity.
+
+```op:bounce+1,lens:bounce+update
+  if (obj.pos.x <= obj.radius || obj.pos.x >= W - obj.radius) {
+    obj.vel.x = -obj.vel.x;
+    obj.pos.x = clamp(obj.pos.x, obj.radius, W - obj.radius);
+  }
+```
+
+We do this for both dimensions and we also want to return whether we have
+touched the side or not, as this will be useful for us later.
+
+```op:bounce:6
+function bounce(obj) {
+  let bounced = false;
+  if (obj.pos.x <= obj.radius || obj.pos.x >= W - obj.radius) {
+    obj.vel.x = -obj.vel.x;
+    bounced = true;
+    obj.pos.x = clamp(obj.pos.x, obj.radius, W - obj.radius);
+  }
+  if (obj.pos.y <= obj.radius || obj.pos.y >= H - obj.radius) {
+    obj.vel.y = -obj.vel.y;
+    bounced = true;
+    obj.pos.y = clamp(obj.pos.y, obj.radius, H - obj.radius);
+  }
+  return bounced;
+}
+```
+
+Finally, we just need to use our new `bounce()` function on update, propagating
+the result value into the control object.
+
+```op:update+4,lens:bounce+update
+    if (bounce(c)) {
+      c.bounced = true;
+    }
+```
+
+```op:+
+```
+@[canvas-demo]
+
+Next we need to deal with the collision between them.
+
+```op:update-1
+
+function updateCollision(a, b) {
+
+}
+```
+```op:update+8
+  updateCollision(crystal.control[0], crystal.control[1]);
+```
 
 
 ### crystal
+
+### colors
 
 ### particles
 

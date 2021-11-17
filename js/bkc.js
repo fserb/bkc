@@ -131,7 +131,7 @@ function place(input, state, rel) {
     }
     return int;
   }
-  const p = /(?<name>[^+]+)(?<delta>[+-]\d+)?/.exec(input).groups;
+  const p = /(?<name>[^+-]+)(?<delta>[+-]\d+)?/.exec(input).groups;
   const delta = Number.parseInt(p.delta ?? 0);
   return state.labels[p.name][0] + delta + 1;
 }
@@ -141,7 +141,7 @@ function buildState(state, code, opts) {
   const op = opts.op;
   const old = state.code;
   let lines = code.split('\n').slice(0, -1);
-  const addedlines = lines.length;
+  let addedlines = lines.length;
   let topline = 0;
   if (op === "+") {
     lines = [...old, ...lines];
@@ -154,6 +154,7 @@ function buildState(state, code, opts) {
     const length = s.length >= 2 ? Number.parseInt(s[1]) : 0;
     lines.splice(start, length, ...ed);
     topline = start;
+    addedlines -= length;
   }
 
   // generate new label.
@@ -164,7 +165,7 @@ function buildState(state, code, opts) {
       range[0] = topline;
       range[1] = addedlines;
       // label:name+<start>+<length>
-      const order = /(?<name>[^+]+)(\+(?<delta>\d+)(\+(?<len>\d+))?)?/
+      const order = /(?<name>[^+-]+)(\+(?<delta>\d+)(\+(?<len>\d+))?)?/
         .exec(l).groups;
       if (order.delta) {
         const delta = Number.parseInt(order.delta);
@@ -203,7 +204,6 @@ function buildState(state, code, opts) {
       lens = null;
       for (const l of opts.lens.split('+')) {
         const t = labels[l];
-        console.log(l, t, lens);
         if (lens === null) {
           lens = [t[0], t[1]];
           continue;
@@ -212,7 +212,6 @@ function buildState(state, code, opts) {
         const end = Math.max(lens[0] + lens[1], t[0] + t[1]);
         lens = [start, end - start];
       }
-      console.log("final", lens);
     }
   } else if (lens !== null) {
     if (lens[0] > topline) {
