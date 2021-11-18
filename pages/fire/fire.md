@@ -131,9 +131,9 @@ for the number to be in the same order of magnitude as the index.
       1030 - i * Math.tan(i ** 4 + t / 1000),
 ```
 
+@[canvas-demo]
 ```op:+
 ```
-@[canvas-demo]
 
 Okey. This looks like a nice low poly fire. We could improve it by making the
 top particles approach the middle as they go up, but let's leave at this for
@@ -193,9 +193,9 @@ With this, we should get the exact same effect we had before.
 
 ```
 
+@[canvas-demo]
 ```op:+
 ```
-@[canvas-demo]
 
 Now we are ready to add some filters to the final image. We are going to use the
 new [CanvasFilter](https://github.com/fserb/canvas2D/blob/master/spec/filters.md)
@@ -258,9 +258,9 @@ up as $1$. This will fix the bluriness and make the fire pop out.
     ]},
 ```
 
+@[canvas-demo]
 ```op:+
 ```
-@[canvas-demo]
 
 And here it is. The final fire effect with filters. You can also see it [here in a standalone page with all the source code]({{relativePath}}/effect.html).
 

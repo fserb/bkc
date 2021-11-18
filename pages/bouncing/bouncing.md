@@ -171,7 +171,7 @@ state to track whether they have bounced at something this frame.
 For now, we will render them as circles, so we can have some idea of what's
 happening.
 
-```op:render+1,lens:render
+```op:render+1,lens:crystal+render
   ctx.reset();
   ctx.fillStyle = "#222";
   ctx.fillRect(0, 0, W, H);
@@ -185,15 +185,15 @@ happening.
   }
 ```
 
+@[canvas-demo]
 ```op:+,lens:crystal+render
 ```
-@[canvas-demo]
 
-Cool. Now let's do some moving. The first obvious thing to do is to update the
-position given the velocity. Given that we have no acceleration, the proper
-integration is trivial.
+Cool. Now let's do some movement. The first thing to do is update the position
+given the velocity. Since we have no acceleration, the proper integration is
+trivial.
 
-```op:update+1
+```op:update+1,lens:update
   for (const c of crystal.control) {
     c.pos.x += c.vel.x * dt;
     c.pos.y += c.vel.y * dt;
@@ -202,8 +202,9 @@ integration is trivial.
 
 We should make sure that our balls actually bounce on the borders. For this, we
 can create a generic function that bounce any circle inside the screen area.
+This will be useful for us to reuse it later on the particles.
 
-```op:update-1,label:bounce+1
+```op:update-1,label:bounce+1,lens:bounce+update
 
 function bounce(obj) {
 }
@@ -248,9 +249,9 @@ the result value into the control object.
     }
 ```
 
+@[canvas-demo]
 ```op:+
 ```
-@[canvas-demo]
 
 Next we need to deal with the collision between them.
 

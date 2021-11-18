@@ -164,6 +164,7 @@ iframe, #ph {
   width: 100%;
   aspect-ratio: 1920 / 1080;
   display: block;
+  user-select: none;
 }
 #ph {
   background-color: rgba(0,0,0,0.1);
@@ -175,6 +176,7 @@ iframe, #ph {
   height: 24px;
   vertical-align: top;
   overflow: hidden;
+  user-select: none;
 }
 #r {
   float: right;
