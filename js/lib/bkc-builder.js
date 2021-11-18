@@ -14,25 +14,28 @@ function parsePlace(input, state, rel) {
   return state.labels[p.name][0] + delta + 1;
 }
 
-function applyOp(state, op, code) {
+/*
+Apply @op(@newcode) into @state.code using @state.labels.
+*/
+function applyOp(state, op, newcode) {
   const old = state.code;
-  let lines = code.split('\n').slice(0, -1);
-  let addedlines = lines.length;
+  let code = newcode.split('\n').slice(0, -1);
+  let addedlines = code.length;
   let topline = 0;
   if (op === "+") {
-    lines = [...old, ...lines];
+    code = [...old, ...code];
     topline = old.length;
   } else if (op !== "") {
-    const ed = lines;
-    lines = [...old];
+    const ed = code;
+    code = [...old];
     const s = op.split(':');
-    const start = parsePlace(s[0], state, lines.length) - 1;
+    const start = parsePlace(s[0], state, code.length) - 1;
     const length = s.length >= 2 ? Number.parseInt(s[1]) : 0;
-    lines.splice(start, length, ...ed);
+    code.splice(start, length, ...ed);
     topline = start;
     addedlines -= length;
   }
-  return {lines, topline, addedlines};
+  return {code, topline, addedlines};
 }
 
 function generateNewLabels(opts, topline, addedlines) {
@@ -123,18 +126,18 @@ function determineHighlight(old, lines) {
   return highlight;
 }
 
-export function buildState(state, code, opts) {
-  // apply op and generate new code.
-  const {lines, topline, addedlines} = applyOp(state, opts.op, code);
+export function buildState(state, newcode, opts) {
+  const {code, topline, addedlines} = applyOp(state, opts.op, newcode);
 
   const {labels, range} = generateNewLabels(opts, topline, addedlines);
+
   propagateOldLabels(labels, state, topline, addedlines);
 
   const lens = calculateLens(state, labels, opts.lens, range, topline, addedlines);
 
-  const highlight = determineHighlight(state.code, lines);
+  const highlight = determineHighlight(state.code, code);
 
-  return {code: lines, highlight, labels, lens};
+  return {code, highlight, labels, lens};
 }
 
 export function rebuildPRE(state, el) {
