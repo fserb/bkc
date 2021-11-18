@@ -1,4 +1,8 @@
-// BKC apply
+/*
+BKC apply
+
+applies and animates a BKC state into the aside DOM.
+*/
 
 import diff from "./diff.js";
 
@@ -11,7 +15,6 @@ function clearLine(s) {
     .replaceAll('&#x27;', "'")
     .replaceAll('&#x60;', '`');
 }
-
 
 const LINE_HEIGHT = 1.1;
 

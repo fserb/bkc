@@ -1,36 +1,7 @@
 // BKC builder
 import diff from "./diff.js";
 
-function resizeRulers() {
-  const rulers = document.querySelectorAll("main .ruler");
-  for (const el of rulers) {
-    el.style.height = "0px";
-  }
-
-  for (let i = 0; i < rulers.length; ++i) {
-    const el = rulers[i];
-    let h = 0;
-
-    if (i < rulers.length - 1) {
-      h = rulers[i + 1].offsetTop;
-    } else {
-      h = document.querySelector("main").scrollHeight;
-    }
-
-    el.style.height = `${h - el.offsetTop}px`;
-  }
-}
-
-function createRuler(io, state) {
-  const ruler = document.createElement("div");
-  ruler.classList.add("ruler");
-  ruler.setAttribute('bkc-state', JSON.stringify(state));
-
-  io.observe(ruler);
-  return ruler;
-}
-
-function place(input, state, rel) {
+function parsePlace(input, state, rel) {
   const int = Number.parseInt(input);
   if (Number.isFinite(int)) {
     if (input[0] == '+' || input[1] == '-') {
@@ -43,9 +14,7 @@ function place(input, state, rel) {
   return state.labels[p.name][0] + delta + 1;
 }
 
-function buildState(state, code, opts) {
-  // apply op and generate new code.
-  const op = opts.op;
+function applyOp(state, op, code) {
   const old = state.code;
   let lines = code.split('\n').slice(0, -1);
   let addedlines = lines.length;
@@ -57,14 +26,16 @@ function buildState(state, code, opts) {
     const ed = lines;
     lines = [...old];
     const s = op.split(':');
-    const start = place(s[0], state, lines.length) - 1;
+    const start = parsePlace(s[0], state, lines.length) - 1;
     const length = s.length >= 2 ? Number.parseInt(s[1]) : 0;
     lines.splice(start, length, ...ed);
     topline = start;
     addedlines -= length;
   }
+  return {lines, topline, addedlines};
+}
 
-  // generate new label.
+function generateNewLabels(opts, topline, addedlines) {
   const labels = {};
   const range = [topline, addedlines];
   if (opts.label) {
@@ -85,8 +56,10 @@ function buildState(state, code, opts) {
       labels[order.name] = [range[0], range[1]];
     }
   }
+  return {labels, range};
+}
 
-  // propagate older labels.
+function propagateOldLabels(labels, state, topline, addedlines) {
   for (const k of Object.keys(state.labels)) {
     let [start, len] = state.labels[k];
     if (start > topline) {
@@ -97,19 +70,20 @@ function buildState(state, code, opts) {
 
     labels[k] = [start, len];
   }
+}
 
-  // calculate lens.
+function calculateLens(state, labels, askedlens, range, topline, addedlines) {
   let lens = state.lens;
-  if (opts.lens !== null) {
-    if (opts.lens == "") {
+  if (askedlens !== null) {
+    if (askedlens == "") {
       lens = null;
-    } else if (opts.lens.startsWith("this")) {
-      const p = /this(?<delta>[+-]\d+)?/.exec(opts.lens).groups;
+    } else if (askedlens.startsWith("this")) {
+      const p = /this(?<delta>[+-]\d+)?/.exec(askedlens).groups;
       const delta = Number.parseInt(p.delta ?? 0);
       lens = [range[0] + delta, range[1] - delta];
-    } else if (opts.lens != "") {
+    } else if (askedlens != "") {
       lens = null;
-      for (const l of opts.lens.split('+')) {
+      for (const l of askedlens.split('+')) {
         const t = labels[l];
         if (lens === null) {
           lens = [t[0], t[1]];
@@ -128,7 +102,10 @@ function buildState(state, code, opts) {
     }
   }
 
-  // calculate highlighted area.
+  return lens;
+}
+
+function determineHighlight(old, lines) {
   const highlight = [];
   let pos = 0;
   for (const [oper, _] of diff(old, lines)) {
@@ -143,71 +120,48 @@ function buildState(state, code, opts) {
       highlight.push(i);
     }
   }
+  return highlight;
+}
+
+export function buildState(state, code, opts) {
+  // apply op and generate new code.
+  const {lines, topline, addedlines} = applyOp(state, opts.op, code);
+
+  const {labels, range} = generateNewLabels(opts, topline, addedlines);
+  propagateOldLabels(labels, state, topline, addedlines);
+
+  const lens = calculateLens(state, labels, opts.lens, range, topline, addedlines);
+
+  const highlight = determineHighlight(state.code, lines);
 
   return {code: lines, highlight, labels, lens};
 }
 
-export function builder(io) {
-  const ro = new ResizeObserver(resizeRulers);
+export function rebuildPRE(state, el) {
+  let touse = el.innerHTML;
+  if (touse.length == 0) touse = state.code.join("\n");
+  const out = touse.split("\n");
 
-  const main = document.querySelector("main");
-  ro.observe(main);
+  const op = el.getAttribute('op') ?? "";
+  let firstLine = op == "" ? 0 : state.highlight[0];
 
-  let state = {code: [], highlight: [], labels: {}, lens: null};
-
-  main.insertBefore(createRuler(io, state), main.firstElementChild);
-
-  for (const el of document.querySelectorAll("main pre code, canvas-demo")) {
-    if (el.tagName == "CANVAS-DEMO") {
-      const doc = new DOMParser().parseFromString(
-        state.code.join('\n'), 'text/html');
-      el.code = doc.body.textContent ?? "";
-      el.reRender();
-      continue;
-    }
-
-    if (el.tagName != "CODE") continue;
-    const op = el.getAttribute('op') ?? "";
-    const label = el.getAttribute('label') ?? "";
-    const lens = el.getAttribute('lens') ?? null;
-    state = buildState(state, el.innerHTML, {op, label, lens});
-
-    const spawn = Number.parseInt(el.getAttribute('spawn') ?? 1);
-
-    let touse = el.innerHTML;
-    if (touse.length == 0) touse = state.code.join("\n");
-    const out = touse.split("\n");
-
-    let firstLine = op == "" ? 0 : state.highlight[0];
-
-    // clean up empty lines at the beginning and end.
-    while (out.length > 0 && out[0].length == 0) {
-      out.shift();
-      firstLine++;
-    }
-    while (out.length > 0 && out[out.length - 1].length == 0) {
-      out.pop();
-    }
-
-    el.innerHTML = "";
-    for (const l of out) {
-      const o = document.createElement("li");
-      o.innerHTML = l;
-      el.appendChild(o);
-    }
-    if (el.firstElementChild) {
-      el.firstElementChild.style.counterSet = `code-line ${firstLine}`;
-    }
-
-    let target = el.parentNode;
-    for (let i = 0; i < spawn; ++i) {
-      const n = target.previousElementSibling;
-      if (!n) break;
-      target = n;
-    }
-
-    main.insertBefore(createRuler(io, state), target);
+  // clean up empty lines at the beginning and end.
+  while (out.length > 0 && out[0].length == 0) {
+    out.shift();
+    firstLine++;
+  }
+  while (out.length > 0 && out[out.length - 1].length == 0) {
+    out.pop();
   }
 
-  resizeRulers();
-};
+  el.innerHTML = "";
+  for (const l of out) {
+    const o = document.createElement("li");
+    o.innerHTML = l;
+    el.appendChild(o);
+  }
+  if (el.firstElementChild) {
+    el.firstElementChild.style.counterSet = `code-line ${firstLine}`;
+  }
+}
+
