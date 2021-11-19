@@ -51,7 +51,7 @@ function setup() {
   const main = document.querySelector("main");
   ro.observe(main);
 
-  let state = {code: [], highlight: [], labels: {}, lens: null};
+  let state = {code: [], highlight: [], labels: {}, lens: null, range: [0, 0]};
 
   main.insertBefore(createRuler(io, state), main.firstElementChild);
 
@@ -68,7 +68,7 @@ function setup() {
     const op = el.getAttribute('op') ?? "";
     const label = el.getAttribute('label') ?? "";
     const lens = el.getAttribute('lens') ?? null;
-    state = buildState(state, el.innerHTML, {op, label, lens});
+    state = buildState(state, {op, label, lens, code: el.innerHTML});
 
     rebuildPRE(state, el);
 

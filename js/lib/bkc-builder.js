@@ -1,145 +1,171 @@
 // BKC builder
 import diff from "./diff.js";
 
-function parsePlace(input, state, rel) {
+function parsePlace(prev, input) {
   const int = Number.parseInt(input);
   if (Number.isFinite(int)) {
     if (input[0] == '+' || input[1] == '-') {
-      return rel + int;
+      return prev.code.length + int;
     }
     return int;
   }
+  // name+3
   const p = /(?<name>[^+-]+)(?<delta>[+-]\d+)?/.exec(input).groups;
   const delta = Number.parseInt(p.delta ?? 0);
-  return state.labels[p.name][0] + delta + 1;
+  return prev.labels[p.name][0] + delta + 1;
 }
 
 /*
-Apply @op(@newcode) into @state.code using @state.labels.
+Apply @cmd.op(@cmd.newcode) into @prev.code.
 */
-function applyOp(state, op, newcode) {
-  const old = state.code;
-  let code = newcode.split('\n').slice(0, -1);
-  let addedlines = code.length;
-  let topline = 0;
-  if (op === "+") {
-    code = [...old, ...code];
-    topline = old.length;
-  } else if (op !== "") {
-    const ed = code;
-    code = [...old];
-    const s = op.split(':');
-    const start = parsePlace(s[0], state, code.length) - 1;
+function applyOp(prev, cmd, out) {
+  const newcode = cmd.code.split('\n').slice(0, -1);
+  out.range = [0, newcode.length];
+  if (cmd.op === "+") {
+    out.code = [...prev.code, ...newcode];
+    out.range[0] = prev.code.length;
+  } else if (cmd.op !== "") {
+    const s = cmd.op.split(':');
+    const start = parsePlace(prev, s[0]) - 1;
     const length = s.length >= 2 ? Number.parseInt(s[1]) : 0;
-    code.splice(start, length, ...ed);
-    topline = start;
-    addedlines -= length;
+    out.code = [...prev.code];
+    out.code.splice(start, length, ...newcode);
+    out.range[0] = start;
+    out.range[1] -= length;
   }
-  return {code, topline, addedlines};
 }
 
-function generateNewLabels(opts, topline, addedlines) {
-  const labels = {};
-  const range = [topline, addedlines];
-  if (opts.label) {
-    for (const l of opts.label.split(':')) {
-      range[0] = topline;
-      range[1] = addedlines;
-      // label:name+<start>+<length>
-      const order = /(?<name>[^+-]+)(\+(?<delta>\d+)(\+(?<len>\d+))?)?/
-        .exec(l).groups;
-      if (order.delta) {
-        const delta = Number.parseInt(order.delta);
-        range[0] += delta;
-        range[1] -= delta;
-      }
-      if (order.len) {
-        range[1] = Number.parseInt(order.len);
-      }
-      labels[order.name] = [range[0], range[1]];
+/*
+Parse @cmd.label into ranges related to current edit.
+*/
+function generateNewLabels(cmd, out) {
+  out.labels = {};
+  if (!cmd.label) return;
+  let range;
+  for (const l of cmd.label.split(':')) {
+    range = [...out.range];
+    // label:name+<start>+<length>
+    const order = /(?<name>[^+-]+)(\+(?<delta>\d+)(\+(?<len>\d+))?)?/
+      .exec(l).groups;
+    if (order.delta) {
+      const delta = Number.parseInt(order.delta);
+      range[0] += delta;
+      range[1] -= delta;
     }
-  }
-  return {labels, range};
-}
-
-function propagateOldLabels(labels, state, topline, addedlines) {
-  for (const k of Object.keys(state.labels)) {
-    let [start, len] = state.labels[k];
-    if (start > topline) {
-      start += addedlines;
-    } else if (topline >= start && topline < start + len) {
-      len += addedlines;
+    if (order.len) {
+      range[1] = Number.parseInt(order.len);
     }
+    out.labels[order.name] = [...range];
+  }
+  out.thislabel = range;
+}
 
-    labels[k] = [start, len];
+/*
+Update @prev.labels into @out.labels depending on current edit.
+*/
+function propagateOldLabels(prev, out) {
+  for (const k of Object.keys(prev.labels)) {
+    let [start, len] = prev.labels[k];
+    if (start > out.range[0]) {
+      start += out.range[1];
+    } else if (out.range[0] >= start && out.range[0] < start + len) {
+      len += out.range[1];
+    }
+    out.labels[k] = [start, len];
   }
 }
 
-function calculateLens(state, labels, askedlens, range, topline, addedlines) {
-  let lens = state.lens;
-  if (askedlens !== null) {
-    if (askedlens == "") {
-      lens = null;
-    } else if (askedlens.startsWith("this")) {
-      const p = /this(?<delta>[+-]\d+)?/.exec(askedlens).groups;
-      const delta = Number.parseInt(p.delta ?? 0);
-      lens = [range[0] + delta, range[1] - delta];
-    } else if (askedlens != "") {
-      lens = null;
-      for (const l of askedlens.split('+')) {
-        const t = labels[l];
-        if (lens === null) {
-          lens = [t[0], t[1]];
-          continue;
-        }
-        const start = Math.min(lens[0], t[0]);
-        const end = Math.max(lens[0] + lens[1], t[0] + t[1]);
-        lens = [start, end - start];
+/*
+Update @out.lens, either with the current edit, or by using new labels.
+*/
+function calculateLens(prev, cmd, out) {
+  out.lens = prev.lens ? [...prev.lens] : null;
+
+  if (cmd.lens === null) {
+    // if there's no lens update, just update the current lens range.
+    if (out.lens !== null) {
+      if (out.lens[0] > out.range[0]) {
+        out.lens[0] += out.range[1];
+      } else if (out.range[0] >= out.lens[0] &&
+          out.range[0] < out.lens[0] + out.lens[1]) {
+        out.lens[1] += out.range[1];
       }
     }
-  } else if (lens !== null) {
-    if (lens[0] > topline) {
-      lens[0] += addedlines;
-    } else if (topline >= lens[0] && topline < lens[0] + lens[1]) {
-      lens[1] += addedlines;
-    }
+    return;
   }
 
-  return lens;
+  if (cmd.lens == "") {
+    out.lens = null;
+    return;
+  }
+
+  if (cmd.lens.startsWith("this")) {
+    // this+4
+    const p = /this(?<delta>[+-]\d+)?/.exec(cmd.lens).groups;
+    const delta = Number.parseInt(p.delta ?? 0);
+    out.lens = [out.thislabel[0] + delta, out.thislabel[1] - delta];
+    return;
+  }
+
+  if (cmd.lens != "") {
+    out.lens = null;
+    for (const l of cmd.lens.split('+')) {
+      const t = out.labels[l];
+      if (out.lens === null) {
+        out.lens = [...t];
+        continue;
+      }
+      const start = Math.min(out.lens[0], t[0]);
+      const end = Math.max(out.lens[0] + out.lens[1], t[0] + t[1]);
+      out.lens = [start, end - start];
+    }
+  }
 }
 
-function determineHighlight(old, lines) {
-  const highlight = [];
+/*
+Determine the diff lines between @prev.code and @out.code.
+*/
+function determineHighlight(prev, out) {
+  out.highlight = [];
   let pos = 0;
-  for (const [oper, _] of diff(old, lines)) {
+  for (const [oper, _] of diff(prev.code, out.code)) {
     if (oper == '+') {
-      highlight.push(pos++);
+      out.highlight.push(pos++);
     } else if (oper == '=') {
       pos++;
     }
   }
-  if (highlight.length == 0) {
-    for (let i = 0; i < lines.length; ++i) {
-      highlight.push(i);
+
+  if (out.highlight.length == 0) {
+    for (let i = 0; i < out.code.length; ++i) {
+      out.highlight.push(i);
     }
   }
-  return highlight;
 }
 
-export function buildState(state, newcode, opts) {
-  const {code, topline, addedlines} = applyOp(state, opts.op, newcode);
+/*
+state:
+  - code: [] of lines of code
+  - highlight: [] of lines to be highlighted
+  - labels: {label: [start, length]} of references
+  - lens: null|[start, length] of lines to show
+  - range: [start, length] of current edit
+*/
+export function buildState(prev, cmd) {
+  const out = {};
 
-  const {labels, range} = generateNewLabels(opts, topline, addedlines);
+  applyOp(prev, cmd, out);
+  generateNewLabels(cmd, out);
+  propagateOldLabels(prev, out);
+  calculateLens(prev, cmd, out);
+  determineHighlight(prev, out);
 
-  propagateOldLabels(labels, state, topline, addedlines);
-
-  const lens = calculateLens(state, labels, opts.lens, range, topline, addedlines);
-
-  const highlight = determineHighlight(state.code, code);
-
-  return {code, highlight, labels, lens};
+  return out;
 }
 
+/*
+Rebuild PRE to show up directly without BKC.
+*/
 export function rebuildPRE(state, el) {
   let touse = el.innerHTML;
   if (touse.length == 0) touse = state.code.join("\n");

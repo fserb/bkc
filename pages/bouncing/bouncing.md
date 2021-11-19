@@ -99,7 +99,7 @@ We are going to set up our `requestAnimationFrame` with an `update` and a
 time. The second is supposed to not change any state. Also, remember that
 `requestAnimationFrame` returns the time in milliseconds.
 
-```op:raf+4:5,spawn:2
+```op:raf+4:4
 let last = 0;
 function frame(ts) {
   ts /= 1000;
