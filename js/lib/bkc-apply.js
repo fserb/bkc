@@ -16,6 +16,8 @@ function clearLine(s) {
     .replaceAll('&#x60;', '`');
 }
 
+// this is the line-height em attribute for the `aside li`.
+// in theory, we could query this from the stylesheet, but why bother?
 const LINE_HEIGHT = 1.1;
 
 export function apply(state) {
