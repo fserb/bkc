@@ -7,6 +7,9 @@ import "./lib/color-show.js";
 import {buildState, rebuildPRE} from "./lib/bkc-builder.js";
 import {apply} from "./lib/bkc-apply.js";
 
+// contains all BKC states referenced by rulers.
+const SYSTEM = [];
+
 function resizeRulers() {
   const rulers = document.querySelectorAll("main .ruler");
   for (const el of rulers) {
@@ -30,7 +33,8 @@ function resizeRulers() {
 function createRuler(io, state) {
   const ruler = document.createElement("div");
   ruler.classList.add("ruler");
-  ruler.setAttribute('bkc-state', JSON.stringify(state));
+  SYSTEM.push(state);
+  ruler.setAttribute('bkc-state', SYSTEM.length - 1);
 
   io.observe(ruler);
   return ruler;
@@ -40,7 +44,8 @@ function setup() {
   const io = new IntersectionObserver(entries => {
     for (const e of entries) {
       if (!e.isIntersecting) continue;
-      apply(JSON.parse(e.target.getAttribute('bkc-state')));
+      const id = Number.parseInt(e.target.getAttribute('bkc-state'));
+      apply(SYSTEM[id]);
     }
   }, {
     rootMargin: '-50% 0% -50% 0%',
