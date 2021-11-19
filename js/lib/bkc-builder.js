@@ -21,18 +21,24 @@ Apply @cmd.op(@cmd.newcode) into @prev.code.
 function applyOp(prev, cmd, out) {
   const newcode = cmd.code.split('\n').slice(0, -1);
   out.range = [0, newcode.length];
+  if (cmd.op === "") {
+    out.code = newcode;
+    return;
+  }
+
   if (cmd.op === "+") {
     out.code = [...prev.code, ...newcode];
     out.range[0] = prev.code.length;
-  } else if (cmd.op !== "") {
-    const s = cmd.op.split(':');
-    const start = parsePlace(prev, s[0]) - 1;
-    const length = s.length >= 2 ? Number.parseInt(s[1]) : 0;
-    out.code = [...prev.code];
-    out.code.splice(start, length, ...newcode);
-    out.range[0] = start;
-    out.range[1] -= length;
+    return;
   }
+
+  const s = cmd.op.split(':');
+  const start = parsePlace(prev, s[0]) - 1;
+  const length = s.length >= 2 ? Number.parseInt(s[1]) : 0;
+  out.code = [...prev.code];
+  out.code.splice(start, length, ...newcode);
+  out.range[0] = start;
+  out.range[1] -= length;
 }
 
 /*

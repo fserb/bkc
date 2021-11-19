@@ -32,7 +32,7 @@ We use of `Math.TAU`, which is
 $\tau = 2\pi$. And since we are at it, let's add another useful constant for
 $\sqrt{3}$.
 
-```op:1
+```op:
 Math.TAU = Math.PI * 2;
 Math.SQRT3 = Math.sqrt(3);
 ```
