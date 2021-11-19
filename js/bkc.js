@@ -4,7 +4,7 @@
 import "./lib/canvas-demo.js";
 import "./lib/color-show.js";
 
-import {buildState, rebuildPRE} from "./lib/bkc-builder.js";
+import {buildState, rebuildPRE, mergeState} from "./lib/bkc-builder.js";
 import {apply} from "./lib/bkc-apply.js";
 
 // contains all BKC states referenced by rulers.
@@ -79,12 +79,25 @@ function setup() {
 
     const spawn = Number.parseInt(el.getAttribute('spawn') ?? 1);
     let target = el.parentNode;
+    let merged = false;
     for (let i = 0; i < spawn; ++i) {
       const n = target.previousElementSibling;
       if (!n) break;
+
+      // if one of the spawn targets is a `pre code`, merge the state.
+      if (n.tagName == 'PRE') {
+        if (n.firstElementChild?.tagName == 'CODE') {
+          SYSTEM[SYSTEM.length - 1] = mergeState(SYSTEM[SYSTEM.length - 2],
+            SYSTEM[SYSTEM.length - 1], state);
+          merged = true;
+        }
+      }
+
       target = n;
     }
-    main.insertBefore(createRuler(io, state), target);
+    if (!merged) {
+      main.insertBefore(createRuler(io, state), target);
+    }
   }
 
   resizeRulers();

@@ -200,3 +200,14 @@ export function rebuildPRE(state, el) {
   }
 }
 
+/*
+Merge @prev and @state into a new state.
+
+TODO: we could also manually merge lens.
+*/
+export function mergeState(parent, prev, state) {
+  const out = {...state};
+  determineHighlight(parent, out);
+  return out;
+}
+
