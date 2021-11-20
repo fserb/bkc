@@ -29,6 +29,8 @@ everything before the first `:` is a attribute and everything after is data.
   * `op:a:b` replaces interval that starts at `a` with length `b` with content.
     Where `a` is as above and `b` is a number length.
 
+  * `op:a:` replaces the whole location `a` with content.
+
 * `spawn` defines how many block before the `pre code` this content refers to.
   Default is `spawn:1`.
 

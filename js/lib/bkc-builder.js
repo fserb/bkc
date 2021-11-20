@@ -1,22 +1,6 @@
 // BKC builder
 import diff from "./diff.js";
 
-window.diff = diff;
-
-function parsePlace(prev, input) {
-  const int = Number.parseInt(input);
-  if (Number.isFinite(int)) {
-    if (input[0] == '+' || input[1] == '-') {
-      return prev.code.length + int;
-    }
-    return int;
-  }
-  // name+3
-  const p = /(?<name>[^+-]+)(?<delta>[+-]\d+)?/.exec(input).groups;
-  const delta = Number.parseInt(p.delta ?? 0);
-  return prev.labels[p.name][0] + delta + 1;
-}
-
 /*
 Apply @cmd.op(@cmd.newcode) into @prev.code.
 */
@@ -34,9 +18,36 @@ function applyOp(prev, cmd, out) {
     return;
   }
 
-  const s = cmd.op.split(':');
-  const start = parsePlace(prev, s[0]) - 1;
-  const length = s.length >= 2 ? Number.parseInt(s[1]) : 0;
+  let start, length;
+  let label = null, delta;
+
+  const input = cmd.op.split(':');
+  // parse first part of the input (start).
+  const int = Number.parseInt(input[0]);
+  if (Number.isFinite(int)) {
+    if (input[0][0] == '+' || input[0][1] == '-') {
+      start = prev.code.length + int;
+    }
+    start = int;
+  } else {
+    // name+3
+    const p = /(?<name>[^+-]+)(?<delta>[+-]\d+)?/.exec(input[0]).groups;
+    delta = Number.parseInt(p.delta ?? 0);
+    label = p.name;
+    start = prev.labels[label][0] + delta;
+  }
+
+  // parse second part of the input (length).
+  if (input.length >= 2) {
+    if (input[1] == "") {
+      length = prev.labels[label][1] - delta;
+    } else {
+      length = Number.parseInt(input[1]);
+    }
+  } else {
+    length = 0;
+  }
+
   out.code = [...prev.code];
   out.code.splice(start, length, ...newcode);
   out.range[0] = start;

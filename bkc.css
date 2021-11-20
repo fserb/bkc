@@ -267,6 +267,7 @@ aside {
   top: 0;
   left: 0;
   overflow-x: hidden;
+  scrollbar-width: none;
 }
 
 aside::after {
@@ -279,6 +280,10 @@ aside::after {
   border-top: var(--arrow-size) solid transparent;
   border-bottom: var(--arrow-size) solid transparent;
   border-left: var(--arrow-size) solid #181923;
+}
+
+aside::-webkit-scrollbar {
+  display: none;
 }
 
 aside ol {

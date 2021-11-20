@@ -55,7 +55,7 @@ run(document.getElementById("c"));
 </script>`);
 
 const WORKER_SRC = code => BASE(`<script type='worker-module'>
-function run(canvas) {
+async function run(canvas) {
 ${code}
 }
 
@@ -70,8 +70,10 @@ ${FPS}
 
  <script type='module'>
 const script = document.querySelector('[type="worker-module"]').textContent;
-const blob = new Blob([script], {type: 'application/javascript'});
-const worker = new Worker(URL.createObjectURL(blob));
+const blob = new Blob([script], {type: 'text/javascript'});
+const worker = new Worker(URL.createObjectURL(blob), {type: "module"});
+
+worker.onerror = ev => console.log('worker failed!', ev);
 
 const ofc = document.getElementById("c").transferControlToOffscreen();
 worker.addEventListener("message", ev => {

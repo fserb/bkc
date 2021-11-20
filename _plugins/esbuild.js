@@ -15,6 +15,8 @@ export default function (options) {
     site.process([".js"], async page => {
       const name = `${page.src.path}${page.src.ext}`;
       const filename = path.relative(site.src(), path.join(site.src(), name));
+
+      if (name == "/pages/extend.js") return;
       console.log("📦", name);
 
       try {

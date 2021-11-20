@@ -6,28 +6,7 @@ title: Bouncing Crystal
 <script type="module">
 const canvas = document.querySelector("canvas");
 
-Math.TAU = Math.PI * 2;
-Math.SQRT3 = Math.sqrt(3);
-
-function clamp(x, lower, upper) {
-  return x <= lower ? lower : (x >= upper ? upper : x);
-}
-
-function rgb(r, g, b) {
-  return `rgb(${r}, ${g}, ${b})`;
-}
-
-function infilter(arr, cond) {
-  let j = 0;
-  arr.forEach((e, i) => {
-    if (cond(e)) {
-      if (i !== j) arr[j] = e;
-      j++;
-    }
-  });
-  arr.length = j;
-  return arr;
-}
+const {rgba} = await import("{{baseURL}}extend.js");
 
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
@@ -79,12 +58,12 @@ function bounce(obj) {
   if (obj.pos.x <= obj.radius || obj.pos.x >= W - obj.radius) {
     obj.vel.x = -obj.vel.x;
     bounced = true;
-    obj.pos.x = clamp(obj.pos.x, obj.radius, W - obj.radius);
+    obj.pos.x = Math.clamp(obj.pos.x, obj.radius, W - obj.radius);
   }
   if (obj.pos.y <= obj.radius || obj.pos.y >= H - obj.radius) {
     obj.vel.y = -obj.vel.y;
     bounced = true;
-    obj.pos.y = clamp(obj.pos.y, obj.radius, H - obj.radius);
+    obj.pos.y = Math.clamp(obj.pos.y, obj.radius, H - obj.radius);
   }
   return bounced;
 }
@@ -113,7 +92,7 @@ function updateParticles(dt) {
     p.life -= dt;
     p.radius = 125 * p.life;
   }
-  infilter(particles, e => e.life > 0);
+  particles.filterIn(e => e.life > 0);
 }
 
 function updateCollision(a, b) {
@@ -212,7 +191,7 @@ function rendercrystal(a, b, scale, colora, colorb) {
 
 function renderParticles() {
   for (const p of particles) {
-    ctx.fillStyle = rgb(...COLORS[p.color]);
+    ctx.fillStyle = rgba(...COLORS[p.color]);
     ctx.save();
     ctx.translate(p.pos.x, p.pos.y);
     ctx.scale(p.radius, p.radius);
@@ -229,7 +208,7 @@ function renderParticles() {
 
 function render() {
   ctx.reset();
-  ctx.fillStyle = rgb(...BG);
+  ctx.fillStyle = rgba(...BG);
   ctx.fillRect(0, 0, W, H);
   ctx.globalCompositeOperation = "screen";
 
@@ -242,8 +221,8 @@ function render() {
   renderParticles();
 
   ctx.globalAlpha = 0.5;
-  const colora = rgb(...COLORS[crystal.control[0].color]);
-  const colorb = rgb(...COLORS[crystal.control[1].color]);
+  const colora = rgba(...COLORS[crystal.control[0].color]);
+  const colorb = rgba(...COLORS[crystal.control[1].color]);
   const outer = 60 + 20 * (1 + crystal.pulse);
   rendercrystal(crystal.control[0].pos, crystal.control[1].pos,
     outer, colora, colorb);

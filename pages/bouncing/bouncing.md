@@ -4,14 +4,15 @@ layout: article
 draft: true
 ---
 
-This crystal effect with particles is inspired by
-[pixel's bouncing demo](https://github.com/faiface/pixel-examples/tree/master/community/bouncing)
-and it's simpler than it looks.
+This crystal effect with particles is inspired by the
+[bouncing demo](https://github.com/faiface/pixel-examples/tree/master/community/bouncing)
+of [Go's pixel library](https://github.com/faiface/pixel) and it's interesting
+because it piles up a few simple techniques together into a nice effect.
 
 The mechanics of this effect are based on bouncing balls. The trick is that we
-are going to calculate the physics of balls, but we are not going to render
-them as such. Instead, we are going to use their positions to render our
-crystal.
+are going to calculate the physics of bouncing balls (technically, circles),
+but we are not going to render them as such. Instead, we are going to use their
+positions to render our bouncing crystal.
 
 Apart from the boundary collision, we are also going to have a circle/circle
 collision that will be simplified for two objects with the same mass. Finally,
@@ -22,67 +23,23 @@ allows to match colors two-by-two instead of having a fully consistent
 palette.
 
 
-### as good as your tools
-
-Before we start, let's spend some time writing support functions, mostly for
-`Math` and `Array`.
-
-We use of `Math.TAU`, which is
-[the correct circle constant](https://tauday.com/tau-manifesto) and defined as
-$\tau = 2\pi$. And since we are at it, let's add another useful constant for
-$\sqrt{3}$.
-
-```op:
-Math.TAU = Math.PI * 2;
-Math.SQRT3 = Math.sqrt(3);
-```
-
-It will be convenient to have a simple `clamp` function that limits an input `x`
-to stay inside the `[lower, upper]` range.
-
-```op:+
-
-function clamp(x, lower, upper) {
-  return x <= lower ? lower : (x >= upper ? upper : x);
-}
-```
-
-And a convenient way to convert `RGB` values into a string, while we can't use
-`TypedOM` for colors.
-
-```op:+
-
-function rgb(r, g, b) {
-  return `rgb(${r}, ${g}, ${b})`;
-}
-```
-
-Finally, we will need a method to filter an `Array` in place. The algorithm is:
-keep a index `j` of the position after the last valid element. When we find a
-valid element, we copy it to the `j`th position and increment `j`. In the end,
-resize the array to only contain `j` elements.
-
-```op:+
-
-function infilter(arr, cond) {
-  let j = 0;
-  arr.forEach((e, i) => {
-    if (cond(e)) {
-      if (i !== j) arr[j] = e;
-      j++;
-    }
-  });
-  arr.length = j;
-  return arr;
-}
-```
-
 #### Boilerplate
+
+We start by importing our common library that includes some things like
+`Math.TAU`, `Math.SQRT3`, `Math.clamp()`, in-place array filter and a
+convenience `rgba()` function to generate color strings. You can check the
+commented
+[source code](https://github.com/fserb/bkc/blob/master/pages/extend.js), but
+the functions should be fairly obvious.
+
+```op:,spawn:2
+const {rgba} = await import("{{baseURL}}extend.js");
+```
 
 We will do our [usual boilerplate](fire), where we assume there's a `canvas`
 variable pointing to a valid canvas and initialize it to `1080p`.
 
-```op:+,label:raf+1,lens:raf
+```op:+,label:raf+1
 
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
@@ -160,8 +117,8 @@ vector to match the generated `speed` and `vdir`.
     vel: {x: speed * Math.cos(vdir), y: speed * Math.sin(vdir)},
 ```
 
-We also define a `radius` (since our controls are circles) and an internal
-state to track whether they have bounced at something this frame.
+We also define a `radius` (since they are circles) and an internal state to
+track whether they have bounced at something this frame.
 
 ```op:crystal+10
     radius: 64,
@@ -169,9 +126,10 @@ state to track whether they have bounced at something this frame.
 ```
 
 For now, we will render them as circles, so we can have some idea of what's
-happening.
+happening (you can press on ⟳ to restart with different values).
 
-```op:render+1,lens:crystal+render
+```op:render:,lens:crystal+render
+function render() {
   ctx.reset();
   ctx.fillStyle = "#222";
   ctx.fillRect(0, 0, W, H);
@@ -183,6 +141,7 @@ happening.
     ctx.fill();
     ctx.stroke();
   }
+}
 ```
 
 @[canvas-demo]
@@ -216,25 +175,25 @@ and if it is, we move it in and invert the velocity.
 ```op:bounce+1,lens:bounce+update
   if (obj.pos.x <= obj.radius || obj.pos.x >= W - obj.radius) {
     obj.vel.x = -obj.vel.x;
-    obj.pos.x = clamp(obj.pos.x, obj.radius, W - obj.radius);
+    obj.pos.x = Math.clamp(obj.pos.x, obj.radius, W - obj.radius);
   }
 ```
 
 We do this for both dimensions and we also want to return whether we have
 touched the side or not, as this will be useful for us later.
 
-```op:bounce:6
+```op:bounce:
 function bounce(obj) {
   let bounced = false;
   if (obj.pos.x <= obj.radius || obj.pos.x >= W - obj.radius) {
     obj.vel.x = -obj.vel.x;
     bounced = true;
-    obj.pos.x = clamp(obj.pos.x, obj.radius, W - obj.radius);
+    obj.pos.x = Math.clamp(obj.pos.x, obj.radius, W - obj.radius);
   }
   if (obj.pos.y <= obj.radius || obj.pos.y >= H - obj.radius) {
     obj.vel.y = -obj.vel.y;
     bounced = true;
-    obj.pos.y = clamp(obj.pos.y, obj.radius, H - obj.radius);
+    obj.pos.y = Math.clamp(obj.pos.y, obj.radius, H - obj.radius);
   }
   return bounced;
 }
