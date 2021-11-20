@@ -189,7 +189,7 @@ function runApply() {
 
     for (const o of pendingAlive) {
       o.classList.remove("born");
-      o.style.top = "0px"; // ? top = null ?
+      o.style.top = "0px";
     }
   }
 
