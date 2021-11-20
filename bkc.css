@@ -338,12 +338,10 @@ aside li.born:before {
   opacity: 0;
 }
 
-aside li.hidden {
-  animation: ease-in-out forwards lens_hide 0.5s;
-}
 
-aside li.unhidden {
-  animation: ease-in-out forwards lens_show 0.5s;
+aside li.hidden {
+  height: 0;
+  opacity: 0;
 }
 
 @keyframes lens_hide {

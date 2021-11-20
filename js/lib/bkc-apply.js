@@ -13,7 +13,8 @@ import diffCode from "./diff.js";
 // this is the line-height em attribute for the `aside li`.
 // in theory, we could query this from the stylesheet, but why bother?
 const LINE_HEIGHT = 1.1;
-
+const HIDE_ANIMATION = `ease-in forwards lens_hide 0.5s`;
+const UNHIDE_ANIMATION = `ease-in forwards lens_show 0.5s`;
 
 // We do this little apply() dance, so we can re-run apply after transitions.
 let pending = 0;
@@ -72,7 +73,7 @@ function preApplyLens(alives, diff, lens) {
       if (!hide) {
         changed = true;
         el.classList.remove("hidden");
-        el.classList.add("unhidden");
+        el.style.animation = UNHIDE_ANIMATION;
       }
     }
   }
@@ -86,8 +87,8 @@ function preApplyLens(alives, diff, lens) {
     if (hide != isHidden) {
       if (hide) {
         changed = true;
-        el.classList.remove("unhidden");
         el.classList.add("hidden");
+        el.style.animation = HIDE_ANIMATION;
       }
     }
   }
@@ -104,11 +105,11 @@ function postApplyLens(alives, lens) {
     if (hide != isHidden) {
       changed = true;
       if (hide) {
-        el.classList.remove("unhidden");
         el.classList.add("hidden");
+        el.style.animation = HIDE_ANIMATION;
       } else {
         el.classList.remove("hidden");
-        el.classList.add("unhidden");
+        el.style.animation = UNHIDE_ANIMATION;
       }
     }
   }
