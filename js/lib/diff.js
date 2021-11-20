@@ -10,6 +10,7 @@ export default function diff(a, b) {
       let x, y, oldX, history;
       const goDown = (k == -d ||
         (k != d && frontier[k - 1][0] < frontier[k + 1][0]));
+
       if (goDown) {
         [oldX, history] = frontier[k + 1];
         x = oldX;
@@ -26,7 +27,7 @@ export default function diff(a, b) {
         history.push(["-", x - 1]);
       }
 
-      while (x < a.length && y < b.length && a[x] == b[y]) {
+      while (x < a.length && y < b.length && a[x] === b[y]) {
         x++;
         y++;
         history.push(["=", x - 1]);

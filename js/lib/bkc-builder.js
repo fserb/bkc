@@ -1,6 +1,8 @@
 // BKC builder
 import diff from "./diff.js";
 
+window.diff = diff;
+
 function parsePlace(prev, input) {
   const int = Number.parseInt(input);
   if (Number.isFinite(int)) {

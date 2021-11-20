@@ -288,11 +288,12 @@ aside ol {
   padding: 25px 0;
   margin: auto;
   top: 0;
-  height: 0;
   max-width: calc(var(--split-size) - 50px);
-  transition: height 0.5s, top 0.5s;
+  transition: height 0.5s ease-in-out, top 0.5s ease-in-out;
   display: block;
   position: relative;
+  overflow: hidden;
+  will-change: scroll-position, contents, top;
 }
 
 aside li {
@@ -300,6 +301,7 @@ aside li {
   height: 1.1em;
   overflow: visible;
   position: relative;
+  will-change: opacity, left, top;
 }
 
 aside li:before {
@@ -326,6 +328,7 @@ aside li.dead:before {
 }
 
 aside li.born {
+  transition: all 0.5s ease-in-out;
   transform: translate(100%, 0);
   opacity: 0;
   height: 0;
@@ -336,10 +339,47 @@ aside li.born:before {
 }
 
 aside li.hidden {
-  opacity: 0;
-  transition: opacity 0.5s ease-in-out;
-  position: absolute;
+  animation: ease-in-out forwards lens_hide 0.5s;
 }
+
+aside li.unhidden {
+  animation: ease-in-out forwards lens_show 0.5s;
+}
+
+@keyframes lens_hide {
+  from {
+    opacity: 1;
+    height: 1.1em;
+  }
+
+  50% {
+    height: 1.1em;
+    opacity: 0;
+  }
+
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes lens_show {
+  from {
+    opacity: 0;
+    height: 0;
+  }
+
+  50% {
+    opacity: 0;
+    height: 1.1em;
+  }
+
+  to {
+    opacity: 1;
+    height: 1.1em;
+  }
+}
+
 
 aside *::selection {
   color: #959DCB !important;
@@ -389,7 +429,6 @@ main svg[display=true] {
   height: 1em;
   vertical-align: baseline;
 }
-
 
 /* Syntax highlight */
 pre code { color: #959dcb; }
