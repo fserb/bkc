@@ -336,9 +336,49 @@ function render() {
 }
 ```
 
-a
+We start by computing the normalized vector `dir` that connects `a` and `b`, we
+also calculate a perpendicular vector `nor` to that. Those two will work as the
+basis for our crystal rendering.
 
-```op:+,lens:renderCrystal
+A quick note on the perpendicular vector. We do it by rotating the original
+vector by $90^{\circ}$ counter-clockwise. A vector rotation by $\theta$ is a
+multiplication by $\left[\begin
+{smallmatrix}\cos\theta & -\sin\theta\\ \sin\theta & \cos\theta\end
+{smallmatrix}\right]$. For $90^{\circ}$ it becomes $\left[\begin
+{smallmatrix}0 & -1 \\ 1 & 0\end{smallmatrix}\right]$, which is simply $(-y, x)$.
+
+```op:renderCrystal:,lens:renderCrystal,spawn:2
+function renderCrystal(a, b, size, colorA, colorB) {
+  const dir = {x: a.x - b.x, y: a.y - b.y};
+  const dirlen = Math.hypot(dir.x, dir.y);
+  if (dirlen == 0) return;
+  dir.x /= dirlen;
+  dir.y /= dirlen;
+  const nor = {x: -dir.y, y: dir.x};
+}
+```
+asdas
+
+```op:renderCrystal+7
+
+  ctx.beginPath();
+  ctx.moveTo(a.x + dir.x * scale, a.y + dir.y * scale);
+  ctx.lineTo(a.x - nor.x * scale, a.y - nor.y * scale);
+  ctx.lineTo(b.x - nor.x * scale, b.y - nor.y * scale);
+  ctx.lineTo(b.x - dir.x * scale, b.y - dir.y * scale);
+  ctx.lineTo(b.x + nor.x * scale, b.y + nor.y * scale);
+  ctx.lineTo(a.x + nor.x * scale, a.y + nor.y * scale);
+  ctx.fill();
+```
+
+asdf
+
+```op:renderCrystal+7
+
+  const g = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
+  g.addColorStop(0, colora);
+  g.addColorStop(1, colorb);
+  ctx.fillStyle = g;
 ```
 
 ### colors

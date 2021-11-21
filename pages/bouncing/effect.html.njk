@@ -166,10 +166,10 @@ function updateBGWith(r, g, b) {
 
 function renderCrystal(a, b, scale, colora, colorb) {
   const dir = {x: a.x - b.x, y: a.y - b.y};
-  const dv = Math.hypot(dir.x, dir.y);
-  if (dv == 0) return;
-  dir.x /= dv;
-  dir.y /= dv;
+  const dirlen = Math.hypot(dir.x, dir.y);
+  if (dirlen == 0) return;
+  dir.x /= dirlen;
+  dir.y /= dirlen;
   const nor = {x: -dir.y, y: dir.x};
 
   const g = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
