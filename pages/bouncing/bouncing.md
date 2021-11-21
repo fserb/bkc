@@ -357,7 +357,21 @@ function renderCrystal(a, b, size, colorA, colorB) {
   const nor = {x: -dir.y, y: dir.x};
 }
 ```
-asdas
+Now we draw the crystal with a path.
+
+{% svg 512,512 %}
+  svg.circle(50, 50, 50, {fill: "red"})
+    .rect(10, 10, 20, 20, {fill: "green"})
+    .line(0, 0, 256, 256, {stroke: "blue"});
+
+  const g = svg.g({fill: 'none', stroke: 'red', 'stroke-width': 3});
+  const p = g.path();
+  p.moveTo(200, 200);
+  p.lineTo(400, 300, 200, 300).L(100, 350).z();
+
+  svg.tex(400, 100, "x^2");
+
+{% endsvg %}
 
 ```op:renderCrystal+7
 
@@ -371,7 +385,6 @@ asdas
   ctx.fill();
 ```
 
-asdf
 
 ```op:renderCrystal+7
 

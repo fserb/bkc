@@ -5,11 +5,13 @@ import slugifyUrls from "lume/plugins/slugify_urls.ts";
 import binaryLoader from "lume/core/loaders/binary.ts";
 import postcss from "lume/plugins/postcss.ts";
 import markdown from "lume/plugins/markdown.ts";
+import nunjucks from "lume/plugins/nunjucks.ts";
 
 import basic from "./_plugins/basic.js";
 import esbuild from "./_plugins/esbuild.js";
 import prism from "./_plugins/prism.js";
 import forceJs from "./_plugins/force_js.js";
+import NunjucksSVG from "./_plugins/nunjucks-svg.js";
 
 import postcssCSSO from "https://esm.sh/postcss-csso";
 
@@ -24,32 +26,26 @@ const site = lume({
   }
 }, {
   verbose: 2,
-  nunjucks: {
-  options: {
-      autoescape: false,
-    },
-    plugins: {
-    },
-  },
-  markdown: {
-    options: {
-      typographer: true,
-    },
-    plugins: [
-      markdownItComponent(),
-    ]
-  }
 });
 
+site.use(nunjucks({
+  options: {
+    autoescape: false,
+  },
+  plugins: {
+    "svg": new NunjucksSVG(site.options.dev),
+  }
+}));
+
 site.use(markdown({
-    options: {
-      typographer: true,
-    },
-    plugins: [
-      markdownItComponent(),
-      markdownItMathJaxTexSvg({quick: site.options.dev}),
-    ]
-  }));
+  options: {
+    typographer: true,
+  },
+  plugins: [
+    markdownItComponent(),
+    markdownItMathJaxTexSvg({quick: site.options.dev}),
+  ]
+}));
 
 if (site.options.dev) {
   site.options.location = new URL("https://dev.metaphora.co/bkc/_site/");

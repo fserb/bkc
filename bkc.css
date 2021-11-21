@@ -195,6 +195,12 @@ a:hover {
   text-decoration: underline #181923;
 }
 
+main img.svg {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
 main code, main pre {
   font-family: 'Inconsolata', monospace;
   color: #000;
