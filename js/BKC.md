@@ -19,6 +19,8 @@ everything before the first `:` is a attribute and everything after is data.
 
   * `op:+` appends content at the end of the code.
 
+  * `op:++` appends content after the last appended code.
+
   * `op:a` inserts content at location `a` where a can be one of:
 
     * a line number (`op:3`)

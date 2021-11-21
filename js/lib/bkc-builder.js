@@ -18,6 +18,14 @@ function applyOp(prev, cmd, out) {
     return;
   }
 
+  if (cmd.op === "++") {
+    out.code = [...prev.code];
+    const end = prev.range[0] + prev.range[1];
+    out.code.splice(end, 0, ...newcode);
+    out.range[0] = end;
+    return;
+  }
+
   let start, length;
   let label = null, delta;
 
@@ -130,6 +138,9 @@ function calculateLens(prev, cmd, out) {
     out.lens = null;
     for (const l of cmd.lens.split('+')) {
       const t = out.labels[l];
+      if (!t) {
+        console.warn("Invalid label:", l);
+      }
       if (out.lens === null) {
         out.lens = [...t];
         continue;

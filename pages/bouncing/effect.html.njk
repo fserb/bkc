@@ -96,9 +96,10 @@ function updateParticles(dt) {
 }
 
 function updateCollision(a, b) {
-  const col = { x: a.pos.x - b.pos.x, y: a.pos.y - b.pos.y};
+  const col = { x: b.pos.x - a.pos.x, y: b.pos.y - a.pos.y};
   const distance = Math.hypot(col.x, col.y);
   if (distance > a.radius + b.radius) return;
+
   if (distance > 0) {
     col.x /= distance;
     col.y /= distance;
@@ -108,19 +109,16 @@ function updateCollision(a, b) {
   }
 
   const p = a.radius + b.radius - distance;
-  const pen = { x: col.x * p, y: col.y * p };
-  a.pos.x += pen.x * 0.5;
-  a.pos.y += pen.y * 0.5;
-  b.pos.x -= pen.x * 0.5;
-  b.pos.y -= pen.y * 0.5;
+  a.pos.x -= col.x * p / 2;
+  a.pos.y -= col.y * p / 2;
+  b.pos.x += col.x * p / 2;
+  b.pos.y += col.y * p / 2;
 
-  const velad = col.x * a.vel.x + col.y * a.vel.y;
-  const velbd = col.x * b.vel.x + col.y * b.vel.y;
-  const v = 2 * (velad - velbd);
-  a.vel.x -= col.x * v * 0.5;
-  a.vel.y -= col.y * v * 0.5;
-  b.vel.x += col.x * v * 0.5;
-  b.vel.y += col.y * v * 0.5;
+  const colvel = (b.vel.x - a.vel.x) * col.x + (b.vel.y - a.vel.y) * col.y;
+  a.vel.x += colvel * col.x;
+  a.vel.y += colvel * col.y;
+  b.vel.x -= colvel * col.x;
+  b.vel.y -= colvel * col.y;
 
   a.bounced = true;
   b.bounced = true;

@@ -212,18 +212,103 @@ the result value into the control object.
 ```op:+
 ```
 
-Next we need to deal with the collision between them.
+Next we need to deal with the collision between them. In theory we should make a
+$n^2$ loop over all control points. Since we only have two, we shortcirtcuit it
+to just call the collision function once.
 
-```op:update-1
+```op:update-1,label:update_collision+1
 
 function updateCollision(a, b) {
-
 }
 ```
-```op:update+8
+```op:update+8,lens:update_collision+update
   updateCollision(crystal.control[0], crystal.control[1]);
 ```
 
+We calculate the `distance` between the two circles by computing a vector from
+one to the other. If we are farther than the sum of the radius, there's no
+collision and our job here is done.
+
+`Math.hypot()` is one of those lesser known `Math` functions that is very handy:
+it returns the square root of the sum of the squares of all its arguments. In
+the case of two arguments, `Math.hypot(x,y)`, calculates $\sqrt{x^2 + y^2}$
+which is the magnitude of a vector.
+
+```op:update_collision+1,spawn:2,lens:update_collision
+  const col = { x: b.pos.x - a.pos.x, y: b.pos.y - a.pos.y};
+  const distance = Math.hypot(col.x, col.y);
+  if (distance > a.radius + b.radius) return;
+```
+
+In the case that we do have a collision, it will be useful to normalize the
+collision vector. For that, we should be a bit careful to not divide by zero.
+In the very unlikely case the distance is zero (i.e., both circles are at the
+same point), we can choose any arbitrary direction as they will all be equally
+wrong (and useful).
+
+```op:++
+
+  if (distance > 0) {
+    col.x /= distance;
+    col.y /= distance;
+  } else {
+    col.x = 1;
+    col.y = 0;
+  }
+```
+
+There will be two consequences of the collision: we will move the circles out so
+they don't overlap and we will update the velocities to account for the
+collision. First the overlap. We compute how big is the overlap and move each
+circle half that distance `p` in the opposite direction, on the axis of the
+collision.
+
+```op:++
+
+  const p = a.radius + b.radius - distance;
+  a.pos.x -= col.x * p / 2;
+  a.pos.y -= col.y * p / 2;
+  b.pos.x += col.x * p / 2;
+  b.pos.y += col.y * p / 2;
+```
+
+Then we do the velocity update. This is a simple
+[elastic collision](https://en.wikipedia.org/wiki/Elastic_collision)
+(i.e., we don't want to lose energy) where both objects have the same mass. If
+you do the math on this, you will reach two conclusions: because they have the
+same mass, transfering energy will be identical to transfering velocity. And
+because we want to keep both total energy and total linear momentum unchanged,
+this becomes just a matter of inverting each object velocity, in the collision
+axis.
+
+Which is what we do here. We calculate the relative velocity and project on the
+collision vector (with dot product) on `colvel`. We then add/subtract it from
+each velocity on the collision axis. In practice, each velocity $\vec{v_a}$ is
+losing its component on the collision axis ($\vec{v_a} \cdot \vec{col}$) and
+gaining the velocity of the other object ($\vec{v_b} \cdot \vec{col}$).
+
+
+```op:++,spawn:2
+
+  const colvel = (b.vel.x - a.vel.x) * col.x + (b.vel.y - a.vel.y) * col.y;
+  a.vel.x += colvel * col.x;
+  a.vel.y += colvel * col.y;
+  b.vel.x -= colvel * col.x;
+  b.vel.y -= colvel * col.y;
+```
+
+Finally, we mark both circles as having been bounced. And we are done with the
+all the physics we will need to simulate for this effect,
+
+```op:++
+
+  a.bounced = true;
+  b.bounced = true;
+```
+
+@[canvas-demo]
+```op:++
+```
 
 ### crystal
 
