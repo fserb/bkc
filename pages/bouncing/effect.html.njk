@@ -26,7 +26,7 @@ const COLORS = [
   [0, 87, 132],
   [49, 162, 242],
   [178, 220, 239],
-]
+];
 let CC = Math.floor(Math.random() * COLORS.length);
 function nextColor() {
   CC = (CC + 1) % COLORS.length;
@@ -42,7 +42,7 @@ let shakemag = 1.0;
 const particles = [];
 
 for (let i = 0; i < 2; ++i) {
-  const speed = 600 + 400 * Math.random();
+  const speed = 700 + 400 * Math.random();
   const vdir = Math.TAU * Math.random();
   crystal.control.push({
     pos: {x: W * Math.random(), y: H * Math.random() },
@@ -108,11 +108,11 @@ function updateCollision(a, b) {
     col.y = 0;
   }
 
-  const p = a.radius + b.radius - distance;
-  a.pos.x -= col.x * p / 2;
-  a.pos.y -= col.y * p / 2;
-  b.pos.x += col.x * p / 2;
-  b.pos.y += col.y * p / 2;
+  const overlap = a.radius + b.radius - distance;
+  a.pos.x -= col.x * overlap / 2;
+  a.pos.y -= col.y * overlap / 2;
+  b.pos.x += col.x * overlap / 2;
+  b.pos.y += col.y * overlap / 2;
 
   const colvel = (b.vel.x - a.vel.x) * col.x + (b.vel.y - a.vel.y) * col.y;
   a.vel.x += colvel * col.x;
@@ -164,7 +164,7 @@ function updateBGWith(r, g, b) {
   BG[2] = 16 + 16 * (b / 255);
 }
 
-function rendercrystal(a, b, scale, colora, colorb) {
+function renderCrystal(a, b, scale, colora, colorb) {
   const dir = {x: a.x - b.x, y: a.y - b.y};
   const dv = Math.hypot(dir.x, dir.y);
   if (dv == 0) return;
@@ -222,10 +222,10 @@ function render() {
   const colora = rgba(...COLORS[crystal.control[0].color]);
   const colorb = rgba(...COLORS[crystal.control[1].color]);
   const outer = 60 + 20 * (1 + crystal.pulse);
-  rendercrystal(crystal.control[0].pos, crystal.control[1].pos,
+  renderCrystal(crystal.control[0].pos, crystal.control[1].pos,
     outer, colora, colorb);
   ctx.globalAlpha = crystal.pulse;
-  rendercrystal(crystal.control[0].pos, crystal.control[1].pos,
+  renderCrystal(crystal.control[0].pos, crystal.control[1].pos,
     outer * Math.abs(crystal.pulse), colora, colorb);
 }
 

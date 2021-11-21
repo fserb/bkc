@@ -6,7 +6,8 @@ Apply @cmd.op(@cmd.newcode) into @prev.code.
 */
 function applyOp(prev, cmd, out) {
   const newcode = cmd.code.split('\n').slice(0, -1);
-  out.range = [0, newcode.length];
+  out.range = [0, newcode.length, newcode.length];
+
   if (cmd.op === "") {
     out.code = newcode;
     return;
@@ -59,7 +60,7 @@ function applyOp(prev, cmd, out) {
   out.code = [...prev.code];
   out.code.splice(start, length, ...newcode);
   out.range[0] = start;
-  out.range[1] -= length;
+  out.range[2] -= length;
 }
 
 /*
@@ -70,7 +71,7 @@ function generateNewLabels(cmd, out) {
   if (!cmd.label) return;
   let range;
   for (const l of cmd.label.split(':')) {
-    range = [...out.range];
+    range = [out.range[0], out.range[1]];
     // label:name+<start>+<length>
     const order = /(?<name>[^+-]+)(\+(?<delta>\d+)(\+(?<len>\d+))?)?/
       .exec(l).groups;
@@ -84,7 +85,7 @@ function generateNewLabels(cmd, out) {
     }
     out.labels[order.name] = [...range];
   }
-  out.thislabel = range;
+  out.thisLabel = range;
 }
 
 /*
@@ -92,11 +93,12 @@ Update @prev.labels into @out.labels depending on current edit.
 */
 function propagateOldLabels(prev, out) {
   for (const k of Object.keys(prev.labels)) {
+    if (out.labels[k]) continue;
     let [start, len] = prev.labels[k];
     if (start > out.range[0]) {
-      start += out.range[1];
+      start += out.range[2];
     } else if (out.range[0] >= start && out.range[0] < start + len) {
-      len += out.range[1];
+      len += out.range[2];
     }
     out.labels[k] = [start, len];
   }
@@ -115,7 +117,7 @@ function calculateLens(prev, cmd, out) {
         out.lens[0] += out.range[1];
       } else if (out.range[0] >= out.lens[0] &&
           out.range[0] < out.lens[0] + out.lens[1]) {
-        out.lens[1] += out.range[1];
+        out.lens[1] += out.range[2];
       }
     }
     return;
@@ -130,7 +132,7 @@ function calculateLens(prev, cmd, out) {
     // this+4
     const p = /this(?<delta>[+-]\d+)?/.exec(cmd.lens).groups;
     const delta = Number.parseInt(p.delta ?? 0);
-    out.lens = [out.thislabel[0] + delta, out.thislabel[1] - delta];
+    out.lens = [out.thisLabel[0] + delta, out.thisLabel[1] - delta];
     return;
   }
 
@@ -139,7 +141,7 @@ function calculateLens(prev, cmd, out) {
     for (const l of cmd.lens.split('+')) {
       const t = out.labels[l];
       if (!t) {
-        console.warn("Invalid label:", l);
+        throw TypeError("Invalid label: " + l);
       }
       if (out.lens === null) {
         out.lens = [...t];
@@ -179,7 +181,7 @@ state:
   - highlight: [] of lines to be highlighted
   - labels: {label: [start, length]} of references
   - lens: null|[start, length] of lines to show
-  - range: [start, length] of current edit
+  - range: [start, length, difflength] of current edit
 */
 export function buildState(prev, cmd) {
   const out = {};

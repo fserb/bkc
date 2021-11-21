@@ -162,7 +162,6 @@ class CanvasDemo extends Tonic {
     return `
 iframe, #ph {
   border: 1px solid #000;
-  max-width: 600px;
   width: 100%;
   aspect-ratio: 1920 / 1080;
   display: block;
@@ -174,7 +173,6 @@ iframe, #ph {
 #bar {
   margin: 0;
   width: 100%;
-  max-width: 600px;
   height: 24px;
   vertical-align: top;
   overflow: hidden;

@@ -1,8 +1,8 @@
 :root {
-  /* main doc font size */
-  --font-size: max(16px, 0.9vw);
   /* size of the aside panel */
   --split-size: clamp(40vw, 550px, 50vw);
+  /* main doc font size */
+  --font-size: clamp(16px, calc((100vw - var(--split-size))/43), 23px);
   /* size of the aside PRE font */
   --aside-font-size: min(20px, calc(2 * (clamp(40vw, 550px, 50vw) - 40px) / 84));
   /* size of the aside arrow */
@@ -243,6 +243,7 @@ main .ruler {
 
 canvas-demo {
   display: block;
+  max-width: 100%;
 }
 
 main .ruler:nth-of-type(even) {

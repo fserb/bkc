@@ -32,14 +32,14 @@ commented
 [source code](https://github.com/fserb/bkc/blob/master/pages/extend.js), but
 the functions should be fairly obvious.
 
-```op:,spawn:2
+```op:
 const {rgba} = await import("{{baseURL}}extend.js");
 ```
 
 We will do our [usual boilerplate](fire), where we assume there's a `canvas`
 variable pointing to a valid canvas and initialize it to `1080p`.
 
-```op:+,label:raf+1
+```op:+,label:raf+5
 
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
@@ -56,7 +56,7 @@ We are going to set up our `requestAnimationFrame` with an `update` and a
 time. The second is supposed to not change any state. Also, remember that
 `requestAnimationFrame` returns the time in milliseconds.
 
-```op:raf+4:4
+```op:raf:
 let last = 0;
 function frame(ts) {
   ts /= 1000;
@@ -74,7 +74,7 @@ frame(0);
 Finally, we just need to define our two main loop functions. They are going to
 be a bit empty for now.
 
-```op:raf+3,label:update+1+2:render+4+2
+```op:raf-1,label:update+1+2:render+4+2
 
 function update(dt, t) {
 }
@@ -88,7 +88,7 @@ function render() {
 We start by defining the crystal object with our list of control points. We are
 going to have 2 control points, that we will initialize right here.
 
-```op:raf+3,label:crystal+1,lens:this
+```op:update-1,label:crystal+1,lens:this
 
 const crystal = {
   control: [],
@@ -103,10 +103,10 @@ for (let i = 0; i < 2; ++i) {
 Each of our control points will start with a velocity. Because we have a
 physical system that will conserve energy, this will end up defining how fast
 the system will be, as no new energy will be introduced. We force the initial
-velocity to be within $[600,1000]$ in any direction.
+velocity to be within $[700,1100]$ in any direction.
 
 ```op:crystal+5
-  const speed = 600 + 400 * Math.random();
+  const speed = 700 + 400 * Math.random();
   const vdir = Math.TAU * Math.random();
 ```
 We put the control in a random position inside our canvas and create the `vel`
@@ -212,9 +212,9 @@ the result value into the control object.
 ```op:+
 ```
 
-Next we need to deal with the collision between them. In theory we should make a
-$n^2$ loop over all control points. Since we only have two, we shortcirtcuit it
-to just call the collision function once.
+Next we need to deal with the collision between them. We should make a $n^2$
+loop that checks every control against each other. But since we will only have
+two controls, we shortcirtcuit it to just call the collision function once.
 
 ```op:update-1,label:update_collision+1
 
@@ -257,35 +257,35 @@ wrong (and useful).
   }
 ```
 
-There will be two consequences of the collision: we will move the circles out so
-they don't overlap and we will update the velocities to account for the
-collision. First the overlap. We compute how big is the overlap and move each
-circle half that distance `p` in the opposite direction, on the axis of the
-collision.
+When there's a collision we need to update the objects position and velocity.
+For the position, we want to remove any overlap between them. We compute how
+big the overlap is and move each circle half that distance `overlap` in the
+opposite direction, on the axis of the collision.
 
 ```op:++
 
-  const p = a.radius + b.radius - distance;
-  a.pos.x -= col.x * p / 2;
-  a.pos.y -= col.y * p / 2;
-  b.pos.x += col.x * p / 2;
-  b.pos.y += col.y * p / 2;
+  const overlap = a.radius + b.radius - distance;
+  a.pos.x -= col.x * overlap / 2;
+  a.pos.y -= col.y * overlap / 2;
+  b.pos.x += col.x * overlap / 2;
+  b.pos.y += col.y * overlap / 2;
 ```
 
 Then we do the velocity update. This is a simple
 [elastic collision](https://en.wikipedia.org/wiki/Elastic_collision)
-(i.e., we don't want to lose energy) where both objects have the same mass. If
-you do the math on this, you will reach two conclusions: because they have the
-same mass, transfering energy will be identical to transfering velocity. And
+(i.e., there's no energy loss) where both objects have the same mass. If we do
+the math on this, we get to two simplifcations: because they have the same
+mass, transfering momentum will be identical to transfering velocity. And
 because we want to keep both total energy and total linear momentum unchanged,
-this becomes just a matter of inverting each object velocity, in the collision
+this becomes just a matter of swapping each object's velocity, in the collision
 axis.
 
-Which is what we do here. We calculate the relative velocity and project on the
-collision vector (with dot product) on `colvel`. We then add/subtract it from
-each velocity on the collision axis. In practice, each velocity $\vec{v_a}$ is
-losing its component on the collision axis ($\vec{v_a} \cdot \vec{col}$) and
-gaining the velocity of the other object ($\vec{v_b} \cdot \vec{col}$).
+Which is what we do here. We calculate the relative velocity and project it on
+the collision vector (with dot product) on `colvel`. We then add/subtract it
+from each velocity on the collision axis. In practice, each velocity $\vec
+{v_a}$ is losing its component on the collision axis ($\vec{v_a} \cdot \vec
+{col}$) and gaining the velocity of the other object ($\vec{v_b} \cdot \vec
+{col}$).
 
 
 ```op:++,spawn:2
@@ -311,6 +311,35 @@ all the physics we will need to simulate for this effect,
 ```
 
 ### crystal
+
+Now comes the first part of the magic. We will replace our current rendering
+with something more interesting.
+
+```op:+,lens:render
+```
+
+We can replace our current circles with a function to render crystals. Apart
+from the control points, we will take a `size` parameter (for the axis
+perpendicular to the `a-b` direction) and a color for each control point.
+
+```op:render:,label:render+3:renderCrystal+0+2
+function renderCrystal(a, b, size, colorA, colorB) {
+}
+
+function render() {
+  ctx.reset();
+  ctx.fillStyle = "#222";
+  ctx.fillRect(0, 0, W, H);
+
+  renderCrystal(crystal.control[0].pos, crystal.control[1].pos,
+    60, "#be2633", "#e06f8b");
+}
+```
+
+a
+
+```op:+,lens:renderCrystal
+```
 
 ### colors
 
