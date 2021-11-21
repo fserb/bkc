@@ -108,6 +108,10 @@ export default class SVG {
     return this._newChild({tag: "symbol", id, viewBox}, opts);
   }
 
+  marker(id, opts) {
+    return this._newChild({tag: "marker", id}, opts);
+  }
+
   use(x, y, href, opts) {
     this._newChild({tag: "use", x, y, "xlink:href": `${href}`}, opts);
     return this;
@@ -187,6 +191,16 @@ class SVGPath extends SVG {
       return this;
     }
   }
+  _stepOnce(action) {
+    return (...pts) => {
+      const out = [];
+      for (let i = 0; i < pts.length; i ++) {
+        out.push(`${pts[i]}`);
+      }
+      this.path.push(`${action} ${out.join(' ')}`);
+      return this;
+    }
+  }
 
   moveTo = this.M = this._step('M')
   move = this.m = this._step('m')
@@ -194,10 +208,10 @@ class SVGPath extends SVG {
   lineTo = this.L = this._step('L')
   line = this.l = this._step('l')
 
-  H = this._step('H')
-  h = this._step('h')
-  V = this._step('V')
-  v = this._step('v')
+  H = this._stepOnce('H')
+  h = this._stepOnce('h')
+  V = this._stepOnce('V')
+  v = this._stepOnce('v')
 
   cubicTo = this.C = this._step('C')
   cubic = this.c = this._step('c')

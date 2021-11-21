@@ -15,18 +15,17 @@ function resizeRulers() {
   for (const el of rulers) {
     el.style.height = "0px";
   }
-
   for (let i = 0; i < rulers.length; ++i) {
     const el = rulers[i];
-    let h = 0;
+    let end = 0;
 
     if (i < rulers.length - 1) {
-      h = rulers[i + 1].offsetTop;
+      end = rulers[i + 1].offsetTop;
     } else {
-      h = document.querySelector("main").scrollHeight;
+      end = document.querySelector("main").scrollHeight;
     }
 
-    el.style.height = `${h - el.offsetTop}px`;
+    el.style.height = `${end - el.offsetTop}px`;
   }
 }
 

@@ -198,6 +198,7 @@ a:hover {
 main img.svg {
   width: 100%;
   height: auto;
+  display: block;
   object-fit: contain;
 }
 
@@ -402,6 +403,7 @@ aside .low {
 
 main svg[display=true] {
   object-fit: contain;
+  display: block;
   width: 100%;
   font-size: clamp(0.68em, 1.4vw, 1em);
 }

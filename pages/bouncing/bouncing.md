@@ -88,7 +88,7 @@ function render() {
 We start by defining the crystal object with our list of control points. We are
 going to have 2 control points, that we will initialize right here.
 
-```op:update-1,label:crystal+1,lens:this
+```op:update-1,label:crystal+1:crystaldef+1+3,lens:this
 
 const crystal = {
   control: [],
@@ -331,8 +331,8 @@ function render() {
   ctx.fillStyle = "#222";
   ctx.fillRect(0, 0, W, H);
 
-  renderCrystal(crystal.control[0].pos, crystal.control[1].pos,
-    60, "#be2633", "#e06f8b");
+  renderCrystal(crystal.control[0].pos, crystal.control[1].pos, 60,
+    "#be2633", "#e06f8b");
 }
 ```
 
@@ -349,7 +349,7 @@ multiplication by $\left[\begin
 
 ```op:renderCrystal:,lens:renderCrystal,spawn:2
 function renderCrystal(a, b, size, colorA, colorB) {
-  const dir = {x: a.x - b.x, y: a.y - b.y};
+  const dir = {x: b.x - a.x, y: b.y - a.y};
   const dirlen = Math.hypot(dir.x, dir.y);
   if (dirlen == 0) return;
   dir.x /= dirlen;
@@ -357,41 +357,167 @@ function renderCrystal(a, b, size, colorA, colorB) {
   const nor = {x: -dir.y, y: dir.x};
 }
 ```
-Now we draw the crystal with a path.
+Now we draw the crystal with a path, following the axis we created. The diagram
+below marks each point in order they are added to the path.
 
-{% svg 512,512 %}
-  svg.circle(50, 50, 50, {fill: "red"})
-    .rect(10, 10, 20, 20, {fill: "green"})
-    .line(0, 0, 256, 256, {stroke: "blue"});
+{% svg 640,150 %}
+  const a = {x: 150, y: 75};
+  const b = {x: 490, y: 75};
+  const dir = {x: 1, y: 0};
+  const nor = {x: 0, y: 1};
+  const size = 35;
 
-  const g = svg.g({fill: 'none', stroke: 'red', 'stroke-width': 3});
-  const p = g.path();
-  p.moveTo(200, 200);
-  p.lineTo(400, 300, 200, 300).L(100, 350).z();
+  svg.options.transform = "rotate(-7.5)";
 
-  svg.tex(400, 100, "x^2");
+  const points = [
+    {x: a.x - dir.x * size, y: a.y - dir.y * size},
+    {x: a.x + nor.x * size, y: a.y + nor.y * size},
+    {x: b.x + nor.x * size, y: b.y + nor.y * size},
+    {x: b.x + dir.x * size, y: b.y + dir.y * size},
+    {x: b.x - nor.x * size, y: b.y - nor.y * size},
+    {x: a.x - nor.x * size, y: a.y - nor.y * size},
+  ];
 
+  const mask = svg.mask("points");
+  mask.rect(0, 0, 640, 150, {fill: "#FFF"});
+  for (const p of points) {
+    mask.circle(p.x, p.y, 2, {fill:'#000', stroke: '#000'});
+  }
+
+  const path = svg.path({fill: 'none', stroke: '#000', 'stroke-width': 1,
+  mask: "url(#points)"});
+  path.moveTo(points[0].x, points[0].y);
+  for (const p of points) {
+    path.lineTo(p.x, p.y);
+  }
+  path.close();
+
+  svg.circle(a.x, a.y, 3, {fill: '#000'});
+  svg.tex(a.x + 7.5, a.y, "a");
+  svg.circle(b.x, b.y, 3, {fill: '#000'});
+  svg.tex(b.x - 15, b.y, "b");
+
+  const textPoints = [
+    {x: -15, y: 5},
+    {x: -4, y: 15},
+    {x: -4, y: 15},
+    {x: 5, y: 5},
+    {x: -5, y: -5},
+    {x: -5, y: -5},
+  ];
+  for (let i = 0; i < points.length; ++i) {
+    const p = points[i];
+    svg.circle(p.x, p.y, 2, {fill:'transparent', stroke: '#000'});
+    svg.text(p.x + textPoints[i].x, p.y + textPoints[i].y, "" + i,
+      {"font-family": "Open Sans", "font-size": "12px"});
+  }
+
+  svg.marker("head",
+    {orient: "auto", markerWidth: 2, markerHeight: 4, refX: 0.1, refY: 2})
+    .path({fill: '#000'}).M(0,0).V(4).L(2,2).Z();
+
+  const c = {x: 320, y: 75};
+  svg.path({'stroke-width': 2, 'stroke': '#000', 'marker-end': 'url(#head)'})
+    .M(c.x, c.y).l(20,0);
+  svg.path({'stroke-width': 2, 'stroke': '#000', 'marker-end': 'url(#head)'})
+    .M(c.x, c.y).l(0,-20);
+  svg.text(c.x + 2, c.y + 12.5, "dir", {"font-family": "Open Sans", "font-size": "10px"});
+  svg.text(c.x - 21, c.y - 7.5, "nor", {"font-family": "Open Sans", "font-size": "10px"});
 {% endsvg %}
 
-```op:renderCrystal+7
+```op:renderCrystal+7,spawn:2
 
   ctx.beginPath();
-  ctx.moveTo(a.x + dir.x * scale, a.y + dir.y * scale);
-  ctx.lineTo(a.x - nor.x * scale, a.y - nor.y * scale);
-  ctx.lineTo(b.x - nor.x * scale, b.y - nor.y * scale);
-  ctx.lineTo(b.x - dir.x * scale, b.y - dir.y * scale);
-  ctx.lineTo(b.x + nor.x * scale, b.y + nor.y * scale);
-  ctx.lineTo(a.x + nor.x * scale, a.y + nor.y * scale);
+  ctx.moveTo(a.x - dir.x * size, a.y - dir.y * size);
+  ctx.lineTo(a.x + nor.x * size, a.y + nor.y * size);
+  ctx.lineTo(b.x + nor.x * size, b.y + nor.y * size);
+  ctx.lineTo(b.x + dir.x * size, b.y + dir.y * size);
+  ctx.lineTo(b.x - nor.x * size, b.y - nor.y * size);
+  ctx.lineTo(a.x - nor.x * size, a.y - nor.y * size);
   ctx.fill();
 ```
+
+Finally, we create a gradient from `colorA` to `colorB` to fill the crystal,
+that will go across the the path. The parameters for `createLinearGradient` are
+the $0\%$ and $100\%$ of the gradient (that we are passing as out control
+points).
 
 
 ```op:renderCrystal+7
 
   const g = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
-  g.addColorStop(0, colora);
-  g.addColorStop(1, colorb);
+  g.addColorStop(0, colorA);
+  g.addColorStop(1, colorB);
   ctx.fillStyle = g;
+```
+
+@[canvas-demo]
+```op:+
+```
+
+We are already mostly there, but the render still looks a bit flat. We can fix
+that. First, we are going to update our crystal with an extra parameter.
+
+```op:crystaldef:,lens:crystaldef
+const crystal = {
+  control: [],
+  pulse: 1.0,
+};
+```
+
+And update it so it pulsates in a sine wave over time.
+
+```op:update+1,lens:update
+  crystal.pulse = Math.sin(t * 5);
+
+```
+
+Now are ready to use it to improve our render. First, we are going to use
+`pulse` to animate the size of the crystal on the $[60, 100]$ range.
+
+```op:render:,lens:render
+function render() {
+  ctx.reset();
+  ctx.fillStyle = "#222";
+  ctx.fillRect(0, 0, W, H);
+
+  const outer = 60 + 20 * (1 + crystal.pulse);
+  renderCrystal(crystal.control[0].pos, crystal.control[1].pos,
+    outer, "#be2633", "#e06f8b");
+}
+```
+
+Let's draw a second crystal inside the first, where it shrinks to 0 in half the
+period of the pulse (that we can get with `abs`).
+
+```op:render+8
+  renderCrystal(crystal.control[0].pos, crystal.control[1].pos,
+    outer * Math.abs(crystal.pulse), "#be2633", "#e06f8b");
+```
+
+Finally, instead of simply drawing one of the top of the other, we can make the
+whole rendering more interesting by using a screen composite and playing with
+the opacity.
+
+```op:render:,lens:render
+function render() {
+  ctx.reset();
+  ctx.fillStyle = "#222";
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalCompositeOperation = "screen";
+
+  ctx.globalAlpha = 0.5;
+  const outer = 60 + 20 * (1 + crystal.pulse);
+  renderCrystal(crystal.control[0].pos, crystal.control[1].pos,
+    outer, "#be2633", "#e06f8b");
+  ctx.globalAlpha = crystal.pulse;
+  renderCrystal(crystal.control[0].pos, crystal.control[1].pos,
+    outer * Math.abs(crystal.pulse), "#be2633", "#e06f8b");
+}
+```
+
+@[canvas-demo]
+```op:+
 ```
 
 ### colors
