@@ -58,11 +58,11 @@ function component(state, silent) {
 
   if (!silent) {
     const token = state.push("component", name, 0);
-    token.markup = "[" + name + "]{" + content + "}";
+    token.markup = "@[" + name + "]{" + content + "}";
     token.props = json;
   }
 
-  state.pos = state.posMax + 1;
+  state.pos = state.posMax;
   state.posMax = max;
   return true;
 }
@@ -87,7 +87,8 @@ function render(options) {
       token.attrPush([k, str]);
     }
 
-    return self.renderToken(tokens, idx, _options, env, self);
+    return self.renderToken(tokens, idx, _options, env, self) +
+      `</${token.tag}>`;
   };
 }
 

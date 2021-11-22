@@ -39,7 +39,7 @@ const {rgba} = await import("{{baseURL}}extend.js");
 We will do our [usual boilerplate](fire), where we assume there's a `canvas`
 variable pointing to a valid canvas and initialize it to `1080p`.
 
-```op:+,label:raf+5
+```op:+,label:init+1+3:raf+5
 
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
@@ -439,9 +439,8 @@ below marks each point in order they are added to the path.
 
 Finally, we create a gradient from `colorA` to `colorB` to fill the crystal,
 that will go across the the path. The parameters for `createLinearGradient` are
-the $0\%$ and $100\%$ of the gradient (that we are passing as out control
-points).
-
+the $0\%$ and $100\%$ position of the gradient (that we are passing as out
+control points).
 
 ```op:renderCrystal+7
 
@@ -455,8 +454,8 @@ points).
 ```op:+
 ```
 
-We are already mostly there, but the render still looks a bit flat. We can fix
-that. First, we are going to update our crystal with an extra parameter.
+We are mostly there, but the render still looks a bit flat. We can fix that.
+First, we are going to update our crystal with an extra parameter.
 
 ```op:crystaldef:,lens:crystaldef
 const crystal = {
@@ -475,7 +474,7 @@ And update it so it pulsates in a sine wave over time.
 Now are ready to use it to improve our render. First, we are going to use
 `pulse` to animate the size of the crystal on the $[60, 100]$ range.
 
-```op:render:,lens:render
+```op:render:,label:render,lens:render
 function render() {
   ctx.reset();
   ctx.fillStyle = "#222";
@@ -495,7 +494,7 @@ period of the pulse (that we can get with `abs`).
     outer * Math.abs(crystal.pulse), "#be2633", "#e06f8b");
 ```
 
-Finally, instead of simply drawing one of the top of the other, we can make the
+Finally, instead of simply drawing one on top of the other, we can make the
 whole rendering more interesting by using a screen composite and playing with
 the opacity.
 
@@ -520,7 +519,97 @@ function render() {
 ```op:+
 ```
 
+And here we have our crystal render. Next up, let's add some more colors.
+
 ### colors
+
+We start by picking some colors from the
+[Arne 16 Palette](https://lospec.com/palette-list/arne-16):
+@[color-show]{"color":"rgb(190, 38, 51)"}
+@[color-show]{"color":"rgb(224, 111, 139)"}
+@[color-show]{"color":"rgb(73, 60, 43)"}
+@[color-show]{"color":"rgb(164, 100, 34)"}
+@[color-show]{"color":"rgb(235, 137, 49)"}
+@[color-show]{"color":"rgb(247, 226, 107)"}
+@[color-show]{"color":"rgb(47, 72, 78)"}
+@[color-show]{"color":"rgb(68, 137, 26)"}
+@[color-show]{"color":"rgb(163, 206, 39)"}
+@[color-show]{"color":"rgb(0, 87, 132)"}
+@[color-show]{"color":"rgb(49, 162, 242)"}
+@[color-show]{"color":"rgb(178, 220, 239)"}. We are going to use them pair-wise
+in sequence.
+
+```op:init+3,label:color+1,lens:init+color
+
+const COLORS = [
+  [190, 38, 51],
+  [224, 111, 139],
+  [73, 60, 43],
+  [164, 100, 34],
+  [235, 137, 49],
+  [247, 226, 107],
+  [47, 72, 78],
+  [68, 137, 26],
+  [163, 206, 39],
+  [0, 87, 132],
+  [49, 162, 242],
+  [178, 220, 239],
+];
+```
+
+We create a simple function that returns the next color on this list and loops
+back once it's over. We also start somewhere randomly. Also notice that we
+return the RGB array and not the final string color. This will allow us to
+manipulate the values later on.
+
+```op:++,label:color-14,lens:color
+let CC = Math.floor(Math.random() * COLORS.length);
+function nextColor() {
+  CC = (CC + 1) % COLORS.length;
+  return CC;
+}
+```
+
+The first place to use this is when we construct our control points.
+
+```op:crystal+13,lens:crystal
+    color: nextColor(),
+```
+
+Now we should use the color for rendering. We use our utility `rgba()` function
+to convert the RGB array into a CSS color string and pass that along to
+`renderCrystal`.
+
+```op:render+6:,lens:render
+  ctx.globalAlpha = 0.5;
+  const colorA = rgba(...COLORS[crystal.control[0].color]);
+  const colorB = rgba(...COLORS[crystal.control[1].color]);
+  const outer = 60 + 20 * (1 + crystal.pulse);
+  renderCrystal(crystal.control[0].pos, crystal.control[1].pos,
+    outer, colorA, colorB);
+  ctx.globalAlpha = crystal.pulse;
+  renderCrystal(crystal.control[0].pos, crystal.control[1].pos,
+    outer * Math.abs(crystal.pulse), colorA, colorB);
+}
+```
+
+One last thing. We haven't used the info that the control has bounced for
+anything until now. Let's cycle the color when they do.
+
+```op:update+11,lens:update
+
+  for (const c of crystal.control) {
+    if (!c.bounced) continue;
+    c.bounced = false;
+    c.color = nextColor();
+  }
+```
+
+@[canvas-demo]
+```op:+,lens:
+```
+
+Ouf. That was quite a bit.
 
 ### particles
 

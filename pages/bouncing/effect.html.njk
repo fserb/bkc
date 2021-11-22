@@ -219,14 +219,14 @@ function render() {
   renderParticles();
 
   ctx.globalAlpha = 0.5;
-  const colora = rgba(...COLORS[crystal.control[0].color]);
-  const colorb = rgba(...COLORS[crystal.control[1].color]);
+  const colorA = rgba(...COLORS[crystal.control[0].color]);
+  const colorB = rgba(...COLORS[crystal.control[1].color]);
   const outer = 60 + 20 * (1 + crystal.pulse);
   renderCrystal(crystal.control[0].pos, crystal.control[1].pos,
-    outer, colora, colorb);
+    outer, colorA, colorB);
   ctx.globalAlpha = crystal.pulse;
   renderCrystal(crystal.control[0].pos, crystal.control[1].pos,
-    outer * Math.abs(crystal.pulse), colora, colorb);
+    outer * Math.abs(crystal.pulse), colorA, colorB);
 }
 
 let last = 0;

@@ -43,6 +43,9 @@ function applyOp(prev, cmd, out) {
     const p = /(?<name>[^+-]+)(?<delta>[+-]\d+)?/.exec(input[0]).groups;
     delta = Number.parseInt(p.delta ?? 0);
     label = p.name;
+    if (!prev.labels[label]) {
+      throw TypeError("Invalid label: " + label);
+    }
     start = prev.labels[label][0] + delta;
   }
 
@@ -73,7 +76,7 @@ function generateNewLabels(cmd, out) {
   for (const l of cmd.label.split(':')) {
     range = [out.range[0], out.range[1]];
     // label:name+<start>+<length>
-    const order = /(?<name>[^+-]+)(\+(?<delta>\d+)(\+(?<len>\d+))?)?/
+    const order = /(?<name>[^+-]+)((?<delta>[+-]\d+)(\+(?<len>\d+))?)?/
       .exec(l).groups;
     if (order.delta) {
       const delta = Number.parseInt(order.delta);
