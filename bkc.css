@@ -442,6 +442,72 @@ main svg[display=true] {
   vertical-align: baseline;
 }
 
+aside #ed {
+  position: fixed;
+  bottom: 15px;
+  right: calc(100vw - var(--split-size));
+  margin: 0;
+  padding: 0;
+  width: 50px;
+  height: 50px;
+  opacity: 0.5;
+  background-image: url("assets/edit.png");
+  background-size: 16px 16px;
+  background-repeat: no-repeat;
+  background-position: right bottom;
+  cursor: pointer;
+  overflow: hidden;
+  transition: width 0.5s ease-in-out, opacity 0.25s ease-in-out;
+}
+
+aside #ed_opts {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  opacity: 0.0;
+  width: 64px;
+  height: 32px;
+  transition: all 0.25s ease-in-out 0s;
+}
+
+aside #ed:hover {
+  width: 175px;
+  opacity: 1.0;
+}
+
+aside #ed:hover #ed_opts {
+  opacity: 1.0;
+  transition: all 0.25s ease-in-out 0.25s;
+}
+
+aside #ed_jsfiddle, aside #ed_codepen {
+  width: 48px;
+  height: 48px;
+  position: absolute;
+  background-size: 16px 16px;
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: 8px;
+  background-color: #000;
+  transition: opacity 0.25s linear;
+  border: 1px solid #FFF;
+  opacity: 0.33;
+}
+aside #ed #ed_jsfiddle {
+  top: 0;
+  left: 25px;
+  background-image: url("assets/jsfiddle.png");
+}
+
+aside #ed #ed_codepen {
+  top: 0;
+  left: 90px;
+  background-image: url("assets/codepen.png");
+}
+aside #ed_jsfiddle:hover, aside #ed_codepen:hover {
+  opacity: 1;
+}
+
 /* Syntax highlight */
 pre code { color: #959dcb; }
 pre code ::selection, pre code::selection { background-color:#32374d;color:#959dcb}

@@ -6,7 +6,9 @@ date: 6/11/2021
 ---
 
 <div id="bkc">
-<aside><ol></ol></aside>
+<aside>
+<div id=ed><div id=ed_opts><div id=ed_jsfiddle></div><div id=ed_codepen></div></div></div>
+<ol></ol></aside>
 <main>
 <h1><a href="{{ baseURL }}">Better Know Canvas</a></h1>
 
@@ -27,7 +29,7 @@ date: 6/11/2021
 
 <script type="module">
 import BKC from "./js/bkc.js";
-BKC();
+BKC("{{baseURL}}");
 
 import polyfillWarning from "./js/canvas-polyfill.js";
 polyfillWarning(document.querySelector("main"));

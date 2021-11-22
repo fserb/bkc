@@ -6,6 +6,7 @@ import "./lib/color-show.js";
 
 import {buildState, rebuildPRE, mergeState} from "./lib/bkc-builder.js";
 import {apply} from "./lib/bkc-apply.js";
+import {connectEditor, updateEditorCode} from "./lib/bkc-editor.js";
 
 // contains all BKC states referenced by rulers.
 const SYSTEM = [];
@@ -45,6 +46,7 @@ function setup() {
       if (!e.isIntersecting) continue;
       const id = Number.parseInt(e.target.getAttribute('bkc-state'));
       apply(SYSTEM[id]);
+      updateEditorCode(SYSTEM[id].code);
     }
   }, {
     rootMargin: '-50% 0% -50% 0%',
@@ -100,6 +102,10 @@ function setup() {
   }
 
   resizeRulers();
+  connectEditor(URL, {
+    jsfiddle: document.getElementById("ed_jsfiddle"),
+    codepen: document.getElementById("ed_codepen"),
+  });
 }
 
 function onReady() {
@@ -108,6 +114,8 @@ function onReady() {
   setup();
 }
 
-export default function BKC() {
+let URL;
+export default function BKC(url) {
+  URL = url;
   document.addEventListener("readystatechange", onReady);
 }
