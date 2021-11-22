@@ -445,7 +445,7 @@ main svg[display=true] {
 aside #ed {
   position: fixed;
   bottom: 15px;
-  right: calc(100vw - var(--split-size));
+  right: calc(100vw - var(--split-size) + 15px);
   margin: 0;
   padding: 0;
   width: 50px;

@@ -1,24 +1,24 @@
 // editor.js
 
-const HTML = url => `<!doctype html>
-<html><head>
-<style>
-html, body { background-color: #000; margin: 0; width: 100%; height: 100% }
+const CSS = bgcolor => `
+html, body { background-color: ${bgcolor}; margin: 0; width: 100%; height: 100% }
 #c { display: block; width: 100%; height: 100%; object-fit: contain; }
-</style>
+`
+
+const HTML = url => `
+<canvas id=c></canvas>
 <script type="module">
 import * as poly from "${url}js/canvas-polyfill.js";
 import * as extend from "${url}extend.js";
 
+// JSFiddle and Codepen don't accept JS Modules. Shame on them.
+// And shame on me for writing this hack around it.
 for (const k of Object.keys(extend)) {
   window[k] = extend[k];
 }
 
 run(document.getElementById("c"));
 </script>
-</head><body>
-<canvas id=c></canvas>
-</body></html>
 `;
 
 let code = null;
@@ -56,6 +56,7 @@ function openJSFiddle(ev) {
     title: "Editor " + document.title,
     js: getCode(),
     html: HTML(url),
+    css: CSS("#202227"),
     wrap: "b",
   });
 }
@@ -67,6 +68,7 @@ function openCodepen(ev) {
       editors: "001",
       layout: "left",
       js: getCode(),
+      css: CSS("#000"),
       html: HTML(url),
     })
   });

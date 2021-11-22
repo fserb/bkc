@@ -609,12 +609,127 @@ anything until now. Let's cycle the color when they do.
 ```op:+,lens:
 ```
 
-Ouf. That was quite a bit.
+Ouf. That was quite a bit of code. Remember that you can always play around
+with the current code by pressing on the edit button on the corner.
 
 ### particles
 
+```op:+
+const particles = [];
+
+```
+
+```
+function newParticle(pos, vel, color) {
+  const speed = Math.hypot(vel.x, vel.y) * (0.25 + 1.25 * Math.random());
+  const vangle = Math.TAU * Math.random();
+
+  return {
+    pos: {x: pos.x, y: pos.y },
+    vel: { x: speed * Math.cos(vangle), y: speed * Math.sin(vangle)},
+    angle: Math.TAU * Math.random(),
+    dir: -4 + 8 * Math.random(),
+    color: color,
+    life: Math.random() * 1,
+    radius: 0,
+  };
+}
+```
+
+```
+function updateParticles(dt) {
+  for (const p of particles) {
+    p.pos.x += p.vel.x * dt;
+    p.pos.y += p.vel.y * dt;
+    p.angle += p.life * p.dir * dt;
+    bounce(p);
+    p.life -= dt;
+    p.radius = 125 * p.life;
+  }
+  particles.filterIn(e => e.life > 0);
+}
+```
+
+```
+    for (let i = 0; i < 50; ++i) {
+      particles.push(newParticle(c.pos, c.vel, c.color));
+    }
+  }
+
+  updateParticles(dt);
+```
+
+```
+function renderParticles() {
+  for (const p of particles) {
+    ctx.fillStyle = rgba(...COLORS[p.color]);
+    ctx.save();
+    ctx.translate(p.pos.x, p.pos.y);
+    ctx.scale(p.radius, p.radius);
+    ctx.rotate(p.angle);
+    ctx.beginPath();
+    ctx.moveTo(0, -1);
+    ctx.lineTo(Math.SQRT3 / 2, 0.5);
+    ctx.lineTo(-Math.SQRT3 / 2, 0.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+}
+```
+
+```
+  renderParticles();
+```
+
 ### background
+
+```
+const BG = [16, 16, 16];
+```
+
+```
+  for (let i = 0; i < 3; ++i) {
+    BG[i] = Math.max(16, BG[i] - 16 * dt);
+  }
+```
+
+```
+function updateBGWith(r, g, b) {
+  BG[0] = 16 + 16 * (r / 255);
+  BG[1] = 16 + 16 * (g / 255);
+  BG[2] = 16 + 16 * (b / 255);
+}
+```
+
+```
+    updateBGWith(...COLORS[c.color]);
+```
+
+```
+  ctx.fillStyle = rgba(...BG);
+```
 
 ### shaking
 
+```
+let shaking = 0.0;
+let shakemag = 1.0;
+```
 
+```
+    shaking = Math.min(0.4, shaking + 0.2);
+    shakemag = Math.hypot(c.vel.x, c.vel.y) / 15;
+```
+
+```
+  shaking = Math.max(0, shaking - dt);
+```
+
+```
+  if (shaking > 0) {
+    ctx.translate(
+      shakemag * shaking * (2 * Math.random() - 1),
+      shakemag * shaking * (2 * Math.random() - 1));
+  }
+```
