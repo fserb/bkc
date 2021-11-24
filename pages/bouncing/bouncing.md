@@ -4,40 +4,36 @@ layout: article
 draft: true
 ---
 
-This crystal effect with particles is inspired by the
-[bouncing demo](https://github.com/faiface/pixel-examples/tree/master/community/bouncing)
+This crystal effect with particles is inspired by the [bouncing
+demo](https://github.com/faiface/pixel-examples/tree/master/community/bouncing)
 of [Go's pixel library](https://github.com/faiface/pixel) and it's interesting
 because it piles up a few simple techniques together into a nice effect.
 
 The mechanics of this effect are based on bouncing balls. The trick is that we
-are going to calculate the physics of bouncing balls (technically, circles),
+are going to calculate the physics of bouncing balls (technically circles),
 but we are not going to render them as such. Instead, we are going to use their
 positions to render our bouncing crystal.
 
 Apart from the boundary collision, we are also going to have a circle/circle
 collision that will be simplified for two objects with the same mass. Finally,
-we will have a particle system.
-
-The colors will be out of a palette of 12 colors that will rotate around. This
-allows to match colors two-by-two instead of having a fully consistent
-palette.
+we will have a simple particle system. Let's do this.
 
 
 #### Boilerplate
 
 We start by importing our common library that includes some things like
-`Math.TAU`, `Math.SQRT3`, `Math.clamp()`, in-place array filter and a
-convenience `rgba()` function to generate color strings. You can check the
-commented
-[source code](https://github.com/fserb/bkc/blob/master/pages/extend.js), but
-the functions should be fairly obvious.
+`Math.TAU` (the one true [circle constant](https://tauday.com/tau-manifesto)),
+`Math.SQRT3`, `Math.clamp()`, in-place array filter and a convenience `rgba()`
+function to generate color strings. You can check the commented [source
+code](https://github.com/fserb/bkc/blob/master/pages/extend.js), but the
+functions should be fairly obvious.
 
 ```op:
 const {rgba} = await import("{{baseURL}}extend.js");
 ```
 
-We will do our [usual boilerplate](fire), where we assume there's a `canvas`
-variable pointing to a valid canvas and initialize it to `1080p`.
+We will do the [usual boilerplate](fire), where we assume there's a `canvas`
+variable pointing to a valid canvas element and initialize it to `1080p`.
 
 ```op:+,label:init+1+3:raf+5
 
@@ -48,7 +44,7 @@ const H = canvas.height = 1080;
 function frame(ts) {
   requestAnimationFrame(frame);
 }
-frame(0);
+requestAnimationFrame(frame);
 ```
 
 We are going to set up our `requestAnimationFrame` with an `update` and a
@@ -56,12 +52,22 @@ We are going to set up our `requestAnimationFrame` with an `update` and a
 time. The second is supposed to not change any state. Also, remember that
 `requestAnimationFrame` returns the time in milliseconds.
 
-```op:raf:
+We need to be a bit careful on the initial frames. The initial call to `frame()`
+will have `ts=0` (because we called it like so), so `dt=0`, and the second call
+will have `dt=ts`, which can be any number, as there's no guarantee of when
+`requestAnimationFrame` starts counting, and this could lead to an arbitrarily
+big number. Both of those results can lead to weird numbers, so we just skip the
+initial frames until everything settles.
+
+```op:raf:,spawn:2
 let last = 0;
 function frame(ts) {
   ts /= 1000;
   const dt = (ts - last);
   last = ts;
+  if (dt === ts) {
+    return requestAnimationFrame(frame);
+  }
 
   update(dt, ts);
   render();
@@ -70,9 +76,6 @@ function frame(ts) {
 }
 frame(0);
 ```
-
-Finally, we just need to define our two main loop functions. They are going to
-be a bit empty for now.
 
 ```op:raf-1,label:update+1+2:render+4+2
 
@@ -88,7 +91,7 @@ function render() {
 We start by defining the crystal object with our list of control points. We are
 going to have 2 control points, that we will initialize right here.
 
-```op:update-1,label:crystal+1:crystaldef+1+3,lens:this
+```op:update-1,label:crystaldef+1+3:crystal+1,lens:this
 
 const crystal = {
   control: [],
@@ -102,23 +105,28 @@ for (let i = 0; i < 2; ++i) {
 
 Each of our control points will start with a velocity. Because we have a
 physical system that will conserve energy, this will end up defining how fast
-the system will be, as no new energy will be introduced. We force the initial
-velocity to be within $[700,1100]$ in any direction.
+the system will be forever, as no new energy will be introduced. We force the
+initial velocity to be within $[700,1100]$ in any direction.
 
 ```op:crystal+5
   const speed = 700 + 400 * Math.random();
   const vdir = Math.TAU * Math.random();
 ```
+
 We put the control in a random position inside our canvas and create the `vel`
-vector to match the generated `speed` and `vdir`.
+vector to match the generated `speed` and `vdir`. Notice that we do no effort
+to make sure that they don't initially overlap, as our collision system will
+take care of that.
 
 ```op:crystal+8
     pos: {x: W * Math.random(), y: H * Math.random()},
     vel: {x: speed * Math.cos(vdir), y: speed * Math.sin(vdir)},
 ```
 
-We also define a `radius` (since they are circles) and an internal state to
-track whether they have bounced at something this frame.
+We also define a `radius` (we could hard code that, but if we define it
+explicitly, our collision code is more generic and can be used for particles
+too) and an internal state to track whether they have `bounced` at something
+this frame.
 
 ```op:crystal+10
     radius: 64,
@@ -148,9 +156,9 @@ function render() {
 ```op:+,lens:crystal+render
 ```
 
-Cool. Now let's do some movement. The first thing to do is update the position
-given the velocity. Since we have no acceleration, the proper integration is
-trivial.
+Now let's do some movement. The first thing to do is update the position given
+the velocity. Since we have no acceleration, the proper integration is the
+obvious one.
 
 ```op:update+1,lens:update
   for (const c of crystal.control) {
@@ -161,7 +169,7 @@ trivial.
 
 We should make sure that our balls actually bounce on the borders. For this, we
 can create a generic function that bounce any circle inside the screen area.
-This will be useful for us to reuse it later on the particles.
+This will be useful for us to reuse it later for particles.
 
 ```op:update-1,label:bounce+1,lens:bounce+update
 
@@ -170,7 +178,7 @@ function bounce(obj) {
 ```
 
 For each dimension, we check if the circle is touching each side of the screen,
-and if it is, we move it in and invert the velocity.
+and if it is, we move it back in and invert the velocity in that axis.
 
 ```op:bounce+1,lens:bounce+update
   if (obj.pos.x <= obj.radius || obj.pos.x >= W - obj.radius) {
@@ -179,21 +187,21 @@ and if it is, we move it in and invert the velocity.
   }
 ```
 
-We do this for both dimensions and we also want to return whether we have
-touched the side or not, as this will be useful for us later.
+We do this for both axis and we also return whether we have touched the side or
+not.
 
 ```op:bounce:
 function bounce(obj) {
   let bounced = false;
   if (obj.pos.x <= obj.radius || obj.pos.x >= W - obj.radius) {
     obj.vel.x = -obj.vel.x;
-    bounced = true;
     obj.pos.x = Math.clamp(obj.pos.x, obj.radius, W - obj.radius);
+    bounced = true;
   }
   if (obj.pos.y <= obj.radius || obj.pos.y >= H - obj.radius) {
     obj.vel.y = -obj.vel.y;
-    bounced = true;
     obj.pos.y = Math.clamp(obj.pos.y, obj.radius, H - obj.radius);
+    bounced = true;
   }
   return bounced;
 }
@@ -212,9 +220,10 @@ the result value into the control object.
 ```op:+
 ```
 
-Next we need to deal with the collision between them. We should make a $n^2$
-loop that checks every control against each other. But since we will only have
-two controls, we shortcirtcuit it to just call the collision function once.
+Next we need to deal with the collision between them. The correct way would be
+to make a $n^2$ loop that checks every control against all others. But since we
+will only have two controls, we short-circuit it to just call the collision
+function once.
 
 ```op:update-1,label:update_collision+1
 
@@ -225,14 +234,15 @@ function updateCollision(a, b) {
   updateCollision(crystal.control[0], crystal.control[1]);
 ```
 
-We calculate the `distance` between the two circles by computing a vector from
-one to the other. If we are farther than the sum of the radius, there's no
+We calculate the `distance` between the two circles by computing a vector `col`
+from one to the other. If we are farther than the sum of the radius, there's no
 collision and our job here is done.
 
 `Math.hypot()` is one of those lesser known `Math` functions that is very handy:
 it returns the square root of the sum of the squares of all its arguments. In
 the case of two arguments, `Math.hypot(x,y)`, calculates $\sqrt{x^2 + y^2}$
-which is the magnitude of a vector.
+which is the magnitude of a vector, the hypotenuse of the triangle, the
+euclidian norm, etc...
 
 ```op:update_collision+1,spawn:2,lens:update_collision
   const col = { x: b.pos.x - a.pos.x, y: b.pos.y - a.pos.y};
@@ -271,14 +281,16 @@ opposite direction, on the axis of the collision.
   b.pos.y += col.y * overlap / 2;
 ```
 
-Then we do the velocity update. This is a simple
-[elastic collision](https://en.wikipedia.org/wiki/Elastic_collision)
-(i.e., there's no energy loss) where both objects have the same mass. If we do
-the math on this, we get to two simplifcations: because they have the same
-mass, transfering momentum will be identical to transfering velocity. And
-because we want to keep both total energy and total linear momentum unchanged,
-this becomes just a matter of swapping each object's velocity, in the collision
-axis.
+Then we do the velocity update. This is a simple [elastic
+collision](https://en.wikipedia.org/wiki/Elastic_collision) (i.e., there's no
+energy loss) where both objects have the same mass. If we do the math on this,
+we get to two simplifications: because they have the same mass, transferring
+momentum will be identical to transferring velocity. And because we want to keep
+both total energy and total linear momentum unchanged, this becomes just a
+matter of swapping each object's velocity, in the collision axis.
+
+
+
 
 Which is what we do here. We calculate the relative velocity and project it on
 the collision vector (with dot product) on `colvel`. We then add/subtract it
@@ -297,8 +309,8 @@ from each velocity on the collision axis. In practice, each velocity $\vec
   b.vel.y -= colvel * col.y;
 ```
 
-Finally, we mark both circles as having been bounced. And we are done with the
-all the physics we will need to simulate for this effect,
+Finally, we mark both circles as having been bounced. And we are done with all
+the physics we will need for this effect.
 
 ```op:++
 
@@ -523,8 +535,8 @@ And here we have our crystal render. Next up, let's add some more colors.
 
 ### colors
 
-We start by picking some colors from the
-[Arne 16 Palette](https://lospec.com/palette-list/arne-16):
+We start by picking some colors from the [Arne 16
+Palette](https://lospec.com/palette-list/arne-16):
 @[color-show]{"color":"rgb(190, 38, 51)"}
 @[color-show]{"color":"rgb(224, 111, 139)"}
 @[color-show]{"color":"rgb(73, 60, 43)"}

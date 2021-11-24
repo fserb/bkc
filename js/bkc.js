@@ -10,6 +10,7 @@ import {connectEditor, updateEditorCode} from "./lib/bkc-editor.js";
 
 // contains all BKC states referenced by rulers.
 const SYSTEM = [];
+let URL;
 
 function resizeRulers() {
   const rulers = document.querySelectorAll("main .ruler");
@@ -114,7 +115,6 @@ function onReady() {
   setup();
 }
 
-let URL;
 export default function BKC(url) {
   URL = url;
   document.addEventListener("readystatechange", onReady);

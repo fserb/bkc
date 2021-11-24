@@ -132,10 +132,11 @@ function calculateLens(prev, cmd, out) {
   }
 
   if (cmd.lens.startsWith("this")) {
-    // this+4
-    const p = /this(?<delta>[+-]\d+)?/.exec(cmd.lens).groups;
+    // this+4+<len>
+    const p = /this((?<delta>[+-]\d+)(\+(?<len>\d+))?)?/.exec(cmd.lens).groups;
     const delta = Number.parseInt(p.delta ?? 0);
-    out.lens = [out.thisLabel[0] + delta, out.thisLabel[1] - delta];
+    const len = Number.parseInt(p.len ?? 0);
+    out.lens = [out.thisLabel[0] + delta, out.thisLabel[1] - delta + len];
     return;
   }
 
