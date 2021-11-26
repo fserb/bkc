@@ -55,7 +55,7 @@ if (site.options.dev) {
 }
 
 site.ignore("_images", "_plugins", "orig", "3rdp", ".gitignore", ".git",
-  "js/lib", "README.md");
+  "js/lib", "README.md", "TODO");
 
 site.copy("assets", "assets");
 site.loadAssets([".html"]);

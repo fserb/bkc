@@ -637,9 +637,9 @@ and eventually die off.
 const particles = [];
 ```
 
-We are going to spawn particles in a similar way that we spawned the control
-points. The main difference is that our parameters will be somehow related to
-the control point that spawned the particles.
+We are going to spawn particles in a similar way we spawned the control points.
+The main difference is that our parameters will be somehow related to the
+control point that spawned the particles.
 
 ```op:+bounce-1,label:newparticle+1,lens:newparticle
 
@@ -662,9 +662,9 @@ velocity is $[25\%,150\%]$ of the control point's velocity at a random angle.
 
 We want the particles to rotate, so we set an initial `angle` and a angular
 velocity `rot`. We copy the color from the control point, and set its lifetime
-to $[0, 1]$ seconds. Since we are going to reuse our `bounce()` function for
-particle collision, we need a radius, but since the particle will change size
-over time, we will calculate this later.
+to $[0, 1]$ seconds. Because we are going to reuse our `bounce()` function for
+particle collision, we need to specify a radius. But since the particle will
+change size over time, we will calculate this later.
 
 ```op:+newparticle+7
     angle: Math.TAU * Math.random(),
@@ -674,12 +674,12 @@ over time, we will calculate this later.
     radius: 0,
 ```
 
-For the particles updates, we do the `pos` and `angle` updates. We call
-`bounce()` to allow the particles to bounce on the borders of the screen. This
-is surprisingly effective to give the particles some "weight" and make them
-feel real.
+For the particles updates, we do the `pos` and `angle` updates with the simple
+integration as we did for control points. We call `bounce()` to allow the
+particles to bounce on the borders of the screen. This is surprisingly
+effective to give the particles some "weight" and make them feel real.
 
-```op:+bounce-1,label:update_particles+1,lens:this+1
+```op:+bounce-1,label:update_particles+1,lens:this
 
 function updateParticles(dt) {
   for (const p of particles) {
@@ -691,21 +691,26 @@ function updateParticles(dt) {
 }
 ```
 
-Particles have a limited lifespan. They start big and shrink into nothingness.
+To implement the particle lifespan, we just reduce their lives and make the size
+proportional to their remaining lives. This will make them fade away over time
+and disappear.
 
 ```op:update_particles+6
     p.life -= dt;
     p.radius = 125 * p.life;
 ```
 
-After going through all the particles, filter the `particles` array in-place,
-removing the ones that have died.
+Once a particle reaches `live <= 0`, they have disappeared from the screen and
+we should remove them from the particle list. We filter the array in place and
+remove them.
 
 ```op:update_particles+9
   particles.filterIn(e => e.life > 0);
 ```
-We then need to change our `update()`. We need to spawn particles when a control
-hits something and we need to call our `updateParticles()`.
+
+We want to spawn particles every time one of our controls bounce at something,
+so we can just pig-back on the color-changing logic. We also must remember to
+call our new `updateParticles()`.
 
 ```op:update+16:,lens:update
 
@@ -718,20 +723,50 @@ hits something and we need to call our `updateParticles()`.
 }
 ```
 
-Finally, we should render the particles.
+Finally, we should render the particles. The particles will be rendered as
+equilateral triangles.
 
-```op:render-1,label:render_particles,lens:this
+
+```op:render-1,label:render_particles
 function renderParticles() {
   for (const p of particles) {
-
   }
 }
 ```
-d
-1
-```
+
+```op:render+5,lens:render_particles+render
+
   renderParticles();
 ```
+
+Instead of rotating the points, we will translate, scale, and rotate the current
+transformation matrix (that we usually call `CTM`) and always draw the same
+triangle. This way, `canvas` will do the bulk of the work for us.
+
+
+```op:render_particles+2,lens:render_particles
+    ctx.fillStyle = rgba(...COLORS[p.color]);
+    ctx.save();
+    ctx.translate(p.pos.x, p.pos.y);
+    ctx.scale(p.radius, p.radius);
+    ctx.rotate(p.angle);
+    ctx.restore();
+```
+
+It doesn't really matter in which direction we draw the triangle, so we might as
+well draw the simplest way possible. We choose a triangle is perfectly
+inscribed inside a circle of radius $1$.
+
+```op:render_particles+7
+    ctx.beginPath();
+    ctx.moveTo(0, -1);
+    ctx.lineTo(Math.SQRT3 / 2, 0.5);
+    ctx.lineTo(-Math.SQRT3 / 2, 0.5);
+    ctx.closePath();
+    ctx.fill();
+```
+
+@[canvas-demo]{}
 
 ### background
 
