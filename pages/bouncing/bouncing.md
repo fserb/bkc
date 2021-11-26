@@ -872,8 +872,9 @@ makes the shaking more nature, as it decays slowly its magnitude.
 Keeping things subtle makes them somehow more powerful, as they still add to
 the scene without being strongly noticed.
 
-And this is the final form of our bouncing crystal effect. As always, click on
-the edit button to play around the code at any stage of the article. Hack away.
+And this is the final form of our bouncing crystal effect. As always, you can
+open the [demo standalone]({{relativePath}}/effect.html) or click on the edit
+button to play around the code at any stage of the article. Hack away.
 
 
 
