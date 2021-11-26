@@ -1,6 +1,7 @@
 ---
 title: Bouncing Crystal
 layout: article
+date: 2021-11-26
 ---
 
 This crystal effect with particles is inspired by the [bouncing

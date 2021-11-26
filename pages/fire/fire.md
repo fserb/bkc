@@ -1,6 +1,7 @@
 ---
 title: Fire Filter
 layout: article
+date: 2021-11-12
 ---
 
 A simple fire effect, inspired by this [dwitter](https://www.dwitter.net/d/21204).
