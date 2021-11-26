@@ -35,7 +35,7 @@ const {rgba} = await import("{{baseURL}}extend.js");
 We will do the [usual boilerplate](fire), where we assume there's a `canvas`
 variable pointing to a valid canvas element and initialize it to `1080p`.
 
-```op:+,label:init+1+3:raf+5
+```op:+,label:init+1+4:raf+5
 
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
@@ -60,6 +60,7 @@ big number. Both of those results can lead to weird numbers, so we just skip the
 initial frames until everything settles.
 
 ```op:raf:,spawn:2
+
 let last = 0;
 function frame(ts) {
   ts /= 1000;
@@ -77,7 +78,7 @@ function frame(ts) {
 frame(0);
 ```
 
-```op:raf-1,label:update+1+2:render+4+2
+```op:raf,label:update+1+2:render+4+2
 
 function update(dt, t) {
 }
@@ -555,8 +556,7 @@ Palette](https://lospec.com/palette-list/arne-16):
 @[color-show]{"color":"rgb(178, 220, 239)"}. We are going to use them pair-wise
 in sequence.
 
-```op:init+3,label:color+1,lens:init+color
-
+```op:init+4,label:color+1,lens:init+color
 const COLORS = [
   [190, 38, 51],
   [224, 111, 139],
@@ -770,17 +770,27 @@ inscribed inside a circle of radius $1$.
 
 ### background
 
-```
+Now that the main effect is over, we can do small polishes to improve the demo.
+The first thing we are doing for polish is updating the background. This is a
+subtle effect: every time a control bounces, we will flash the background very
+slightly into that color, which will give the impression the color is shining.
+
+First things first, we are going to keep track of the background...
+
+```op:init+3,lens:init
 const BG = [16, 16, 16];
 ```
 
-```
-  for (let i = 0; i < 3; ++i) {
-    BG[i] = Math.max(16, BG[i] - 16 * dt);
-  }
+... and render it.
+
+```op:render+2:1,lens:render
+  ctx.fillStyle = rgba(...BG);
 ```
 
-```
+Then there's two things that will change `BG`. First, we are going to update its
+value every time a control bounces to a darker version of the original color.
+
+```op:update-1,label:update_bg,lens:update+update_bg
 function updateBGWith(r, g, b) {
   BG[0] = 16 + 16 * (r / 255);
   BG[1] = 16 + 16 * (g / 255);
@@ -788,34 +798,83 @@ function updateBGWith(r, g, b) {
 }
 ```
 
-```
+```op:update+16
     updateBGWith(...COLORS[c.color]);
 ```
 
+Finally, we will dim down the background color over time. This makes the effect
+instant much stronger, which helps the effect.
+
+```op:update+24
+
+  for (let i = 0; i < 3; ++i) {
+    BG[i] = Math.max(16, BG[i] - 16 * dt);
+  }
 ```
-  ctx.fillStyle = rgba(...BG);
+
+@[canvas-demo]
+```op:+
 ```
+
+There. It's a very subtle effect if you are trying to notice it, but if you
+focus on the crystal, your brain will notice it and will make the crystal shine.
 
 ### shaking
 
-```
-let shaking = 0.0;
-let shakemag = 1.0;
+Talking about subtleties, our final effect is not that. We are going to add
+screen shaking when the control bounces. The process to implement it is going
+to be very similar to the background.
+
+First, we set up a state for it. There are two variables to define a shaking:
+how much time we will be shaking and what's the direction of the screen
+shaking.
+
+```op:crystaldef+4,lens:crystaldef
+let shaketime = 0.0;
+let shakedir = {x: 0.0, y: 0.0};
 ```
 
-```
-    shaking = Math.min(0.4, shaking + 0.2);
-    shakemag = Math.hypot(c.vel.x, c.vel.y) / 15;
+We add shaking when there's bouncing. For the time, we want to acknowledge when
+there's multiple bouncings happening, but we also don't want to make the effect
+too long. The ideal direction would be normal to the contact point, but we
+don't need this precision, so we simply take the opposite direction of the
+current velocity, as this is a good proxy to the control's point velocity
+before the collision. It's hand-wavy, but this is *shaking*, so it doesn't
+matter.
+
+```op:update+17,lens:update,spawn:2
+    shaketime = Math.min(0.4, shaketime + 0.2);
+    shakedir = {x: -c.vel.x / 4, y: -c.vel.y / 4};
 ```
 
-```
-  shaking = Math.max(0, shaking - dt);
+```op:update+30
+
+  shaketime = Math.max(0, shaketime - dt);
 ```
 
-```
-  if (shaking > 0) {
+And finally we just apply the shaking as a simple translation before rendering
+anything. The multiplication by `shaketime` is not strictly needed, but it
+makes the shaking more nature, as it decays slowly its magnitude.
+
+```op:render+5,lens:render
+
+  if (shaketime > 0) {
     ctx.translate(
-      shakemag * shaking * (2 * Math.random() - 1),
-      shakemag * shaking * (2 * Math.random() - 1));
+      shakedir.x * shaketime * Math.random(),
+      shakedir.y * shaketime * Math.random());
   }
 ```
+
+@[canvas-demo]
+```op:+,lens:
+```
+
+Keeping things subtle makes them somehow more powerful, as they still add to
+the scene without being strongly noticed.
+
+And this is the final form of our bouncing crystal effect. As always, click on
+the edit button to play around the code at any stage of the article. Hack away.
+
+
+
+

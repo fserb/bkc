@@ -205,6 +205,8 @@ export function buildState(prev, cmd) {
   calculateLens(prev, cmd, out);
   determineHighlight(prev, out);
 
+  if (cmd.debug) console.log(out);
+
   return out;
 }
 

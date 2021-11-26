@@ -75,7 +75,8 @@ function setup() {
     const op = el.getAttribute('op') ?? "";
     const label = el.getAttribute('label') ?? "";
     const lens = el.getAttribute('lens') ?? null;
-    state = buildState(state, {op, label, lens, code: el.innerHTML});
+    const debug = el.getAttribute('debug') !== null;
+    state = buildState(state, {op, label, lens, debug, code: el.innerHTML});
 
     rebuildPRE(state, el);
 
