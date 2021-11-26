@@ -1,5 +1,5 @@
 ---
-title: Fire Filter bigger
+title: Fire Filter
 layout: article
 ---
 

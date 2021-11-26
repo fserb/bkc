@@ -69,8 +69,8 @@ h3 {
 }
 
 #home .entry {
-  width: calc((min(980px, 100vw) - 100px)/4);
-  min-height: calc((min(980px, 100vw) - 100px)/4);
+  width: calc((min(980px, 100vw) - 100px)/3);
+  min-height: calc((min(980px, 100vw) - 100px)/3);
   min-width: 200px;
   padding: 20px;
   margin: 10px;
