@@ -91,7 +91,7 @@ function render() {
 We start by defining the crystal object with our list of control points. We are
 going to have 2 control points, that we will initialize right here.
 
-```op:update-1,label:crystaldef+1+3:crystal+1,lens:this
+```op:update-1,label:crystaldef+1+4:crystal+1,lens:this
 
 const crystal = {
   control: [],
@@ -292,12 +292,13 @@ matter of swapping each object's velocity, in the collision axis.
 
 
 
-Which is what we do here. We calculate the relative velocity and project it on
-the collision vector (with dot product) on `colvel`. We then add/subtract it
-from each velocity on the collision axis. In practice, each velocity $\vec
-{v_a}$ is losing its component on the collision axis ($\vec{v_a} \cdot \vec
-{col}$) and gaining the velocity of the other object ($\vec{v_b} \cdot \vec
-{col}$).
+Which is what we do here. We calculate the relative velocity ($\vec{v_b} - \vec
+{v_a}$) and project it on the collision vector ($\left(\vec{v_b} - \vec
+{v_a}\right) \cdot \vec{col}$) on `colvel`.
+We then add/subtract it from each velocity on the collision axis. In practice,
+each velocity $\vec{v_a}$ is losing its component on the collision axis ($\vec
+{v_a} \cdot \vec{col}$) and gaining the velocity of the other object ($\vec
+{v_b} \cdot \vec{col}$).
 
 
 ```op:++,spawn:2
@@ -350,7 +351,8 @@ function render() {
 
 We start by computing the normalized vector `dir` that connects `a` and `b`, we
 also calculate a perpendicular vector `nor` to that. Those two will work as the
-basis for our crystal rendering.
+basis for our crystal rendering. Notice that we both normalize and multiply by
+the passed `size`.
 
 A quick note on the perpendicular vector. We do it by rotating the original
 vector by $90^{\circ}$ counter-clockwise. A vector rotation by $\theta$ is a
@@ -364,13 +366,13 @@ function renderCrystal(a, b, size, colorA, colorB) {
   const dir = {x: b.x - a.x, y: b.y - a.y};
   const dirlen = Math.hypot(dir.x, dir.y);
   if (dirlen == 0) return;
-  dir.x /= dirlen;
-  dir.y /= dirlen;
+  dir.x *= size / dirlen;
+  dir.y *= size / dirlen;
   const nor = {x: -dir.y, y: dir.x};
 }
 ```
 Now we draw the crystal with a path, following the axis we created. The diagram
-below marks each point in order they are added to the path.
+below marks each point in the order they are added to the path.
 
 {% svg 640,150 %}
   const a = {x: 150, y: 75};
@@ -428,31 +430,32 @@ below marks each point in order they are added to the path.
     {orient: "auto", markerWidth: 2, markerHeight: 4, refX: 0.1, refY: 2})
     .path({fill: '#000'}).M(0,0).V(4).L(2,2).Z();
 
-  const c = {x: 320, y: 75};
+  const c = {x: 320, y: 90};
   svg.path({'stroke-width': 2, 'stroke': '#000', 'marker-end': 'url(#head)'})
-    .M(c.x, c.y).l(20,0);
+    .M(c.x, c.y).l(size,0);
   svg.path({'stroke-width': 2, 'stroke': '#000', 'marker-end': 'url(#head)'})
-    .M(c.x, c.y).l(0,-20);
-  svg.text(c.x + 2, c.y + 12.5, "dir", {"font-family": "Open Sans", "font-size": "10px"});
-  svg.text(c.x - 21, c.y - 7.5, "nor", {"font-family": "Open Sans", "font-size": "10px"});
+    .M(c.x, c.y).l(0,-size);
+  svg.text(c.x + 12, c.y + 12.5, "dir", {"font-family": "Open Sans", "font-size": "10px"});
+  svg.text(c.x - 21, c.y - 14, "nor", {"font-family": "Open Sans", "font-size": "10px"});
 {% endsvg %}
 
 ```op:renderCrystal+7,spawn:2
 
   ctx.beginPath();
-  ctx.moveTo(a.x - dir.x * size, a.y - dir.y * size);
-  ctx.lineTo(a.x + nor.x * size, a.y + nor.y * size);
-  ctx.lineTo(b.x + nor.x * size, b.y + nor.y * size);
-  ctx.lineTo(b.x + dir.x * size, b.y + dir.y * size);
-  ctx.lineTo(b.x - nor.x * size, b.y - nor.y * size);
-  ctx.lineTo(a.x - nor.x * size, a.y - nor.y * size);
+  ctx.moveTo(a.x - dir.x, a.y - dir.y);
+  ctx.lineTo(a.x + nor.x, a.y + nor.y);
+  ctx.lineTo(b.x + nor.x, b.y + nor.y);
+  ctx.lineTo(b.x + dir.x, b.y + dir.y);
+  ctx.lineTo(b.x - nor.x, b.y - nor.y);
+  ctx.lineTo(a.x - nor.x, a.y - nor.y);
   ctx.fill();
 ```
 
 Finally, we create a gradient from `colorA` to `colorB` to fill the crystal,
 that will go across the the path. The parameters for `createLinearGradient` are
-the $0\%$ and $100\%$ position of the gradient (that we are passing as out
-control points).
+the $0\%$ and $100\%$ position of the gradient that we are passing as out
+control points. I.e., the colors at the control points will be exactly `colorA`
+and `ColorB`.
 
 ```op:renderCrystal+7
 
@@ -474,6 +477,7 @@ const crystal = {
   control: [],
   pulse: 1.0,
 };
+
 ```
 
 And update it so it pulsates in a sine wave over time.
@@ -570,9 +574,9 @@ const COLORS = [
 ```
 
 We create a simple function that returns the next color on this list and loops
-back once it's over. We also start somewhere randomly. Also notice that we
-return the RGB array and not the final string color. This will allow us to
-manipulate the values later on.
+back once it's over. We also start somewhere randomly. Notice that we return
+the RGB array and not the final string color. This will allow us to manipulate
+the values later on.
 
 ```op:++,label:color-14,lens:color
 let CC = Math.floor(Math.random() * COLORS.length);
@@ -626,70 +630,105 @@ with the current code by pressing on the edit button on the corner.
 
 ### particles
 
-```op:+
+The particle system is just a list of particles that are spawn at some time,
+and eventually die off.
+
+```op:+crystaldef+4,lens:crystaldef
 const particles = [];
-
 ```
 
-```
+We are going to spawn particles in a similar way that we spawned the control
+points. The main difference is that our parameters will be somehow related to
+the control point that spawned the particles.
+
+```op:+bounce-1,label:newparticle+1,lens:newparticle
+
 function newParticle(pos, vel, color) {
+}
+```
+
+The particle's initial position is the same as the control point, and the
+velocity is $[25\%,150\%]$ of the control point's velocity at a random angle.
+
+```op:+newparticle+1
   const speed = Math.hypot(vel.x, vel.y) * (0.25 + 1.25 * Math.random());
   const vangle = Math.TAU * Math.random();
 
   return {
     pos: {x: pos.x, y: pos.y },
     vel: { x: speed * Math.cos(vangle), y: speed * Math.sin(vangle)},
+  };
+```
+
+We want the particles to rotate, so we set an initial `angle` and a angular
+velocity `rot`. We copy the color from the control point, and set its lifetime
+to $[0, 1]$ seconds. Since we are going to reuse our `bounce()` function for
+particle collision, we need a radius, but since the particle will change size
+over time, we will calculate this later.
+
+```op:+newparticle+7
     angle: Math.TAU * Math.random(),
-    dir: -4 + 8 * Math.random(),
+    rot: -4 + 8 * Math.random(),
     color: color,
     life: Math.random() * 1,
     radius: 0,
-  };
-}
 ```
 
-```
+For the particles updates, we do the `pos` and `angle` updates. We call
+`bounce()` to allow the particles to bounce on the borders of the screen. This
+is surprisingly effective to give the particles some "weight" and make them
+feel real.
+
+```op:+bounce-1,label:update_particles+1,lens:this+1
+
 function updateParticles(dt) {
   for (const p of particles) {
     p.pos.x += p.vel.x * dt;
     p.pos.y += p.vel.y * dt;
-    p.angle += p.life * p.dir * dt;
+    p.angle += p.life * p.rot * dt;
     bounce(p);
-    p.life -= dt;
-    p.radius = 125 * p.life;
   }
-  particles.filterIn(e => e.life > 0);
 }
 ```
 
+Particles have a limited lifespan. They start big and shrink into nothingness.
+
+```op:update_particles+6
+    p.life -= dt;
+    p.radius = 125 * p.life;
 ```
+
+After going through all the particles, filter the `particles` array in-place,
+removing the ones that have died.
+
+```op:update_particles+9
+  particles.filterIn(e => e.life > 0);
+```
+We then need to change our `update()`. We need to spawn particles when a control
+hits something and we need to call our `updateParticles()`.
+
+```op:update+16:,lens:update
+
     for (let i = 0; i < 50; ++i) {
       particles.push(newParticle(c.pos, c.vel, c.color));
     }
   }
 
   updateParticles(dt);
-```
-
-```
-function renderParticles() {
-  for (const p of particles) {
-    ctx.fillStyle = rgba(...COLORS[p.color]);
-    ctx.save();
-    ctx.translate(p.pos.x, p.pos.y);
-    ctx.scale(p.radius, p.radius);
-    ctx.rotate(p.angle);
-    ctx.beginPath();
-    ctx.moveTo(0, -1);
-    ctx.lineTo(Math.SQRT3 / 2, 0.5);
-    ctx.lineTo(-Math.SQRT3 / 2, 0.5);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
 }
 ```
 
+Finally, we should render the particles.
+
+```op:render-1,label:render_particles,lens:this
+function renderParticles() {
+  for (const p of particles) {
+
+  }
+}
+```
+d
+1
 ```
   renderParticles();
 ```

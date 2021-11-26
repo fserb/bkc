@@ -12,6 +12,9 @@ like: `<code op="+" lens="this">`. In Markdown, they are defined as:
 Those are the available commands, described on the markdown format, for HTML
 everything before the first `:` is a attribute and everything after is data.
 
+Those commands are currently not great. They grew organically as I needed to
+describe certain operations. They are not consistent. They are not intuitive.
+
 * `op` defines the operation on how to insert content into code. If not defined,
   behaves as empty.
 

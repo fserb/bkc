@@ -10,9 +10,7 @@ title: ""
   <meta name="Description" content="A collection of advanced web graphics tutorials.">
   <title>{{ title }}{{ " &middot; " if title }}Better Know Canvas</title>
   <meta http-equiv="origin-trial" content="AhLQm4ICiudjd0hChY39JD0RgNfBTsrra93PD/2pTGC05WgqUq//jwCDNVDQo0KVAPPjF/xi+IX4xeP8pn+bdA8AAABUeyJvcmlnaW4iOiJodHRwczovL2NhbnZhcy5yb2Nrczo0NDMiLCJmZWF0dXJlIjoiTmV3Q2FudmFzMkRBUEkiLCJleHBpcnkiOjE2NDU1NzQzOTl9">
-<script type="module">
-</script>
-
+  {% if not dev %}<script defer data-domain="canvas.rocks" src="https://metaphora.co/plausible.js"></script>{% endif %}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;600;700&family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Rock+Salt&display=swap" rel="stylesheet">
@@ -22,6 +20,8 @@ title: ""
   <script type="module" src="js/bkc.js"></script>
 </head>
 <body>
+
+
 {{ content }}
 
 <script defer type="module">

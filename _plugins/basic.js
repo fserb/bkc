@@ -30,6 +30,7 @@ export default function() {
       page.data.srcFile = `${page.src.path}${page.src.ext}`;
       page.data.baseURL = site.options.location.toString();
       page.data.relativePath = page.data.url.split('/').slice(1, -1).join('/');
+      page.data.dev = site.options.dev;
 
       // appends .njk on layout
       if (page.data.layout) {

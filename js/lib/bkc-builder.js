@@ -71,7 +71,10 @@ Parse @cmd.label into ranges related to current edit.
 */
 function generateNewLabels(cmd, out) {
   out.labels = {};
-  if (!cmd.label) return;
+  if (!cmd.label) {
+    out.thisLabel = [out.range[0], out.range[1]];
+    return;
+  }
   let range;
   for (const l of cmd.label.split(':')) {
     range = [out.range[0], out.range[1]];
@@ -114,6 +117,12 @@ function calculateLens(prev, cmd, out) {
   out.lens = prev.lens ? [...prev.lens] : null;
 
   if (cmd.lens === null) {
+    // if lens AND op are ommited, this is probably an empty PRE, so default to
+    // showing everything.
+    if (cmd.op == "") {
+      out.lens = null;
+      return;
+    }
     // if there's no lens update, just update the current lens range.
     if (out.lens !== null) {
       if (out.lens[0] > out.range[0]) {

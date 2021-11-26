@@ -48,6 +48,7 @@ site.use(markdown({
 }));
 
 if (site.options.dev) {
+
   site.options.location = new URL("https://dev.metaphora.co/bkc/_site/");
 } else {
   site.options.location = new URL("https://canvas.rocks/");

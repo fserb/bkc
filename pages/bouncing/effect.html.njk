@@ -1,6 +1,7 @@
 ---
 layout: effect
 title: Bouncing Crystal
+draft: true
 ---
 
 <script type="module">
@@ -43,14 +44,41 @@ const particles = [];
 
 for (let i = 0; i < 2; ++i) {
   const speed = 700 + 400 * Math.random();
-  const vdir = Math.TAU * Math.random();
+  const vangle = Math.TAU * Math.random();
   crystal.control.push({
     pos: {x: W * Math.random(), y: H * Math.random() },
-    vel: {x: speed * Math.cos(vdir), y: speed * Math.sin(vdir)},
+    vel: {x: speed * Math.cos(vangle), y: speed * Math.sin(vangle)},
     radius: 64,
     bounced: false,
     color: nextColor(),
   });
+}
+
+function newParticle(pos, vel, color) {
+  const speed = Math.hypot(vel.x, vel.y) * (0.25 + 1.25 * Math.random());
+  const vangle = Math.TAU * Math.random();
+
+  return {
+    pos: {x: pos.x, y: pos.y },
+    vel: { x: speed * Math.cos(vangle), y: speed * Math.sin(vangle)},
+    angle: Math.TAU * Math.random(),
+    rot: -4 + 8 * Math.random(),
+    color: color,
+    life: Math.random() * 1,
+    radius: 0,
+  };
+}
+
+function updateParticles(dt) {
+  for (const p of particles) {
+    p.pos.x += p.vel.x * dt;
+    p.pos.y += p.vel.y * dt;
+    p.angle += p.life * p.rot * dt;
+    bounce(p);
+    p.life -= dt;
+    p.radius = 125 * p.life;
+  }
+  particles.filterIn(e => e.life > 0);
 }
 
 function bounce(obj) {
@@ -66,33 +94,6 @@ function bounce(obj) {
     obj.pos.y = Math.clamp(obj.pos.y, obj.radius, H - obj.radius);
   }
   return bounced;
-}
-
-function newParticle(pos, vel, color) {
-  const speed = Math.hypot(vel.x, vel.y) * (0.25 + 1.25 * Math.random());
-  const vangle = Math.TAU * Math.random();
-
-  return {
-    pos: {x: pos.x, y: pos.y },
-    vel: { x: speed * Math.cos(vangle), y: speed * Math.sin(vangle)},
-    angle: Math.TAU * Math.random(),
-    dir: -4 + 8 * Math.random(),
-    color: color,
-    life: Math.random() * 1,
-    radius: 0,
-  };
-}
-
-function updateParticles(dt) {
-  for (const p of particles) {
-    p.pos.x += p.vel.x * dt;
-    p.pos.y += p.vel.y * dt;
-    p.angle += p.life * p.dir * dt;
-    bounce(p);
-    p.life -= dt;
-    p.radius = 125 * p.life;
-  }
-  particles.filterIn(e => e.life > 0);
 }
 
 function updateCollision(a, b) {
