@@ -10,9 +10,10 @@ layout: page
 
 <div id="display">
 
-
 {%- for article in search.pages("layout=article.njk") | reverse -%}
-<div class="entry"><a href="{{article.data.relativePath}}"><img alt="{{ article.data.title }}" src="{{article.data.relativePath}}/shot.webp">{{ article.data.title }}</a></div>
+<div class="entry">
+<a href="{{article.data.relativePath}}"><img alt="{{ article.data.title }}" src="{{article.data.relativePath}}/shot.webp"></a>
+<a href="{{article.data.relativePath}}">{{ article.data.title }}</a></div>
 {%- endfor -%}
 
 </div>

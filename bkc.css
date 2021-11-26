@@ -125,7 +125,9 @@ h3 {
 }
 
 #home .entry {
-  width: 300px;
+  width: calc((min(980px, 100vw) - 100px)/4);
+  min-height: calc((min(980px, 100vw) - 100px)/4);
+  min-width: 200px;
   padding: 20px;
   margin: 10px;
   box-sizing: border-box;
@@ -133,7 +135,7 @@ h3 {
   box-shadow: 4px 4px 4px rgba(0,0,0,0.4);
   border-radius: 6px;
   font-family: 'Rock Salt', sans-serif;
-  display: inline-block;
+  display: inline-grid;
 }
 
 #home .entry a {
@@ -142,9 +144,7 @@ h3 {
 }
 
 #home .entry img {
-  display: block;
-  width: 260px;
-  height: 147px;
+  width: 100%;
   object-fit: contain;
   border-radius: 6px;
   margin-bottom: 20px;
