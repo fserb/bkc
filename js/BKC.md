@@ -52,7 +52,7 @@ describe certain operations. They are not consistent. They are not intuitive.
   * `label:a+2+4` defines `a` as start at the 2nd line of the current code, with
     length 4.
 
-  * `label:a+0+1,b+4+2` defines `a` as the first line of current code and `b` as
+  * `label:a+0+1:b+4+2` defines `a` as the first line of current code and `b` as
     the lines 4-6.
 
 * `lens` declares the range of lines that should be focused on. If ommited,

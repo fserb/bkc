@@ -29,20 +29,17 @@ export function apply(state) {
 
 function scheduleApplyAfter(evname) {
   pending++;
-  document.querySelector("aside ol").addEventListener(evname, ev => {
+  document.querySelector("aside ol").addEventListener(evname, () => {
     pending--;
     runApply();
   }, {once: true});
 }
 
-
 function preApplyLens(alives, diff, lens) {
-  let inputPos = 0;
-  let outputPos = 0;
-
   const hideState = [];
   let allHidden = true;
-
+  let inputPos = 0;
+  let outputPos = 0;
   for (const [op, _] of diff) {
     if (inputPos >= alives.length) break;
     if (op == "+") {
@@ -50,7 +47,7 @@ function preApplyLens(alives, diff, lens) {
       continue;
     }
 
-    const hide = outputPos < lens[0] || outputPos >= lens[0] + lens[1];
+    const hide = lensMatch(lens, outputPos) === null;
     hideState.push(hide);
     if (!hide) {
       allHidden = false;
@@ -69,12 +66,20 @@ function preApplyLens(alives, diff, lens) {
     const el = alives[i];
     const hide = hideState[i];
     const isHidden = el.classList.contains("hidden");
-    if (hide != isHidden) {
-      if (!hide) {
-        changed = true;
-        el.classList.remove("hidden");
-        el.style.animation = UNHIDE_ANIMATION;
-      }
+    if (!hide && isHidden) {
+      changed = true;
+      el.classList.remove("hidden");
+      el.style.animation = UNHIDE_ANIMATION;
+    }
+  }
+
+  const lbs = lensBorderSet(lens);
+  for (let i = 0; i < alives.length; ++i) {
+    const el = alives[i];
+    if (lbs.has(i)) {
+      el.classList.add("spacer");
+    } else {
+      el.classList.remove("spacer");
     }
   }
 
@@ -84,12 +89,10 @@ function preApplyLens(alives, diff, lens) {
     const el = alives[i];
     const hide = hideState[i];
     const isHidden = el.classList.contains("hidden");
-    if (hide != isHidden) {
-      if (hide) {
-        changed = true;
-        el.classList.add("hidden");
-        el.style.animation = HIDE_ANIMATION;
-      }
+    if (hide && !isHidden) {
+      changed = true;
+      el.classList.add("hidden");
+      el.style.animation = HIDE_ANIMATION;
     }
   }
 
@@ -100,7 +103,7 @@ function postApplyLens(alives, lens) {
   let changed = false;
   for (let i = 0; i < alives.length; ++i) {
     const el = alives[i];
-    const hide = i < lens[0] || i >= lens[0] + lens[1];
+    const hide = lensMatch(lens, i) === null;
     const isHidden = el.classList.contains("hidden");
     if (hide != isHidden) {
       changed = true;
@@ -116,6 +119,10 @@ function postApplyLens(alives, lens) {
   return changed;
 }
 
+// Every time runApply() does any DOM animation, we can leave the function and
+// reschedule apply to re-run after the animation is over. This has two effects:
+// it allows CSS animations in sequence, AND it allows us to "give up" on a
+// certain animation and move to the next state.
 function runApply() {
   const state = applyState;
   const highlight = new Set(state.highlight);
@@ -130,20 +137,19 @@ function runApply() {
   }
   const diff = diffCode(input, output);
 
-  const lens = state.lens ?? [0, output.length];
+  const lens = state.lens ?? [[0, output.length]];
 
+  // we try to apply lens before editing. If this would lead to an empty area,
+  // we give up and let postApplyLens do the actual lensing.
   if (preApplyLens(alives, diff, lens)) {
     return scheduleApplyAfter("animationend");
   }
 
   let changed = false;
-
   let pos = 0;
   let rel = 0;
   let relsub = 0;
-  let visible = 0;
   const pendingAlive = [];
-  const begin = (alives.length == 0 && lens ? lens[0] : 0) + 1;
   for (const [op, line] of diff) {
     if (op == "-") {
       changed = true;
@@ -155,9 +161,7 @@ function runApply() {
       alives.splice(pos, 1);
       o.style.top = `${LINE_HEIGHT * relsub++}em`;
       rel = 0;
-      if (!o.classList.contains("hidden")) visible++;
     } else if (op == "=") {
-      if (!alives[pos].classList.contains("hidden")) visible++;
       pos++;
       rel = relsub = 0;
     } else if (op == "+") {
@@ -166,11 +170,12 @@ function runApply() {
       o.classList.add("alive");
       o.innerHTML = output[line];
 
-      if (pos >= lens[0] && pos < lens[0] + lens[1]) {
+      const ln = lensMatch(lens, pos);
+      if (ln !== null) {
+        const begin = (alives.length == 0 ? ln[0] : 0) + 1;
         o.classList.add("born");
         o.style.top = `${LINE_HEIGHT * (rel++ - begin)}em`;
         pendingAlive.push(o);
-       visible++;
       } else {
         o.classList.add("hidden");
       }
@@ -182,8 +187,9 @@ function runApply() {
     }
   }
 
-  // we need a re-layout before setting .born animation, so we group them
-  // into a single place.
+  // we need a re-layout before setting .born animation, so we group them into a
+  // single place. In theory, we could do this as an animation and not do this.
+  // In practice, it's a bit hard to set up a proper animation for this.
   if (pendingAlive.length > 0) {
     pendingAlive[0].getBoundingClientRect();
 
@@ -207,6 +213,9 @@ function runApply() {
     return scheduleApplyAfter("transitionend");
   }
 
+  // After all animations have passed, we force-apply the lens. This catches the
+  // case where we didn't apply lens initially, because it would lead to an
+  // empty list.
   postApplyLens(alives, lens);
 }
 
@@ -220,3 +229,30 @@ function clearLine(s) {
     .replaceAll('&#x60;', '`');
 }
 
+function lensMatch(lens, pos) {
+  for (const d of lens) {
+    if (pos >= d[0] && pos < d[0] + d[1]) {
+      return d;
+    }
+  }
+  return null;
+}
+
+function lensBorderSet(lens) {
+  const ret = new Set();
+  if (lens.length == 1) return ret;
+
+  const start = new Set();
+  let last = 0;
+  for (const d of lens) {
+    start.add(d[0]);
+    last = Math.max(last, d[0] + d[1]);
+  }
+  for (const d of lens) {
+    const e = d[0] + d[1];
+    if (!start.has(e) && last != e) {
+      ret.add(e - 1);
+    }
+  }
+  return ret;
+}

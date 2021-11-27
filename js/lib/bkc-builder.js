@@ -114,7 +114,14 @@ function propagateOldLabels(prev, out) {
 Update @out.lens, either with the current edit, or by using new labels.
 */
 function calculateLens(prev, cmd, out) {
-  out.lens = prev.lens ? [...prev.lens] : null;
+  out.lens = null;
+  // deep copy previous, if it exists.
+  if (prev.lens) {
+    out.lens = [];
+    for (const d of prev.lens) {
+      out.lens.push([...d]);
+    }
+  }
 
   if (cmd.lens === null) {
     // if lens AND op are ommited, this is probably an empty PRE, so default to
@@ -125,11 +132,13 @@ function calculateLens(prev, cmd, out) {
     }
     // if there's no lens update, just update the current lens range.
     if (out.lens !== null) {
-      if (out.lens[0] > out.range[0]) {
-        out.lens[0] += out.range[1];
-      } else if (out.range[0] >= out.lens[0] &&
-          out.range[0] < out.lens[0] + out.lens[1]) {
-        out.lens[1] += out.range[2];
+      for (const d of out.lens) {
+        if (d[0] > out.range[0]) {
+          d[0] += out.range[1];
+        } else if (out.range[0] >= d[0] &&
+            out.range[0] < d[0] + d[1]) {
+          d[1] += out.range[2];
+        }
       }
     }
     return;
@@ -145,24 +154,29 @@ function calculateLens(prev, cmd, out) {
     const p = /this((?<delta>[+-]\d+)(\+(?<len>\d+))?)?/.exec(cmd.lens).groups;
     const delta = Number.parseInt(p.delta ?? 0);
     const len = Number.parseInt(p.len ?? 0);
-    out.lens = [out.thisLabel[0] + delta, out.thisLabel[1] - delta + len];
+    out.lens = [[out.thisLabel[0] + delta, out.thisLabel[1] - delta + len]];
     return;
   }
 
+  // when there are specific labels listed on lens.
   if (cmd.lens != "") {
-    out.lens = null;
-    for (const l of cmd.lens.split('+')) {
-      const t = out.labels[l];
-      if (!t) {
-        throw TypeError("Invalid label: " + l);
+    out.lens = [];
+    for (const d of cmd.lens.split('-')) {
+      let dis = null;
+      for (const l of d.split('+')) {
+        const t = out.labels[l];
+        if (!t) {
+          throw TypeError("Invalid label: " + l);
+        }
+        if (dis === null) {
+          dis = [...t];
+          continue;
+        }
+        const start = Math.min(dis[0], t[0]);
+        const end = Math.max(dis[0] + dis[1], t[0] + t[1]);
+        dis = [start, end - start];
       }
-      if (out.lens === null) {
-        out.lens = [...t];
-        continue;
-      }
-      const start = Math.min(out.lens[0], t[0]);
-      const end = Math.max(out.lens[0] + out.lens[1], t[0] + t[1]);
-      out.lens = [start, end - start];
+      out.lens.push(dis);
     }
   }
 }

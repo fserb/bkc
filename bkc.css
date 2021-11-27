@@ -189,7 +189,7 @@ main .ruler {
   margin-right: -40px;
   background-color: #000;
   width: 30px;
-  opacity: 0;
+  opacity: 0.5;
 }
 
 canvas-demo {
@@ -299,6 +299,21 @@ aside li.born:before {
 aside li.hidden {
   height: 0;
   opacity: 0;
+}
+
+aside li.spacer {
+  margin-bottom: 3em;
+}
+
+aside li.spacer::after {
+  height: 3em;
+  line-height: 2em;
+  margin: 0.5em 0;
+  width: 3ch;
+  text-align: right;
+  content: "⋮";
+  display: block;
+  color: #3A3F58;
 }
 
 @keyframes lens_hide {

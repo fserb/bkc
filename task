@@ -23,6 +23,10 @@ function sync {
   rsync -a --partial --progress _site/ canvas.rocks:canvas/
 }
 
+function png2webp {
+  cwebp -q 80 "$1" -o "$2"
+}
+
 function help {
   echo "$0 <task> <args>"
   echo "Tasks:"

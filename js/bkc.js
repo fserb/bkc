@@ -4,6 +4,20 @@
 import "./lib/canvas-demo.js";
 import "./lib/color-show.js";
 
+/*
+BKC is split in 4 parts:
+
+bkc.js - read/write DOM elements (canvas-demo, PRE CODE, rulers), keep all
+states.
+
+bkc-builder.js - given the previous state and a command (ops + code) generate a
+new state. All this code happens at start up time, as we read the page.
+
+bkc-apply.js - given a current selected state and the current ASIDE, render the
+new ASIDE. This happens at scroll time.
+
+bkc-editor.js - open current code in different web editors.
+*/
 import {buildState, rebuildPRE, mergeState} from "./lib/bkc-builder.js";
 import {apply} from "./lib/bkc-apply.js";
 import {connectEditor, updateEditorCode} from "./lib/bkc-editor.js";
