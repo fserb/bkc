@@ -24,7 +24,6 @@ import {connectEditor, updateEditorCode} from "./lib/bkc-editor.js";
 
 // contains all BKC states referenced by rulers.
 const SYSTEM = [];
-let URL;
 
 function resizeRulers() {
   const rulers = document.querySelectorAll("main .ruler");
@@ -118,7 +117,7 @@ function setup() {
   }
 
   resizeRulers();
-  connectEditor(URL, {
+  connectEditor(document.head.baseURI, {
     jsfiddle: document.getElementById("ed_jsfiddle"),
     codepen: document.getElementById("ed_codepen"),
   });
@@ -130,7 +129,6 @@ function onReady() {
   setup();
 }
 
-export default function BKC(url) {
-  URL = url;
+export default function BKC() {
   document.addEventListener("readystatechange", onReady);
 }

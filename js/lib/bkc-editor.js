@@ -24,10 +24,20 @@ run(document.getElementById("c"));
 let code = null;
 let url = null;
 
+function track(el, clickFunc) {
+  el.addEventListener("click", ev => {
+    const op =
+      window.getComputedStyle(el.parentNode).getPropertyValue("opacity");
+    if (op != 1) return;
+    clickFunc(ev);
+  });
+}
+
 export function connectEditor(siteurl, target) {
   url = siteurl;
-  target.jsfiddle.addEventListener("click", openJSFiddle);
-  target.codepen.addEventListener("click", openCodepen);
+
+  track(target.jsfiddle, openJSFiddle);
+  track(target.codepen, openCodepen);
 }
 
 export function updateEditorCode(newcode) {

@@ -1,5 +1,7 @@
 import Tonic from "./tonic.js";
 
+import "../canvas-polyfill.js";
+
 const BASE = content => `<!doctype html>
 <html><head>
 <meta http-equiv="origin-trial" content="AhLQm4ICiudjd0hChY39JD0RgNfBTsrra93PD/\
@@ -18,7 +20,7 @@ function sendFPS(fps) {
 </head><body>
 <canvas id=c></canvas>
 ${content}
-</body></html>`
+</body></html>`;
 
 const FPS = `
 const buffer = [];
@@ -32,7 +34,7 @@ function frame(t) {
   const dt = (t - last) / 1000;
   last = t;
   buffer.push(dt);
-  while (buffer.length > 30) buffer.shift();
+  while (buffer.length > 120) buffer.shift();
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
@@ -87,7 +89,6 @@ class CanvasDemo extends Tonic {
     super();
     this.visible = false;
     this.io = null;
-    this.rafid = 0;
     this.code = "";
   }
 
@@ -112,7 +113,7 @@ class CanvasDemo extends Tonic {
 
     // When pressing on reload, we simply rebuild the internal DOM, which
     // will create a new iframe and restart the code.
-    this.querySelector('#r').addEventListener('click', ev => {
+    this.querySelector('#r').addEventListener('click', () => {
       this.reRender();
     });
     this.start();
@@ -121,15 +122,11 @@ class CanvasDemo extends Tonic {
   // start loads the iframe code and starts the FPS counter.
   start() {
     if (!this.visible) return;
-    this.querySelector("iframe").srcdoc =
-      HTMLCanvasElement.prototype.transferControlToOffscreen ?
-        WORKER_SRC(this.code) : SAFE_SRC(this.code);
 
-    this.lastts = -1;
-    if (this.rafid) {
-      cancelAnimationFrame(this.rafid);
-    }
-    this.rafid = requestAnimationFrame(t => this.frame(t));
+    this.querySelector("iframe").srcdoc =
+      (!HTMLCanvasElement.prototype.transferControlToOffscreen ||
+       globalThis.canvasPolyfill.has("OffscreenCanvas")) ?
+        SAFE_SRC(this.code) : WORKER_SRC(this.code);
   }
 
   intersect(entries) {
@@ -137,25 +134,6 @@ class CanvasDemo extends Tonic {
     if (nv == this.visible) return;
     this.visible = nv;
     this.reRender();
-  }
-
-  // FPS counter.
-  frame(t) {
-    if (this.lastts == -1) {
-      this.buffer = [];
-      this.lastts = t;
-      this.rafid = requestAnimationFrame(t => this.frame(t));
-      return;
-    }
-    const dt = (t - this.lastts) / 1000;
-    this.lastts = t;
-
-    this.buffer.push(dt);
-    while (this.buffer.length > 30) this.buffer.shift();
-
-    let s = 0;
-    for (const v of this.buffer) s += v;
-    s /= this.buffer.length;
   }
 
   stylesheet() {

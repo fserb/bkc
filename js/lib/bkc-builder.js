@@ -207,7 +207,7 @@ state:
   - code: [] of lines of code
   - highlight: [] of lines to be highlighted
   - labels: {label: [start, length]} of references
-  - lens: null|[start, length] of lines to show
+  - lens: null|[[start, length]...] of lines to show
   - range: [start, length, difflength] of current edit
 */
 export function buildState(prev, cmd) {

@@ -5,7 +5,7 @@ applies and animates a BKC state into the aside DOM.
 
 Highlight dimension: .low
 Write dimension: .born .alive .dead
-Lens dimension: .hide
+Lens dimension: .hide .spacer
 */
 
 import diffCode from "./diff.js";

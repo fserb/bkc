@@ -271,6 +271,7 @@ aside li:before {
   margin-right: 1ch;
   transition: all 0s ease-in-out 0.5s;
   opacity: 1.0;
+  user-select: none;
 }
 
 aside li.dead {
@@ -299,6 +300,7 @@ aside li.born:before {
 aside li.hidden {
   height: 0;
   opacity: 0;
+  user-select: none;
 }
 
 aside li.spacer {
@@ -314,6 +316,7 @@ aside li.spacer::after {
   content: "⋮";
   display: block;
   color: #3A3F58;
+  user-select: none;
 }
 
 @keyframes lens_hide {
@@ -418,9 +421,11 @@ aside #ed {
   overflow: hidden;
   transition: width 0.5s ease-in-out, opacity 0.25s ease-in-out;
   z-index: 10000;
+  outline: none !important;
 }
 
 aside #ed_opts {
+  outline: none !important;
   position: absolute;
   left: 0px;
   top: 0px;
@@ -440,7 +445,15 @@ aside #ed:hover #ed_opts {
   transition: all 0.25s ease-in-out 0.25s;
 }
 
+aside #ed, aside #ed_opts, aside #ed_jsfiddle, aside #ed_codepen {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
 aside #ed_jsfiddle, aside #ed_codepen {
+  cursor: pointer;
   width: 48px;
   height: 48px;
   position: absolute;
