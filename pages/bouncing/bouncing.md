@@ -630,16 +630,16 @@ with the current code by pressing on the edit button on the corner.
 
 ### particles
 
-The particle system is just a list of particles that are spawn at some time,
-and eventually die off.
+Conceptually, the particle system is a list of object with the same behavior
+that are spawn at some time, and eventually fade away. Because we usually spawn tens of particles, their visual effect is usually hard to predict without seeing the results, as they are mostly related to them being presented together.
 
 ```op:+crystaldef+4,lens:crystaldef
 const particles = [];
 ```
 
-We are going to spawn particles in a similar way we spawned the control points.
-The main difference is that our parameters will be somehow related to the
-control point that spawned the particles.
+We are going to create particles in a similar way we created control points. The
+main difference is that our parameters will be related to the control point
+that spawned the particles and not purely random.
 
 ```op:+bounce-1,label:newparticle+1,lens:newparticle
 
@@ -647,8 +647,8 @@ function newParticle(pos, vel, color) {
 }
 ```
 
-The particle's initial position is the same as the control point, and the
-velocity is $[25\%,150\%]$ of the control point's velocity at a random angle.
+Particles are spawned at the control point and have velocity within
+$[25\%,150\%]$ of the control point's velocity at a random angle.
 
 ```op:+newparticle+1
   const speed = Math.hypot(vel.x, vel.y) * (0.25 + 1.25 * Math.random());
@@ -660,11 +660,12 @@ velocity is $[25\%,150\%]$ of the control point's velocity at a random angle.
   };
 ```
 
-We want the particles to rotate, so we set an initial `angle` and a angular
-velocity `rot`. We copy the color from the control point, and set its lifetime
-to $[0, 1]$ seconds. Because we are going to reuse our `bounce()` function for
-particle collision, we need to specify a radius. But since the particle will
-change size over time, we will calculate this later.
+Our goal is to have particles that are small triangles, rotating around.
+Initially they start bigger, and shrink over time until they disappear. So we
+need to set up an `angle` and an angular velocity `rot`. We also need to keep
+track of the `life` time. We will reuse `bounce()` for collision, so we need to
+specify a `radius`, but this will change over time, so we will calculate them
+later.
 
 ```op:+newparticle+7
     angle: Math.TAU * Math.random(),
@@ -675,7 +676,8 @@ change size over time, we will calculate this later.
 ```
 
 For the particles updates, we do the `pos` and `angle` updates with the simple
-integration as we did for control points. We call `bounce()` to allow the
+integration as we did for control points. One small detail is that our angular
+velocity reduces with the size of the particle. We call `bounce()` to allow the
 particles to bounce on the borders of the screen. This is surprisingly
 effective to give the particles some "weight" and make them feel real.
 
@@ -691,9 +693,9 @@ function updateParticles(dt) {
 }
 ```
 
-To implement the particle lifespan, we just reduce their lives and make the size
-proportional to their remaining lives. This will make them fade away over time
-and disappear.
+To implement the particle lifespan, we just reduce their lives over time and
+make the size proportional to their remaining lives. This will make them fade
+away and disappear.
 
 ```op:update_particles+6
     p.life -= dt;
@@ -701,16 +703,16 @@ and disappear.
 ```
 
 Once a particle reaches `live <= 0`, they have disappeared from the screen and
-we should remove them from the particle list. We filter the array in place and
-remove them.
+we should remove them from the particle list. Instead of creating a new array,
+we filter the `particles` array in place.
 
 ```op:update_particles+9
   particles.filterIn(e => e.life > 0);
 ```
 
 We want to spawn particles every time one of our controls bounce at something,
-so we can just pig-back on the color-changing logic. We also must remember to
-call our new `updateParticles()`.
+so we can just piggyback on what we did for color changing. We also must
+remember to call our new `updateParticles()`.
 
 ```op:update+16:,lens:update
 
@@ -739,9 +741,9 @@ function renderParticles() {
   renderParticles();
 ```
 
-Instead of rotating the points, we will translate, scale, and rotate the current
-transformation matrix (that we usually call `CTM`) and always draw the same
-triangle. This way, `canvas` will do the bulk of the work for us.
+Instead of calculating the final points, we will translate, scale, and rotate
+the current transformation matrix (that we usually call `CTM`) and always draw
+the same triangle. This way, `canvas` will do the bulk of the work for us.
 
 
 ```op:render_particles+2,lens:render_particles
@@ -754,8 +756,9 @@ triangle. This way, `canvas` will do the bulk of the work for us.
 ```
 
 It doesn't really matter in which direction we draw the triangle, so we might as
-well draw the simplest way possible. We choose a triangle is perfectly
-inscribed inside a circle of radius $1$.
+well draw the simplest way possible. We choose an equilateral triangle that is
+perfectly inscribed inside a circle of radius $1$, with the first point
+pointing straight up.
 
 ```op:render_particles+7
     ctx.beginPath();
@@ -766,14 +769,19 @@ inscribed inside a circle of radius $1$.
     ctx.fill();
 ```
 
-@[canvas-demo]{}
+And this is it. We have created, updated, and rendered the triangular particles.
 
-### background
+@[canvas-demo]{}
+```op:+,lens:
+```
+
+### background glow
 
 Now that the main effect is over, we can do small polishes to improve the demo.
-The first thing we are doing for polish is updating the background. This is a
-subtle effect: every time a control bounces, we will flash the background very
-slightly into that color, which will give the impression the color is shining.
+The first thing we are doing for polish is updating the background color. This
+is a subtle effect: every time a control bounces, we will flash the background
+very slightly into that color, which will give the impression the crystal is
+shining.
 
 First things first, we are going to keep track of the background...
 
@@ -787,8 +795,9 @@ const BG = [16, 16, 16];
   ctx.fillStyle = rgba(...BG);
 ```
 
-Then there's two things that will change `BG`. First, we are going to update its
-value every time a control bounces to a darker version of the original color.
+Then there are two things that will change `BG`. First, we are going to update
+its value every time a control bounces to a darker version of the original
+color.
 
 ```op:update-1,label:update_bg,lens:update+update_bg
 function updateBGWith(r, g, b) {
@@ -802,8 +811,9 @@ function updateBGWith(r, g, b) {
     updateBGWith(...COLORS[c.color]);
 ```
 
-Finally, we will dim down the background color over time. This makes the effect
-instant much stronger, which helps the effect.
+Finally, we will dim down the background color over time, back to the original
+background color. This makes the effect instant much stronger, because it will usually contrast with a darker background.
+
 
 ```op:update+24
 
@@ -813,13 +823,14 @@ instant much stronger, which helps the effect.
 ```
 
 @[canvas-demo]
-```op:+
+```op:+,lens:
 ```
 
-There. It's a very subtle effect if you are trying to notice it, but if you
-focus on the crystal, your brain will notice it and will make the crystal shine.
+There. It's a very subtle effect, and if you are trying to notice it, it won't
+do much. But if you focus on the crystal, your brain will notice it and will
+attribute the change to the crystal glowing.
 
-### shaking
+### screen shaking
 
 Talking about subtleties, our final effect is not that. We are going to add
 screen shaking when the control bounces. The process to implement it is going
@@ -839,8 +850,10 @@ there's multiple bouncings happening, but we also don't want to make the effect
 too long. The ideal direction would be normal to the contact point, but we
 don't need this precision, so we simply take the opposite direction of the
 current velocity, as this is a good proxy to the control's point velocity
-before the collision. It's hand-wavy, but this is *shaking*, so it doesn't
-matter.
+before the collision.
+
+It's hand-wavy, but this is *shaking*, so it doesn't matter. Usually you can make the shake happen in a random direction, but it does help to give a direction when you have a mostly up/down or left/right shaking.
+
 
 ```op:update+17,lens:update,spawn:2
     shaketime = Math.min(0.4, shaketime + 0.2);
@@ -852,9 +865,9 @@ matter.
   shaketime = Math.max(0, shaketime - dt);
 ```
 
-And finally we just apply the shaking as a simple translation before rendering
-anything. The multiplication by `shaketime` is not strictly needed, but it
-makes the shaking more nature, as it decays slowly its magnitude.
+And finally we apply the shaking as a translation before rendering anything. The
+multiplication by `shaketime` is not strictly needed, but it makes it more
+nature, as it decays slowly its magnitude instead of abruptly stopping.
 
 ```op:render+5,lens:render
 
