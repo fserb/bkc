@@ -9,6 +9,8 @@ const CSS_STYLE = `
   top: 25px;
   right: 5px;
   border-radius: 10px;
+  border: 1px outset #F4EFE7;
+  box-shadow: 4px 4px 8px rgba(40,40,40,0.6);
   display: grid;
   gap: 0px 0px;
   grid-template-rows: 1fr;
@@ -23,6 +25,7 @@ const CSS_STYLE = `
 
 #bkcdev #code {
   padding: 1em 0;
+  border-radius: 10px;
   background-color: #181923;
   grid-area: code;
   margin: 0;
@@ -146,7 +149,7 @@ function buildDev(system) {
 
     stacked.filterIn(e => e[0] + e[1] > range[0]);
     const stack = stacked.length;
-    const m = 2 + stack;
+    const m = 2 + stack + (pair ? 1 : -1);
 
     l.style.top = `${LINE_HEIGHT * range[0] + m}px`;
     l.style.height = `${LINE_HEIGHT * range[1] - 2 * m}px`;
@@ -193,8 +196,9 @@ export default function BKCdev(system) {
     if (ev.key != "/") return;
 
     const pop = document.querySelector("#bkcdev");
-    if (pop) {
+    if (!!pop) {
       pop.replaceWith();
+      currentState = -1;
     } else {
       buildDev(system);
     }
