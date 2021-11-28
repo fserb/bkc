@@ -105,73 +105,6 @@ function applyEdit(prev, cmd, out) {
 }
 
 /*
-Apply @cmd.op(@cmd.newcode) into @prev.code.
-*/
-function applyOp(prev, cmd, out) {
-  if (cmd.op === null) return;
-
-  const newcode = cmd.code.split('\n').slice(0, -1);
-  out._range = [0, newcode.length, newcode.length];
-
-  if (cmd.op === "") {
-    out._code = newcode;
-    return;
-  }
-
-  if (cmd.op === "+") {
-    out._code = [...prev.code, ...newcode];
-    out._range[0] = prev.code.length;
-    return;
-  }
-
-  if (cmd.op === "++") {
-    out._code = [...prev.code];
-    const end = prev.range[0] + prev.range[1];
-    out._code.splice(end, 0, ...newcode);
-    out._range[0] = end;
-    return;
-  }
-
-  let start, length;
-  let label = null, delta;
-
-  const input = cmd.op.split(':');
-  // parse first part of the input (start).
-  const int = Number.parseInt(input[0]);
-  if (Number.isFinite(int)) {
-    if (input[0][0] == '+' || input[0][1] == '-') {
-      start = prev.code.length + int;
-    }
-    start = int;
-  } else {
-    // name+3
-    const p = /(?<name>[^+-]+)(?<delta>[+-]\d+)?/.exec(input[0]).groups;
-    delta = Number.parseInt(p.delta ?? 0);
-    label = p.name;
-    if (!prev.labels[label]) {
-      throw TypeError("Invalid label: " + label);
-    }
-    start = prev.labels[label][0] + delta;
-  }
-
-  // parse second part of the input (length).
-  if (input.length >= 2) {
-    if (input[1] == "") {
-      length = prev.labels[label][1] - delta;
-    } else {
-      length = Number.parseInt(input[1]);
-    }
-  } else {
-    length = 0;
-  }
-
-  out._code = [...prev.code];
-  out._code.splice(start, length, ...newcode);
-  out._range[0] = start;
-  out._range[2] -= length;
-}
-
-/*
 Parse @cmd.label into ranges related to current edit.
 */
 function generateNewLabels(cmd, out) {
@@ -308,34 +241,7 @@ export function buildState(prev, cmd) {
     this: null,     // last label range OR current edit
   };
 
-  applyOp(prev, cmd, out);
   applyEdit(prev, cmd, out);
-
-  if (cmd.op !== null) {
-    if (out.code === null || out.range === null) {
-      console.log(`op:${cmd.op} not replaced with add:${cmd.add} sub:${cmd.sub}`);
-      out.code = out._code;
-      out.range = out._range;
-    }
-
-    if (out.code.length != out._code.length) {
-      console.warn(`op:${cmd.op} mismatched code length (${out._code.length} => ${out.code.length}) with add:${cmd.add} sub:${cmd.sub}`);
-    }
-
-    for (let i = 0; i < out.code.length; ++i) {
-      if (out.code[i] != out._code[i]) {
-        console.warn(`op:${cmd.op} mismatched code line ${i+1}: (${out._code[i]} => ${out.code[i]}) with add:${cmd.add} sub:${cmd.sub}`);
-      }
-    }
-
-    for (let i = 0; i < 3; ++i) {
-      if (out.range[i] != out._range[i]) {
-        console.warn(`op:${cmd.op} mismatched range (${out._range} => ${out.range}) with add:${cmd.add} sub:${cmd.sub}`);
-        break;
-      }
-    }
-  }
-
   generateNewLabels(cmd, out);
   propagateOldLabels(prev, out);
   calculateLens(prev, cmd, out);
@@ -354,8 +260,7 @@ export function rebuildPRE(state, el) {
   if (touse.length == 0) touse = state.code.join("\n");
   const out = touse.split("\n");
 
-  const op = el.getAttribute('op') ??
-    el.getAttribute('add') ?? el.getAttribute('sub') ?? "";
+  const op = el.getAttribute('add') ?? el.getAttribute('sub') ?? "";
   let firstLine = op == "" ? 0 : state.highlight[0];
 
   // clean up empty lines at the beginning and end.

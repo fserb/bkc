@@ -28,14 +28,14 @@ function to generate color strings. You can check the commented [source
 code](https://github.com/fserb/bkc/blob/master/pages/extend.js), but the
 functions should be fairly obvious.
 
-```op:,add:
+```add:
 const {rgba} = await import("{{baseURL}}extend.js");
 ```
 
 We will do the [usual boilerplate](fire), where we assume there's a `canvas`
 variable pointing to a valid canvas element and initialize it to `1080p`.
 
-```op:+,add:,label:init+1+3:raf+5
+```add:,label:init+1+3:raf+5
 
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
@@ -59,7 +59,7 @@ will have `dt=ts`, which can be any number, as there's no guarantee of when
 big number. Both of those results can lead to weird numbers, so we just skip the
 initial frames until everything settles.
 
-```op:raf:,sub:raf,spawn:2
+```sub:raf,spawn:2
 let last = 0;
 function frame(ts) {
   ts /= 1000;
@@ -77,7 +77,7 @@ function frame(ts) {
 frame(0);
 ```
 
-```op:raf-1,add:raf-1,label:update+1+2:render+4+2
+```add:raf-1,label:update+1+2:render+4+2
 
 function update(dt, t) {
 }
@@ -91,7 +91,7 @@ function render() {
 We start by defining the crystal object with our list of control points. We are
 going to have 2 control points, that we will initialize right here.
 
-```op:update-1,add:update-1,label:crystaldef+1+4:crystal+1,lens:this
+```add:update-1,label:crystaldef+1+4:crystal+1,lens:this
 
 const crystal = {
   control: [],
@@ -108,7 +108,7 @@ physical system that will conserve energy, this will end up defining how fast
 the system will be forever, as no new energy will be introduced. We force the
 initial velocity to be within $[700,1100]$ in any direction.
 
-```op:crystal+5,add:crystal+5
+```add:crystal+5
   const speed = 700 + 400 * Math.random();
   const vdir = Math.TAU * Math.random();
 ```
@@ -118,7 +118,7 @@ vector to match the generated `speed` and `vdir`. Notice that we do no effort
 to make sure that they don't initially overlap, as our collision system will
 take care of that.
 
-```op:crystal+8,add:crystal+8
+```add:crystal+8
     pos: {x: W * Math.random(), y: H * Math.random()},
     vel: {x: speed * Math.cos(vdir), y: speed * Math.sin(vdir)},
 ```
@@ -128,7 +128,7 @@ explicitly, our collision code is more generic and can be used for particles
 too) and an internal state to track whether they have `bounced` at something
 this frame.
 
-```op:crystal+10,add:crystal+10
+```add:crystal+10
     radius: 64,
     bounced: false,
 ```
@@ -136,7 +136,7 @@ this frame.
 For now, we will render them as circles, so we can have some idea of what's
 happening (you can press on ⟳ to restart with different values).
 
-```op:render:,sub:render,lens:crystal>render
+```sub:render,lens:crystal>render
 function render() {
   ctx.reset();
   ctx.fillStyle = "#222";
@@ -160,7 +160,7 @@ Now let's do some movement. The first thing to do is update the position given
 the velocity. Since we have no acceleration, the proper integration is the
 obvious one.
 
-```op:update+1,add:update+1,lens:update
+```add:update+1,lens:update
   for (const c of crystal.control) {
     c.pos.x += c.vel.x * dt;
     c.pos.y += c.vel.y * dt;
@@ -171,7 +171,7 @@ We should make sure that our balls actually bounce on the borders. For this, we
 can create a generic function that bounce any circle inside the screen area.
 This will be useful for us to reuse it later for particles.
 
-```op:update-1,add:update-1,label:bounce+1,lens:bounce>update
+```add:update-1,label:bounce+1,lens:bounce>update
 
 function bounce(obj) {
 }
@@ -180,7 +180,7 @@ function bounce(obj) {
 For each dimension, we check if the circle is touching each side of the screen,
 and if it is, we move it back in and invert the velocity in that axis.
 
-```op:bounce+1,add:bounce+1,lens:bounce>update
+```add:bounce+1,lens:bounce>update
   if (obj.pos.x <= obj.radius || obj.pos.x >= W - obj.radius) {
     obj.vel.x = -obj.vel.x;
     obj.pos.x = Math.clamp(obj.pos.x, obj.radius, W - obj.radius);
@@ -190,7 +190,7 @@ and if it is, we move it back in and invert the velocity in that axis.
 We do this for both axis and we also return whether we have touched the side or
 not.
 
-```op:bounce:,sub:bounce
+```sub:bounce
 function bounce(obj) {
   let bounced = false;
   if (obj.pos.x <= obj.radius || obj.pos.x >= W - obj.radius) {
@@ -210,7 +210,7 @@ function bounce(obj) {
 Finally, we just need to use our new `bounce()` function on update, propagating
 the result value into the control object.
 
-```op:update+4,add:update+4,lens:bounce>update
+```add:update+4,lens:bounce>update
     if (bounce(c)) {
       c.bounced = true;
     }
@@ -225,12 +225,12 @@ to make a $n^2$ loop that checks every control against all others. But since we
 will only have two controls, we short-circuit it to just call the collision
 function once.
 
-```op:update-1,add:update-1,label:update_collision+1
+```add:update-1,label:update_collision+1
 
 function updateCollision(a, b) {
 }
 ```
-```op:update+8,add:update+8,lens:update_collision>update
+```add:update+8,lens:update_collision>update
   updateCollision(crystal.control[0], crystal.control[1]);
 ```
 
@@ -244,7 +244,7 @@ the case of two arguments, `Math.hypot(x,y)`, calculates $\sqrt{x^2 + y^2}$
 which is the magnitude of a vector, the hypotenuse of the triangle, the
 euclidian norm, etc...
 
-```op:update_collision+1,add:update_collision+1,spawn:2,lens:update_collision
+```add:update_collision+1,spawn:2,lens:update_collision
   const col = { x: b.pos.x - a.pos.x, y: b.pos.y - a.pos.y};
   const distance = Math.hypot(col.x, col.y);
   if (distance > a.radius + b.radius) return;
@@ -256,7 +256,7 @@ In the very unlikely case the distance is zero (i.e., both circles are at the
 same point), we can choose any arbitrary direction as they will all be equally
 wrong (and useful).
 
-```op:++,add:
+```add:
 
   if (distance > 0) {
     col.x /= distance;
@@ -272,7 +272,7 @@ For the position, we want to remove any overlap between them. We compute how
 big the overlap is and move each circle half that distance `overlap` in the
 opposite direction, on the axis of the collision.
 
-```op:++,add:
+```add:
 
   const overlap = a.radius + b.radius - distance;
   a.pos.x -= col.x * overlap / 2;
@@ -298,7 +298,7 @@ each velocity $\vec{v_a}$ is losing its component on the collision axis ($\vec
 {v_b} \cdot \vec{col}$).
 
 
-```op:++,add:,spawn:2
+```add:,spawn:2
 
   const colvel = (b.vel.x - a.vel.x) * col.x + (b.vel.y - a.vel.y) * col.y;
   a.vel.x += colvel * col.x;
@@ -310,7 +310,7 @@ each velocity $\vec{v_a}$ is losing its component on the collision axis ($\vec
 Finally, we mark both circles as having been bounced. And we are done with all
 the physics we will need for this effect.
 
-```op:++,add:
+```add:
 
   a.bounced = true;
   b.bounced = true;
@@ -332,7 +332,7 @@ We can replace our current circles with a function to render crystals. Apart
 from the control points, we will take a `size` parameter (for the axis
 perpendicular to the `a-b` direction) and a color for each control point.
 
-```op:render:,sub:render,label:render+3:renderCrystal+0+2
+```sub:render,label:render+3:renderCrystal+0+2
 function renderCrystal(a, b, size, colorA, colorB) {
 }
 
@@ -358,7 +358,7 @@ multiplication by $\left[\begin
 {smallmatrix}\right]$. For $90^{\circ}$ it becomes $\left[\begin
 {smallmatrix}0 & -1 \\ 1 & 0\end{smallmatrix}\right]$, which is simply $(-y, x)$.
 
-```op:renderCrystal:,sub:renderCrystal,lens:renderCrystal,spawn:2
+```sub:renderCrystal,lens:renderCrystal,spawn:2
 function renderCrystal(a, b, size, colorA, colorB) {
   const dir = {x: b.x - a.x, y: b.y - a.y};
   const dirlen = Math.hypot(dir.x, dir.y);
@@ -436,7 +436,7 @@ below marks each point in the order they are added to the path.
   svg.text(c.x - 21, c.y - 14, "nor", {"font-family": "Open Sans", "font-size": "10px"});
 {% endsvg %}
 
-```op:renderCrystal+7,add:renderCrystal+7,spawn:2
+```add:renderCrystal+7,spawn:2
 
   ctx.beginPath();
   ctx.moveTo(a.x - dir.x, a.y - dir.y);
@@ -454,7 +454,7 @@ the $0\%$ and $100\%$ position of the gradient that we are passing as out
 control points. I.e., the colors at the control points will be exactly `colorA`
 and `ColorB`.
 
-```op:renderCrystal+7,add:renderCrystal+7
+```add:renderCrystal+7
 
   const g = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
   g.addColorStop(0, colorA);
@@ -469,7 +469,7 @@ and `ColorB`.
 We are mostly there, but the render still looks a bit flat. We can fix that.
 First, we are going to update our crystal with an extra parameter.
 
-```op:crystaldef:,sub:crystaldef,lens:crystaldef
+```sub:crystaldef,lens:crystaldef
 const crystal = {
   control: [],
   pulse: 1.0,
@@ -479,7 +479,7 @@ const crystal = {
 
 And update it so it pulsates in a sine wave over time.
 
-```op:update+1,add:update+1,lens:update
+```add:update+1,lens:update
   crystal.pulse = Math.sin(t * 5);
 
 ```
@@ -487,7 +487,7 @@ And update it so it pulsates in a sine wave over time.
 Now are ready to use it to improve our render. First, we are going to use
 `pulse` to animate the size of the crystal on the $[60, 100]$ range.
 
-```op:render:,sub:render,label:render,lens:render
+```sub:render,label:render,lens:render
 function render() {
   ctx.reset();
   ctx.fillStyle = "#222";
@@ -502,7 +502,7 @@ function render() {
 Let's draw a second crystal inside the first, where it shrinks to 0 in half the
 period of the pulse (that we can get with `abs`).
 
-```op:render+8,add:render+8,
+```add:render+8,
   renderCrystal(crystal.control[0].pos, crystal.control[1].pos,
     outer * Math.abs(crystal.pulse), "#be2633", "#e06f8b");
 ```
@@ -511,7 +511,7 @@ Finally, instead of simply drawing one on top of the other, we can make the
 whole rendering more interesting by using a screen composite and playing with
 the opacity.
 
-```op:render:,sub:render,lens:render
+```sub:render,lens:render
 function render() {
   ctx.reset();
   ctx.fillStyle = "#222";
@@ -552,7 +552,7 @@ Palette](https://lospec.com/palette-list/arne-16):
 @[color-show]{"color":"rgb(178, 220, 239)"}. We are going to use them pair-wise
 in sequence.
 
-```op:init+3,add:init+3,label:color+1,lens:init>color
+```add:init+3,label:color+1,lens:init>color
 
 const COLORS = [
   [190, 38, 51],
@@ -575,7 +575,7 @@ back once it's over. We also start somewhere randomly. Notice that we return
 the RGB array and not the final string color. This will allow us to manipulate
 the values later on.
 
-```op:++,add:,label:color-14,lens:color
+```add:,label:color-14,lens:color
 let CC = Math.floor(Math.random() * COLORS.length);
 function nextColor() {
   CC = (CC + 1) % COLORS.length;
@@ -585,7 +585,7 @@ function nextColor() {
 
 The first place to use this is when we construct our control points.
 
-```op:crystal+13,add:crystal+13,lens:crystal
+```add:crystal+13,lens:crystal
     color: nextColor(),
 ```
 
@@ -593,7 +593,7 @@ Now we should use the color for rendering. We use our utility `rgba()` function
 to convert the RGB array into a CSS color string and pass that along to
 `renderCrystal`.
 
-```op:render+6:,sub:render+6,lens:render
+```sub:render+6,lens:render
   ctx.globalAlpha = 0.5;
   const colorA = rgba(...COLORS[crystal.control[0].color]);
   const colorB = rgba(...COLORS[crystal.control[1].color]);
@@ -609,7 +609,7 @@ to convert the RGB array into a CSS color string and pass that along to
 One last thing. We haven't used the info that the control has bounced for
 anything until now. Let's cycle the color when they do.
 
-```op:update+11,add:update+11,lens:update
+```add:update+11,lens:update
 
   for (const c of crystal.control) {
     if (!c.bounced) continue;
@@ -630,7 +630,7 @@ with the current code by pressing on the edit button on the corner.
 Conceptually, the particle system is a list of object with the same behavior
 that are spawn at some time, and eventually fade away. Because we usually spawn tens of particles, their visual effect is usually hard to predict without seeing the results, as they are mostly related to them being presented together.
 
-```op:+crystaldef+4,add:crystaldef+4,lens:crystaldef
+```add:crystaldef+4,lens:crystaldef
 const particles = [];
 ```
 
@@ -638,7 +638,7 @@ We are going to create particles in a similar way we created control points. The
 main difference is that our parameters will be related to the control point
 that spawned the particles and not purely random.
 
-```op:+bounce-1,add:bounce-1,label:newparticle+1,lens:newparticle
+```add:bounce-1,label:newparticle+1,lens:newparticle
 
 function newParticle(pos, vel, color) {
 }
@@ -647,7 +647,7 @@ function newParticle(pos, vel, color) {
 Particles are spawned at the control point and have velocity within
 $[25\%,150\%]$ of the control point's velocity at a random angle.
 
-```op:+newparticle+1,add:newparticle+1
+```add:newparticle+1
   const speed = Math.hypot(vel.x, vel.y) * (0.25 + 1.25 * Math.random());
   const vangle = Math.TAU * Math.random();
 
@@ -664,7 +664,7 @@ track of the `life` time. We will reuse `bounce()` for collision, so we need to
 specify a `radius`, but this will change over time, so we will calculate them
 later.
 
-```op:+newparticle+7,add:newparticle+7
+```add:newparticle+7
     angle: Math.TAU * Math.random(),
     rot: -4 + 8 * Math.random(),
     color: color,
@@ -678,7 +678,7 @@ velocity reduces with the size of the particle. We call `bounce()` to allow the
 particles to bounce on the borders of the screen. This is surprisingly
 effective to give the particles some "weight" and make them feel real.
 
-```op:+bounce-1,add:bounce-1,label:update_particles+1,lens:this
+```add:bounce-1,label:update_particles+1,lens:this
 
 function updateParticles(dt) {
   for (const p of particles) {
@@ -694,7 +694,7 @@ To implement the particle lifespan, we just reduce their lives over time and
 make the size proportional to their remaining lives. This will make them fade
 away and disappear.
 
-```op:update_particles+6,add:update_particles+6
+```add:update_particles+6
     p.life -= dt;
     p.radius = 125 * p.life;
 ```
@@ -703,7 +703,7 @@ Once a particle reaches `live <= 0`, they have disappeared from the screen and
 we should remove them from the particle list. Instead of creating a new array,
 we filter the `particles` array in place.
 
-```op:update_particles+9,add:update_particles+9
+```add:update_particles+9
   particles.filterIn(e => e.life > 0);
 ```
 
@@ -711,7 +711,7 @@ We want to spawn particles every time one of our controls bounce at something,
 so we can just piggyback on what we did for color changing. We also must
 remember to call our new `updateParticles()`.
 
-```op:update+16:,sub:update+16,lens:update
+```sub:update+16,lens:update
 
     for (let i = 0; i < 50; ++i) {
       particles.push(newParticle(c.pos, c.vel, c.color));
@@ -726,7 +726,7 @@ Finally, we should render the particles. The particles will be rendered as
 equilateral triangles.
 
 
-```op:render-1,add:render-1,label:render_particles+1
+```add:render-1,label:render_particles+1
 
 function renderParticles() {
   for (const p of particles) {
@@ -734,7 +734,7 @@ function renderParticles() {
 }
 ```
 
-```op:render+5,add:render+5,lens:render_particles>render
+```add:render+5,lens:render_particles>render
 
   renderParticles();
 ```
@@ -744,7 +744,7 @@ the current transformation matrix (that we usually call `CTM`) and always draw
 the same triangle. This way, `canvas` will do the bulk of the work for us.
 
 
-```op:render_particles+2,add:render_particles+2,lens:render_particles
+```add:render_particles+2,lens:render_particles
     ctx.fillStyle = rgba(...COLORS[p.color]);
     ctx.save();
     ctx.translate(p.pos.x, p.pos.y);
@@ -758,7 +758,7 @@ well draw the simplest way possible. We choose an equilateral triangle that is
 perfectly inscribed inside a circle of radius $1$, with the first point
 pointing straight up.
 
-```op:render_particles+7,add:render_particles+7,
+```add:render_particles+7,
     ctx.beginPath();
     ctx.moveTo(0, -1);
     ctx.lineTo(Math.SQRT3 / 2, 0.5);
@@ -783,13 +783,13 @@ shining.
 
 First things first, we are going to keep track of the background...
 
-```op:init+3,add:init+3,label:init-3+4,lens:init
+```add:init+3,label:init-3+4,lens:init
 const BG = [16, 16, 16];
 ```
 
 ... and render it.
 
-```op:render+2:1,sub:render+2+1lens:render
+```sub:render+2+1lens:render
   ctx.fillStyle = rgba(...BG);
 ```
 
@@ -797,7 +797,7 @@ Then there are two things that will change `BG`. First, we are going to update
 its value every time a control bounces to a darker version of the original
 color.
 
-```op:update-1,add:update-1,label:update_bg+1,lens:update>update_bg
+```add:update-1,label:update_bg+1,lens:update>update_bg
 
 function updateBGWith(r, g, b) {
   BG[0] = 16 + 16 * (r / 255);
@@ -806,7 +806,7 @@ function updateBGWith(r, g, b) {
 }
 ```
 
-```op:update+16,add:update+16
+```add:update+16
     updateBGWith(...COLORS[c.color]);
 ```
 
@@ -814,7 +814,7 @@ Finally, we will dim down the background color over time, back to the original
 background color. This makes the effect instant much stronger, because it will usually contrast with a darker background.
 
 
-```op:update+24,add:update+24
+```add:update+24
 
   for (let i = 0; i < 3; ++i) {
     BG[i] = Math.max(16, BG[i] - 16 * dt);
@@ -839,7 +839,7 @@ First, we set up a state for it. There are two variables to define a shaking:
 how much time we will be shaking and what's the direction of the screen
 shaking.
 
-```op:crystaldef+5,add:crystaldef+5,lens:crystaldef
+```add:crystaldef+5,lens:crystaldef
 let shaketime = 0.0;
 let shakedir = {x: 0.0, y: 0.0};
 ```
@@ -854,12 +854,12 @@ before the collision.
 It's hand-wavy, but this is *shaking*, so it doesn't matter. Usually you can make the shake happen in a random direction, but it does help to give a direction when you have a mostly up/down or left/right shaking.
 
 
-```op:update+17,add:update+17,lens:update,spawn:2
+```add:update+17,lens:update,spawn:2
     shaketime = Math.min(0.4, shaketime + 0.2);
     shakedir = {x: -c.vel.x / 4, y: -c.vel.y / 4};
 ```
 
-```op:update+30,add:update+30,
+```add:update+30,
 
   shaketime = Math.max(0, shaketime - dt);
 ```
@@ -868,7 +868,7 @@ And finally we apply the shaking as a translation before rendering anything. The
 multiplication by `shaketime` is not strictly needed, but it makes it more
 nature, as it decays slowly its magnitude instead of abruptly stopping.
 
-```op:render+5,add:render+5,lens:render
+```add:render+5,lens:render
 
   if (shaketime > 0) {
     ctx.translate(

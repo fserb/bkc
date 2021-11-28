@@ -23,7 +23,7 @@ import {buildState, rebuildPRE, mergeState} from "./lib/bkc-builder.js";
 import {apply} from "./lib/bkc-apply.js";
 import {connectEditor, updateEditorCode} from "./lib/bkc-editor.js";
 
-const VALID_KEYS = ["add", "sub", "op", "lens", "label", "debug", "spawn"];
+const VALID_KEYS = ["add", "sub", "lens", "label", "debug", "spawn"];
 
 // contains all BKC states referenced by rulers.
 export const SYSTEM = [];

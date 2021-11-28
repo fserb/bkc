@@ -67,30 +67,3 @@ everything after is the value.
     and `b`.
 
   * `lens:a&b` sets the lens to the (possible disjoint) range of `a` and `b`.
-
-
-
-
-* DEPRECATED `op` defines the operation on how to insert content into code. If
-  not defined, behaves as empty.
-
-  * `op:` replaces code with content.
-
-  * `op:+` appends content at the end of the code.
-
-  * `op:++` appends content after the last appended code.
-
-  * `op:a` inserts content at location `a` where a can be one of:
-
-    * a line number (`op:3`)
-    * a line relative to the end of the code (`op:-4`)
-    * a label (`op:ref`)
-    * a label with a delta (`op:ref+4` or `op:ref-2`)
-
-  * `op:a:b` replaces interval that starts at `a` with length `b` with content.
-    Where `a` is as above and `b` is a number length.
-
-  * `op:a:` replaces the whole location `a` with content.
-
-
-
