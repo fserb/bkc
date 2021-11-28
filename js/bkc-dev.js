@@ -10,15 +10,15 @@ const CSS_STYLE = `
   right: 5px;
   border-radius: 10px;
   border: 1px outset #F4EFE7;
-  box-shadow: 4px 4px 8px rgba(40,40,40,0.6);
+  box-shadow: 4px 4px 10px rgba(40,40,40,0.6);
   display: grid;
   gap: 0px 0px;
   grid-template-rows: 1fr;
   grid-template-areas: "code";
   color: #EEE;
   font-family: 'Inconsolata', monospace;
-  font-size: 12px;
-  line-height: 13px;
+  font-size: 10px;
+  line-height: 11px;
   white-space: pre;
   z-index: 20000;
 }
@@ -69,6 +69,7 @@ const CSS_STYLE = `
   border-bottom: 1px solid #F4EFE7;
   border-right: 1px solid #F4EFE7;
   padding: 0;
+  font-size: 13px;
   display: flex;
   justify-content: center;
 }
@@ -87,7 +88,7 @@ const CSS_STYLE = `
 
 `;
 
-const LINE_HEIGHT = 13;
+const LINE_HEIGHT = 11;
 
 let currentState = -1;
 function buildDev(system) {
