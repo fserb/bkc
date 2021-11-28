@@ -1,4 +1,4 @@
-const FUNCTIONS = new Set(["op", "spawn", "label", "lens", "debug"]);
+const FUNCTIONS = new Set(["op", "add", "sub", "spawn", "label", "lens", "debug"]);
 
 export default function() {
   return site => {

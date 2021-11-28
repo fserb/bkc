@@ -1,10 +1,95 @@
 // BKC builder
 import diff from "./diff.js";
 
+// label-3+4
+const RANGE_RE =
+  /(?<label>[a-zA-Z_][a-zA-Z0-9_]*)((?<delta>[+-]\d+)(\+(?<len>\d+))?)?/;
+
+function range(prev, out, str) {
+  // we may not have generated code yet.
+  const cur = out.code !== null ? out : prev;
+
+  const order = RANGE_RE.exec(str).groups;
+
+  let rng = null;
+
+  if (order.label == "all") {
+    rng = [0, cur.code.length];
+  } else if (order.label == "edit") {
+    rng = [cur.range[0], cur.range[1]];
+  } else if (order.label == "last") {
+    rng = [prev.range[0], prev.range[1]];
+  } else if (order.label == "this") {
+    if (out.this === null) {
+      throw ReferenceError("'this' used ahead of construction");
+    }
+    rng = [...out.this];
+  } else {
+    const labels = out.labels !== null ? out.labels : prev.labels;
+    if (labels[order.label] === undefined) {
+      throw ReferenceError(`Unknown label "${order.label}".`);
+    }
+    rng = [...labels[order.label]];
+  }
+
+  if (order.delta !== undefined) {
+    const delta = Number.parseInt(order.delta);
+    rng[0] += delta;
+    rng[1] -= delta;
+  }
+
+  if (order.len !== undefined) {
+    rng[1] = Number.parseInt(order.len);
+  }
+
+  return rng;
+}
+
+/*
+Apply add/sub.
+*/
+function applyEdit(prev, cmd, out) {
+  let action = null;
+  let deftarget;
+  if (cmd.add !== null) {
+    action = "add";
+    deftarget = "last";
+  }
+  if (cmd.sub !== null) {
+    if (action === "add") {
+      throw ReferenceError("Cannot have add and sum operators together");
+    }
+    action = "sub";
+    deftarget = "all";
+  }
+  if (action === null) return;
+
+  const target = range(prev, out, cmd[action] ?? deftarget);
+
+  const newcode = cmd.code.split('\n').slice(0, -1);
+  let start, length, delta;
+  if (action === "add") {
+    start = target[0] + target[1];
+    length = 0;
+    delta = newcode.length;
+  } else if (action === "sub") {
+    start = target[0];
+    length = target[1];
+    delta = newcode.length - length;
+  }
+
+  out.code = [...prev.code];
+  out.code.splice(start, length, ...newcode);
+
+  out.range = [start, newcode.length, delta];
+}
+
 /*
 Apply @cmd.op(@cmd.newcode) into @prev.code.
 */
 function applyOp(prev, cmd, out) {
+  if (cmd.op === null) return;
+
   const newcode = cmd.code.split('\n').slice(0, -1);
   out.range = [0, newcode.length, newcode.length];
 
@@ -75,23 +160,23 @@ function generateNewLabels(cmd, out) {
     out.thisLabel = [out.range[0], out.range[1]];
     return;
   }
-  let range;
+  let rng;
   for (const l of cmd.label.split(':')) {
-    range = [out.range[0], out.range[1]];
+    rng = [out.range[0], out.range[1]];
     // label:name+<start>+<length>
     const order = /(?<name>[^+-]+)((?<delta>[+-]\d+)(\+(?<len>\d+))?)?/
       .exec(l).groups;
     if (order.delta) {
       const delta = Number.parseInt(order.delta);
-      range[0] += delta;
-      range[1] -= delta;
+      rng[0] += delta;
+      rng[1] -= delta;
     }
     if (order.len) {
-      range[1] = Number.parseInt(order.len);
+      rng[1] = Number.parseInt(order.len);
     }
-    out.labels[order.name] = [...range];
+    out.labels[order.name] = [...rng];
   }
-  out.thisLabel = range;
+  out.thisLabel = rng;
 }
 
 /*
@@ -202,18 +287,18 @@ function determineHighlight(prev, out) {
   }
 }
 
-/*
-state:
-  - code: [] of lines of code
-  - highlight: [] of lines to be highlighted
-  - labels: {label: [start, length]} of references
-  - lens: null|[[start, length]...] of lines to show
-  - range: [start, length, difflength] of current edit
-*/
 export function buildState(prev, cmd) {
-  const out = {};
+  const out = {
+    code: null,     // [] of lines of code
+    highlight: [],  // [] of lines to be highlighted
+    labels: null,   // {label: [start, length]} of references
+    lens: null,     // null|[[start, length]...] of lines to show
+    range: null,    // [start, length, difflength] of current edit
+    this: null,     // last label range OR current edit
+  };
 
   applyOp(prev, cmd, out);
+  applyEdit(prev, cmd, out);
   generateNewLabels(cmd, out);
   propagateOldLabels(prev, out);
   calculateLens(prev, cmd, out);

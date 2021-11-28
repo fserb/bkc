@@ -23,6 +23,8 @@ import {buildState, rebuildPRE, mergeState} from "./lib/bkc-builder.js";
 import {apply} from "./lib/bkc-apply.js";
 import {connectEditor, updateEditorCode} from "./lib/bkc-editor.js";
 
+const VALID_KEYS = ["add", "sub", "op", "lens", "label", "debug", "spawn"];
+
 // contains all BKC states referenced by rulers.
 export const SYSTEM = [];
 
@@ -87,11 +89,14 @@ function setup() {
     }
 
     if (el.tagName != "CODE") continue;
-    const op = el.getAttribute('op') ?? "";
-    const label = el.getAttribute('label') ?? "";
-    const lens = el.getAttribute('lens') ?? null;
-    const debug = el.getAttribute('debug') !== null;
-    state = buildState(state, {op, label, lens, debug, code: el.innerHTML});
+    const cmd = {code: el.innerHTML};
+    for (const k of VALID_KEYS) {
+      const v = el.getAttribute(k);
+      if (v !== undefined) {
+        cmd[k] = v;
+      }
+    }
+    state = buildState(state, cmd);
 
     rebuildPRE(state, el);
 
