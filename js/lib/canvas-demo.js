@@ -90,11 +90,12 @@ class CanvasDemo extends Tonic {
     this.visible = false;
     this.io = null;
     this.code = "";
+    this.attachShadow({mode: 'open'});
   }
 
   updateFPS(fps) {
     if (!this.visible) return;
-    this.querySelector('#f').innerText = `${fps} fps`;
+    this.shadowRoot.querySelector('#f').innerText = `${fps} fps`;
   }
 
   updated() {
@@ -109,11 +110,11 @@ class CanvasDemo extends Tonic {
 
     if (!this.visible) return;
 
-    this.querySelector('iframe').updateFPS = this.updateFPS.bind(this);
+    this.shadowRoot.querySelector('iframe').updateFPS = this.updateFPS.bind(this);
 
     // When pressing on reload, we simply rebuild the internal DOM, which
     // will create a new iframe and restart the code.
-    this.querySelector('#r').addEventListener('click', () => {
+    this.shadowRoot.querySelector('#r').addEventListener('click', () => {
       this.reRender();
     });
     this.start();
@@ -122,8 +123,7 @@ class CanvasDemo extends Tonic {
   // start loads the iframe code and starts the FPS counter.
   start() {
     if (!this.visible) return;
-
-    this.querySelector("iframe").srcdoc =
+    this.shadowRoot.querySelector("iframe").srcdoc =
       (!HTMLCanvasElement.prototype.transferControlToOffscreen ||
        globalThis.canvasPolyfill.has("OffscreenCanvas")) ?
         SAFE_SRC(this.code) : WORKER_SRC(this.code);

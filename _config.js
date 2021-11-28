@@ -48,10 +48,10 @@ site.use(markdown({
 }));
 
 if (site.options.dev) {
-
   site.options.location = new URL("https://dev.metaphora.co/bkc/_site/");
 } else {
   site.options.location = new URL("https://canvas.rocks/");
+  site.ignore("js/bkc-dev.js");
 }
 
 site.ignore("_images", "_plugins", "orig", "3rdp", ".gitignore", ".git",

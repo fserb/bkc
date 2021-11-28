@@ -159,10 +159,21 @@ main p code {
   hyphens: none;
 }
 
-main pre { width: 100%; overflow-x: auto; box-sizing: border-box; display: none;
-background-color: #181923; color: #EEE; font-size: calc(2 * (min(100vw, 63ch) -
-2ch) / 84); padding: 2em 1ch; line-height: 1.25em; white-space: pre;
-counter-reset: code-line; list-style: none; border-radius: 6px; }
+main pre {
+  width: 100%;
+  overflow-x: auto;
+  box-sizing: border-box;
+  display: none;
+  background-color: #181923;
+  color: #EEE;
+  font-size: calc(2 * (min(100vw, 63ch) - 2ch) / 84);
+  padding: 2em 1ch;
+  line-height: 1.25em;
+  white-space: pre;
+  counter-reset: code-line;
+  list-style: none;
+  border-radius: 6px;
+}
 
 main pre li {
   height: 1.25em;
@@ -189,7 +200,7 @@ main .ruler {
   margin-right: -40px;
   background-color: #000;
   width: 30px;
-  opacity: 0.5;
+  opacity: 0;
 }
 
 canvas-demo {
@@ -445,12 +456,7 @@ aside #ed:hover #ed_opts {
   transition: all 0.25s ease-in-out 0.25s;
 }
 
-aside #ed, aside #ed_opts, aside #ed_jsfiddle, aside #ed_codepen {
-  outline: none !important;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
-  user-select: none;
-}
+aside #ed,
 
 aside #ed_jsfiddle, aside #ed_codepen {
   cursor: pointer;

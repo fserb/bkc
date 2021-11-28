@@ -3,13 +3,17 @@ import Tonic from "./tonic.js";
 
 
 class ColorShow extends Tonic {
+  constructor() {
+    super();
+    this.attachShadow({mode: 'open'});
+  }
 
   connected() {
     this.updated();
   }
 
   updated() {
-    const s = this.querySelector('#s');
+    const s = this.shadowRoot.querySelector('#s');
 
     if (this.props.color) {
       s.style.backgroundColor = this.props.color;

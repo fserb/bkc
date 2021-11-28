@@ -35,7 +35,7 @@ const {rgba} = await import("{{baseURL}}extend.js");
 We will do the [usual boilerplate](fire), where we assume there's a `canvas`
 variable pointing to a valid canvas element and initialize it to `1080p`.
 
-```op:+,label:init+1+4:raf+5
+```op:+,label:init+1+3:raf+5
 
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
@@ -60,7 +60,6 @@ big number. Both of those results can lead to weird numbers, so we just skip the
 initial frames until everything settles.
 
 ```op:raf:,spawn:2
-
 let last = 0;
 function frame(ts) {
   ts /= 1000;
@@ -78,7 +77,9 @@ function frame(ts) {
 frame(0);
 ```
 
-```op:raf,label:update+1+2:render+4+2
+steop
+
+```op:raf-1,label:update+1+2:render+4+2
 
 function update(dt, t) {
 }
@@ -556,7 +557,8 @@ Palette](https://lospec.com/palette-list/arne-16):
 @[color-show]{"color":"rgb(178, 220, 239)"}. We are going to use them pair-wise
 in sequence.
 
-```op:init+4,label:color+1,lens:init+color
+```op:init+3,label:color+1,lens:init+color
+
 const COLORS = [
   [190, 38, 51],
   [224, 111, 139],
@@ -729,7 +731,8 @@ Finally, we should render the particles. The particles will be rendered as
 equilateral triangles.
 
 
-```op:render-1,label:render_particles
+```op:render-1,label:render_particles+1
+
 function renderParticles() {
   for (const p of particles) {
   }
@@ -785,7 +788,7 @@ shining.
 
 First things first, we are going to keep track of the background...
 
-```op:init+3,lens:init
+```op:init+3,label:init-3+4,lens:init
 const BG = [16, 16, 16];
 ```
 
@@ -799,7 +802,8 @@ Then there are two things that will change `BG`. First, we are going to update
 its value every time a control bounces to a darker version of the original
 color.
 
-```op:update-1,label:update_bg,lens:update+update_bg
+```op:update-1,label:update_bg+1,lens:update+update_bg
+
 function updateBGWith(r, g, b) {
   BG[0] = 16 + 16 * (r / 255);
   BG[1] = 16 + 16 * (g / 255);
@@ -840,7 +844,7 @@ First, we set up a state for it. There are two variables to define a shaking:
 how much time we will be shaking and what's the direction of the screen
 shaking.
 
-```op:crystaldef+4,lens:crystaldef
+```op:crystaldef+5,lens:crystaldef
 let shaketime = 0.0;
 let shakedir = {x: 0.0, y: 0.0};
 ```

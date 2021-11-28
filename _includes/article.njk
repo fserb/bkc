@@ -22,7 +22,6 @@ date: 6/11/2021
 {{ content }}
 
 <footer><span>Ø</span>
-
 <p><a href="{{ baseURL }}"><b>Better Know Canvas</b></a> created by <a href="https://fserb.com">Fernando Serboncini</a>
 <a href='https://github.com/fserb/bkc/blob/master{{ srcFile }}?plain=1'>
 <img alt='github' class='github' src='assets/github.png' width=14 height=14></a>
@@ -31,8 +30,13 @@ date: 6/11/2021
 </div>
 
 <script type="module">
-import BKC from "./js/bkc.js";
+import {BKC, SYSTEM} from "./js/bkc.js";
 BKC();
+
+{% if dev %}
+import BKCdev from "./js/bkc-dev.js";
+BKCdev(SYSTEM);
+{% endif %}
 
 import polyfillWarning from "./js/canvas-polyfill.js";
 polyfillWarning(document.querySelector("main"));

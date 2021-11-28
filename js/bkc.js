@@ -3,6 +3,7 @@
 // import WebComponents.
 import "./lib/canvas-demo.js";
 import "./lib/color-show.js";
+import "../pages/extend.js";
 
 /*
 BKC is split in 4 parts:
@@ -23,7 +24,7 @@ import {apply} from "./lib/bkc-apply.js";
 import {connectEditor, updateEditorCode} from "./lib/bkc-editor.js";
 
 // contains all BKC states referenced by rulers.
-const SYSTEM = [];
+export const SYSTEM = [];
 
 function resizeRulers() {
   const rulers = document.querySelectorAll("main .ruler");
@@ -59,6 +60,7 @@ function setup() {
     for (const e of entries) {
       if (!e.isIntersecting) continue;
       const id = Number.parseInt(e.target.getAttribute('bkc-state'));
+      SYSTEM.id = id;
       apply(SYSTEM[id]);
       updateEditorCode(SYSTEM[id].code);
     }
@@ -129,6 +131,6 @@ function onReady() {
   setup();
 }
 
-export default function BKC() {
+export function BKC() {
   document.addEventListener("readystatechange", onReady);
 }

@@ -16,17 +16,16 @@ class EngineSquence {
     return content;
   }
 
-  addHelper(name, fn, options) {}
+  addHelper(_name, _fn, _options) {}
 }
-
 
 export default function() {
   return site => {
     site.preprocess([".njk", ".md"], page => {
-      // adds {{ rootPath }} that alwaycat bk  s point relative to the root of the site.
+      // adds {{ rootPath }} that always point relative to the root of the site.
       page.data.rootPath =
         page.data.url.split('/')
-        .slice(0, -1).filter(x => x).map(_ => '..').join('/') || '.';
+          .slice(0, -1).filter(x => x).map(_ => '..').join('/') || '.';
       page.data.srcFile = `${page.src.path}${page.src.ext}`;
       page.data.baseURL = site.options.location.toString();
       page.data.relativePath = page.data.url.split('/').slice(1, -1).join('/');
