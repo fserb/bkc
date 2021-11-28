@@ -138,7 +138,7 @@ this frame.
 For now, we will render them as circles, so we can have some idea of what's
 happening (you can press on ⟳ to restart with different values).
 
-```op:render:,lens:crystal+render
+```op:render:,lens:crystal>render
 function render() {
   ctx.reset();
   ctx.fillStyle = "#222";
@@ -155,7 +155,7 @@ function render() {
 ```
 
 @[canvas-demo]
-```op:+,lens:crystal+render
+```op:+,lens:crystal>render
 ```
 
 Now let's do some movement. The first thing to do is update the position given
@@ -173,7 +173,7 @@ We should make sure that our balls actually bounce on the borders. For this, we
 can create a generic function that bounce any circle inside the screen area.
 This will be useful for us to reuse it later for particles.
 
-```op:update-1,label:bounce+1,lens:bounce+update
+```op:update-1,label:bounce+1,lens:bounce>update
 
 function bounce(obj) {
 }
@@ -182,7 +182,7 @@ function bounce(obj) {
 For each dimension, we check if the circle is touching each side of the screen,
 and if it is, we move it back in and invert the velocity in that axis.
 
-```op:bounce+1,lens:bounce+update
+```op:bounce+1,lens:bounce>update
   if (obj.pos.x <= obj.radius || obj.pos.x >= W - obj.radius) {
     obj.vel.x = -obj.vel.x;
     obj.pos.x = Math.clamp(obj.pos.x, obj.radius, W - obj.radius);
@@ -212,7 +212,7 @@ function bounce(obj) {
 Finally, we just need to use our new `bounce()` function on update, propagating
 the result value into the control object.
 
-```op:update+4,lens:bounce+update
+```op:update+4,lens:bounce>update
     if (bounce(c)) {
       c.bounced = true;
     }
@@ -232,7 +232,7 @@ function once.
 function updateCollision(a, b) {
 }
 ```
-```op:update+8,lens:update_collision+update
+```op:update+8,lens:update_collision>update
   updateCollision(crystal.control[0], crystal.control[1]);
 ```
 
@@ -557,7 +557,7 @@ Palette](https://lospec.com/palette-list/arne-16):
 @[color-show]{"color":"rgb(178, 220, 239)"}. We are going to use them pair-wise
 in sequence.
 
-```op:init+3,label:color+1,lens:init+color
+```op:init+3,label:color+1,lens:init>color
 
 const COLORS = [
   [190, 38, 51],
@@ -739,7 +739,7 @@ function renderParticles() {
 }
 ```
 
-```op:render+5,lens:render_particles+render
+```op:render+5,lens:render_particles>render
 
   renderParticles();
 ```
@@ -802,7 +802,7 @@ Then there are two things that will change `BG`. First, we are going to update
 its value every time a control bounces to a darker version of the original
 color.
 
-```op:update-1,label:update_bg+1,lens:update+update_bg
+```op:update-1,label:update_bg+1,lens:update>update_bg
 
 function updateBGWith(r, g, b) {
   BG[0] = 16 + 16 * (r / 255);

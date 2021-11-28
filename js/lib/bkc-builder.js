@@ -3,7 +3,7 @@ import diff from "./diff.js";
 
 // label-3+4
 const RANGE_RE =
-  /(?<label>[a-zA-Z_][a-zA-Z0-9_]*)((?<delta>[+-]\d+)(\+(?<len>\d+))?)?/;
+  /(?<label>[a-zA-Z#_][a-zA-Z0-9#_]*)((?<delta>[+-]\d+)(\+(?<len>\d+))?)?/;
 
 function range(prev, out, str) {
   // we may not have generated code yet.
@@ -156,16 +156,21 @@ Parse @cmd.label into ranges related to current edit.
 */
 function generateNewLabels(cmd, out) {
   out.labels = {};
-  if (!cmd.label) {
-    out.thisLabel = [out.range[0], out.range[1]];
+  if (cmd.label === null) {
+    out.this = [out.range[0], out.range[1]];
     return;
   }
   let rng;
   for (const l of cmd.label.split(':')) {
     rng = [out.range[0], out.range[1]];
-    // label:name+<start>+<length>
-    const order = /(?<name>[^+-]+)((?<delta>[+-]\d+)(\+(?<len>\d+))?)?/
-      .exec(l).groups;
+    const order = RANGE_RE.exec(l).groups;
+    const name = order.label;
+    if (name == "this" || name == "edit" || name == "last" || name == "all") {
+      throw ReferenceError(`Name can't be reserved word "${name}"`);
+    }
+    if (name[0] == "#") {
+      throw ReferenceError(`Name can't start with # "${name}"`);
+    }
     if (order.delta) {
       const delta = Number.parseInt(order.delta);
       rng[0] += delta;
@@ -174,9 +179,9 @@ function generateNewLabels(cmd, out) {
     if (order.len) {
       rng[1] = Number.parseInt(order.len);
     }
-    out.labels[order.name] = [...rng];
+    out.labels[name] = [...rng];
   }
-  out.thisLabel = rng;
+  out.this = rng;
 }
 
 /*
@@ -209,9 +214,9 @@ function calculateLens(prev, cmd, out) {
   }
 
   if (cmd.lens === null) {
-    // if lens AND op are ommited, this is probably an empty PRE, so default to
-    // showing everything.
-    if (cmd.op == "") {
+    // if lens AND there's no edit operation, this is probably an empty PRE, so
+    // default to showing everything.
+    if (out.range === null) {
       out.lens = null;
       return;
     }
@@ -229,40 +234,26 @@ function calculateLens(prev, cmd, out) {
     return;
   }
 
+  // reset lens.
   if (cmd.lens == "") {
     out.lens = null;
     return;
   }
 
-  if (cmd.lens.startsWith("this")) {
-    // this+4+<len>
-    const p = /this((?<delta>[+-]\d+)(\+(?<len>\d+))?)?/.exec(cmd.lens).groups;
-    const delta = Number.parseInt(p.delta ?? 0);
-    const len = Number.parseInt(p.len ?? 0);
-    out.lens = [[out.thisLabel[0] + delta, out.thisLabel[1] - delta + len]];
-    return;
-  }
-
-  // when there are specific labels listed on lens.
-  if (cmd.lens != "") {
-    out.lens = [];
-    for (const d of cmd.lens.split('-')) {
-      let dis = null;
-      for (const l of d.split('+')) {
-        const t = out.labels[l];
-        if (!t) {
-          throw TypeError("Invalid label: " + l);
-        }
-        if (dis === null) {
-          dis = [...t];
-          continue;
-        }
-        const start = Math.min(dis[0], t[0]);
-        const end = Math.max(dis[0] + dis[1], t[0] + t[1]);
-        dis = [start, end - start];
+  out.lens = [];
+  for (const d of cmd.lens.split('&')) {
+    let dis = null;
+    for (const l of d.split('>')) {
+      const t = range(prev, out, l);
+      if (dis === null) {
+        dis = [...t];
+        continue;
       }
-      out.lens.push(dis);
+      const start = Math.min(dis[0], t[0]);
+      const end = Math.max(dis[0] + dis[1], t[0] + t[1]);
+      dis = [start, end - start];
     }
+    out.lens.push(dis);
   }
 }
 
@@ -317,7 +308,8 @@ export function rebuildPRE(state, el) {
   if (touse.length == 0) touse = state.code.join("\n");
   const out = touse.split("\n");
 
-  const op = el.getAttribute('op') ?? "";
+  const op = el.getAttribute('op') ??
+    el.getAttribute('add') ?? el.getAttribute('sub') ?? "";
   let firstLine = op == "" ? 0 : state.highlight[0];
 
   // clean up empty lines at the beginning and end.
