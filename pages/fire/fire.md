@@ -17,7 +17,7 @@ Start by creating the 2D context and setting the canvas size. Remember that the
 are still allowed to layout the CSS of the canvas independently. For our
 effect, we are going to use `1080p`.
 
-```op:
+```op:,add:
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
 const H = canvas.height = 1080;
@@ -27,7 +27,7 @@ Create a `requestAnimationFrame` loop. The callback function will be called once
 every frame (usually 60 times per second) with one parameter, which is a
 monotonically increasing time in milliseconds.
 
-```op:+
+```op:+,add:
 
 function frame(t) {
   requestAnimationFrame(frame);
@@ -41,7 +41,7 @@ frame(0);
 So what we do each frame? First, we reset the canvas and clear it black. To
 reset, we can use the new `reset()` function of Canvas 2D.
 
-```op:6
+```op:6,add:all+6
   ctx.reset();
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
@@ -53,15 +53,14 @@ rectangles will end up forming the flame that we will see. They are a better
 choice than circles or squares, because they will add some verticality that
 will make the fire more believable.
 
-```op:10
+```op:10,add:
   ctx.fillStyle = `rgb(255, 0, 0)`;
   ctx.fillRect(960, 1030, 30, 50);
-
 ```
 
 We should have a bunch of them distributed on the canvas.
 
-```op:10:2
+```op:10:2,sub:last
   for (let i = 0; i < 2000; ++i) {
     ctx.fillStyle = `rgb(255, 0, 0)`;
     ctx.fillRect(960, 1030, 30, 50);
@@ -76,7 +75,7 @@ individual particles, but let's try to avoid that for now.
 On the `x axis`, we want the flame concentrated on the center of the canvas. We
 can use a `sin()` function around the center and make the amplitude also vary.
 
-```op:12:1
+```op:12:1,sub:last+2+1
     ctx.fillRect(
       960 + Math.sin(i / 8) * i / 2,
       1030,
@@ -87,7 +86,7 @@ On the `y axis` we want the flame to concentrate on the bottom, and then go up.
 For a fire effect, we probably want something that goes faster the closer
 it is to the top. A `tan()` function will do that.
 
-```op:12:4
+```op:12:4,sub:last
     ctx.fillRect(
       960 + Math.sin(i / 8) * i / 2,
       1030 - i * Math.tan(i ** 4),
@@ -96,7 +95,7 @@ it is to the top. A `tan()` function will do that.
 
 We can see what we got so far, and decide if the distribution looks reasonable.
 
-```op:+
+```add:
 ```
 @[canvas-demo]
 
@@ -113,7 +112,7 @@ We can also use the opportunity to make the white/yellow tones farther away, whi
 add to the effect, as "bright red" flames will appear closer. We can do both
 those things by parametrizing the color with the index.
 
-```op:11:1,spawn:2
+```op:11:1,sub:all+11+1,spawn:2
     ctx.fillStyle = `rgba(255, ${255 - i / 8}, ${255 - i})`;
 ```
 
@@ -128,12 +127,12 @@ Remember also that `requestAnimationFrame` passes the time in milliseconds. This
 means, we need to divide by a big factor (in this case, going back to seconds)
 for the number to be in the same order of magnitude as the index.
 
-```op:14:1,spawn:2
+```op:14:1,sub:all+14+1,spawn:2
       1030 - i * Math.tan(i ** 4 + t / 1000),
 ```
 
 @[canvas-demo]
-```op:+
+```add:
 ```
 
 Okey. This looks like a nice low poly fire. We could improve it by making the
@@ -154,7 +153,7 @@ For now, we must create a temporary canvas to render this. There's nothing much
 here: we create an `OffscreenCanvas` identical to the original canvas, and move
 all our operations to it.
 
-```op:
+```sub:
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
 const H = canvas.height = 1080;
@@ -186,7 +185,7 @@ the canvas to black before drawing.
 
 With this, we should get the exact same effect we had before.
 
-```op:21,spawn:2
+```op:21,add:all+21,spawn:2
   ctx.reset();
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
@@ -195,14 +194,14 @@ With this, we should get the exact same effect we had before.
 ```
 
 @[canvas-demo]
-```op:+
+```add:
 ```
 
 Now we are ready to add some filters to the final image. We are going to use the
 new [CanvasFilter](https://github.com/fserb/canvas2D/blob/master/spec/filters.md)
 API for that.
 
-```op:24
+```op:24,add:all+24
   ctx.filter = new CanvasFilter([
   ]);
 ```
@@ -210,7 +209,7 @@ API for that.
 The first thing we will do is to blur the image. This will have the effect of
 merging particles that are nearby and create little "fire areas".
 
-```op:25
+```op:25,add:all+25
     {filter: "gaussianBlur", stdDeviation: 24},
 ```
 
@@ -250,7 +249,7 @@ and subtract `1.5`, all values that are below $0.375$ (from $4x - 1.5 = 0$),
 will end up as $0$ and all values above $0.625$ (from $4x - 1.5 = 1$), will end
 up as $1$. This will fix the bluriness and make the fire pop out.
 
-```op:26,spawn:5
+```op:26,add:all+26,spawn:5
     {filter:"colorMatrix", values: [
       4, 0, 0, 0, -1.5,
       0, 4, 0, 0, -1.5,
@@ -260,7 +259,7 @@ up as $1$. This will fix the bluriness and make the fire pop out.
 ```
 
 @[canvas-demo]
-```op:+
+```add:
 ```
 
 And here it is. The final fire effect with filters. You can also see it [here in a standalone page with all the source code]({{relativePath}}/effect.html).

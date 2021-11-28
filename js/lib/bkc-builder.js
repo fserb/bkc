@@ -5,7 +5,7 @@ import diff from "./diff.js";
 const RANGE_RE =
   /(?<label>[a-zA-Z#_][a-zA-Z0-9#_]*)((?<delta>[+-]\d+)(\+(?<len>\d+))?)?/;
 
-function range(prev, out, str) {
+function _label(prev, out, str) {
   // we may not have generated code yet.
   const cur = out.code !== null ? out : prev;
 
@@ -32,14 +32,32 @@ function range(prev, out, str) {
     rng = [...labels[order.label]];
   }
 
-  if (order.delta !== undefined) {
-    const delta = Number.parseInt(order.delta);
+  const delta = order.delta !== undefined ? Number.parseInt(order.delta) : null;
+  const len = order.len !== undefined ? Number.parseInt(order.len) : null;
+  return {rng, delta, len};
+}
+
+function range(prev, out, str) {
+  const {rng, delta, len} = _label(prev, out, str);
+
+  if (delta !== null) {
     rng[0] += delta;
     rng[1] -= delta;
   }
 
-  if (order.len !== undefined) {
-    rng[1] = Number.parseInt(order.len);
+  if (len !== null) {
+    rng[1] = len;
+  }
+
+  return rng;
+}
+
+function place(prev, out, str) {
+  const {rng, delta, len} = _label(prev, out, str);
+
+  if (delta !== null) {
+    rng[0] += delta;
+    rng[1] = len !== null ? len : 0;
   }
 
   return rng;
@@ -64,17 +82,19 @@ function applyEdit(prev, cmd, out) {
   }
   if (action === null) return;
 
-  const target = range(prev, out, cmd[action] ?? deftarget);
+  const target = cmd[action] !== "" ? cmd[action] : deftarget;
 
   const newcode = cmd.code.split('\n').slice(0, -1);
   let start, length, delta;
   if (action === "add") {
-    start = target[0] + target[1];
+    const p = place(prev, out, target);
+    start = p[0] + p[1];
     length = 0;
     delta = newcode.length;
   } else if (action === "sub") {
-    start = target[0];
-    length = target[1];
+    const r = range(prev, out, target);
+    start = r[0];
+    length = r[1];
     delta = newcode.length - length;
   }
 
@@ -91,24 +111,24 @@ function applyOp(prev, cmd, out) {
   if (cmd.op === null) return;
 
   const newcode = cmd.code.split('\n').slice(0, -1);
-  out.range = [0, newcode.length, newcode.length];
+  out._range = [0, newcode.length, newcode.length];
 
   if (cmd.op === "") {
-    out.code = newcode;
+    out._code = newcode;
     return;
   }
 
   if (cmd.op === "+") {
-    out.code = [...prev.code, ...newcode];
-    out.range[0] = prev.code.length;
+    out._code = [...prev.code, ...newcode];
+    out._range[0] = prev.code.length;
     return;
   }
 
   if (cmd.op === "++") {
-    out.code = [...prev.code];
+    out._code = [...prev.code];
     const end = prev.range[0] + prev.range[1];
-    out.code.splice(end, 0, ...newcode);
-    out.range[0] = end;
+    out._code.splice(end, 0, ...newcode);
+    out._range[0] = end;
     return;
   }
 
@@ -145,10 +165,10 @@ function applyOp(prev, cmd, out) {
     length = 0;
   }
 
-  out.code = [...prev.code];
-  out.code.splice(start, length, ...newcode);
-  out.range[0] = start;
-  out.range[2] -= length;
+  out._code = [...prev.code];
+  out._code.splice(start, length, ...newcode);
+  out._range[0] = start;
+  out._range[2] -= length;
 }
 
 /*
@@ -290,6 +310,32 @@ export function buildState(prev, cmd) {
 
   applyOp(prev, cmd, out);
   applyEdit(prev, cmd, out);
+
+  if (cmd.op !== null) {
+    if (out.code === null || out.range === null) {
+      console.log(`op:${cmd.op} not replaced with add:${cmd.add} sub:${cmd.sub}`);
+      out.code = out._code;
+      out.range = out._range;
+    }
+
+    if (out.code.length != out._code.length) {
+      console.warn(`op:${cmd.op} mismatched code length (${out._code.length} => ${out.code.length}) with add:${cmd.add} sub:${cmd.sub}`);
+    }
+
+    for (let i = 0; i < out.code.length; ++i) {
+      if (out.code[i] != out._code[i]) {
+        console.warn(`op:${cmd.op} mismatched code line ${i+1}: (${out._code[i]} => ${out.code[i]}) with add:${cmd.add} sub:${cmd.sub}`);
+      }
+    }
+
+    for (let i = 0; i < 3; ++i) {
+      if (out.range[i] != out._range[i]) {
+        console.warn(`op:${cmd.op} mismatched range (${out._range} => ${out.range}) with add:${cmd.add} sub:${cmd.sub}`);
+        break;
+      }
+    }
+  }
+
   generateNewLabels(cmd, out);
   propagateOldLabels(prev, out);
   calculateLens(prev, cmd, out);
