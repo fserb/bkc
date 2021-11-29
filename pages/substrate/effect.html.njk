@@ -1,0 +1,258 @@
+---
+layout: effect
+title: Substrate
+draft: true
+---
+
+<script type="module">
+// Substrate Watercolor
+// j.tarbell   June, 2004
+// Albuquerque, New Mexico
+// complexification.net
+
+/*
+TODO:
+- stop criteria
+- isolate noise
+- color function instead of sampling?
+- better grid values
+- what if grid has smaller dim than screen?
+
+*/
+
+const canvas = document.querySelector("canvas");
+
+const {rgba} = await import("{{baseURL}}extend.js");
+
+const ctx = canvas.getContext("2d");
+const W = canvas.width = 1920;
+const H = canvas.height = 1080;
+
+const COLORS = ['#000000', '#001000', '#100000', '#102028', '#302008',
+  '#382810', '#383828', '#384030', '#484858', '#501000', '#505860', '#582800',
+  '#585048', '#585838', '#586858', '#586868', '#603810', '#607070', '#685858',
+  '#686870', '#687078', '#708080', '#787880', '#805800', '#905048', '#905818',
+  '#906070', '#906848', '#983010', '#984008', '#986870', '#98A0B8', '#A03810',
+  '#A05810', '#A07078', '#A07800', '#A07848', '#A08078', '#A09078', '#A0A0A8',
+  '#A82818', '#A89070', '#A89848', '#A89868', '#A8A078', '#A8A880', '#A8B0A0',
+  '#B08868', '#B09020', '#B09030', '#B0A098', '#B0A870', '#B0A890', '#B0B078',
+  '#B0B098', '#B0B8B0', '#B0C0B8', '#B88868', '#B8B8A8', '#B8B8B0', '#C09888',
+  '#C0A060', '#C0B078', '#C0B090', '#C0C090', '#C0C0B0', '#C8A078', '#C8B060',
+  '#C8B078', '#C8B8A0', '#C8C098', '#C8C8B8', '#D0B078', '#D0B080', '#D0B0B0',
+  '#D0B890', '#D0C058', '#D0C0A0', '#D0C8A0', '#D0C8A8', '#D0C8B0', '#D0D0C0',
+  '#D8C070', '#D8C088', '#D8C0A0', '#D8C0A8', '#D8C0B0', '#D8C898', '#D8C8A0',
+  '#D8C8B0', '#D8D0B0', '#E0A060', '#E0B080', '#E0B850', '#E0C858', '#E0C8A0',
+  '#E0C8A8', '#E0D098', '#E0D0A0', '#E0D0B0', '#E0D8A0', '#E0D8B0', '#E0D8B8',
+  '#E0E0B0', '#E0E0B8', '#E0E0C0', '#E8B828', '#E8B878', '#E8C078', '#E8C088',
+  '#E8C848', '#E8C880', '#E8C898', '#E8D050', '#E8D078', '#E8D8A8', '#E8D8C0',
+  '#E8D8C8', '#E8E080', '#E8E098', '#E8E0B0', '#E8E0C8', '#E8E8D8', '#E8F0C0',
+  '#E8F0D8', '#E8F0E0', '#F0C868', '#F0C898', '#F0D098', '#F0D870', '#F0D890',
+  '#F0D898', '#F0D8C0', '#F0D8D0', '#F0E080', '#F0E0B0', '#F0E0B8', '#F0E0C0',
+  '#F0E8A0', '#F0E8B8', '#F0E8C0', '#F0E8C8', '#F0E8D0', '#F0E8D8', '#F0F0C0',
+  '#F0F0C8', '#F0F0D0', '#F0F0E0', '#F0F8A8', '#F8B828', '#F8B888', '#F8E050',
+  '#F8E070', '#F8E0A0', '#F8E0A8', '#F8E0B0', '#F8E0B8', '#F8E0C0', '#F8E0D8',
+  '#F8E878', '#F8E8B8', '#F8E8C0', '#F8E8D0', '#F8E8E0', '#F8F0B8', '#F8F0C8',
+  '#F8F0D0', '#F8F0D8', '#F8F8D0', '#F8F8F8', '#FF9828', '#FFC828', '#FFD028',
+  '#FFD070', '#FFD0B8', '#FFD8A0', '#FFD8A8', '#FFD8B0', '#FFE078', '#FFE868',
+  '#FFE878', '#FFE890', '#FFE898', '#FFE8B0', '#FFE8B8', '#FFE8C0', '#FFE8C8',
+  '#FFE8D0', '#FFF098', '#FFF0A0', '#FFF0B8', '#FFF0C0', '#FFF0C8', '#FFF0D0',
+  '#FFF0D8', '#FFF0E8', '#FFF0F8', '#FFF8B0', '#FFF8C0', '#FFF8C8', '#FFF8D0',
+  '#FFF8D8', '#FFF8E0', '#FFFFC8', '#FFFFD0', '#FFFFD8'];
+function getColor() {
+  return COLORS[Math.floor(Math.random() * COLORS.length)];
+}
+
+const MAX = 200;
+const cgrid = new Array(W * H);
+const cracks = [];
+
+class SandPainter {
+  constructor() {
+    this.c = getColor();
+    this.g = 0.01 + Math.random() * 0.09;
+  }
+
+  render(x, y, ox, oy) {
+    // modulate gain
+    this.g += -0.050 + 0.1 * Math.random();
+    this.g = Math.clamp(this.g, 0, 1.0);
+
+    // calculate grains by distance
+    //int grains = int(sqrt((ox-x)*(ox-x)+(oy-y)*(oy-y)));
+    const grains = Math.floor(Math.hypot(ox - x, oy - y));
+    // const grains = 64;
+
+    // lay down grains of sand (transparent pixels)
+    const w = this.g / (grains - 1);
+    for (let i = 0; i < grains; i++) {
+      const a = 0.1 - i / (grains * 10.0);
+      ctx.fillStyle = this.c;
+      ctx.globalAlpha = a;
+      ctx.fillRect(
+        ox + (x - ox) * Math.sin(Math.sin(i * w)),
+        oy + (y - oy) * Math.sin(Math.sin(i * w)),
+        1, 1);
+    }
+    ctx.globalAlpha = 1.0;
+  }
+}
+
+class Crack {
+  constructor() {
+    this.x = 0;
+    this.y = 0;
+    this.t = 0;
+    this.findStart();
+    this.sp = new SandPainter();
+  }
+
+  findStart() {
+    let px = 0;
+    let py = 0;
+
+    let found = false;
+    let timeout = 0;
+    while (!found || timeout++ > 1000) {
+      px = Math.floor(Math.random() * W);
+      py = Math.floor(Math.random() * H);
+      if (cgrid[px + py * W] < 10000) {
+        found = true;
+      }
+    }
+
+    if (!found) {
+      console.log("timeout");
+      return;
+    }
+
+    let a = cgrid[px + py * W];
+    if (Math.random() < 0.5) {
+      a -= 90 + Math.floor(-2 + Math.random() * 4);
+    } else {
+      a += 90 + Math.floor(-2 + Math.random() * 4);
+    }
+    this.startCrack(px, py, a);
+  }
+
+  startCrack(x, y, t) {
+    this.x = x;
+    this.y = y;
+    this.t = t;
+    this.x += 0.61 * Math.cos(t * Math.PI / 180);
+    this.y += 0.61 * Math.sin(t * Math.PI / 180);
+  }
+
+  move() {
+    // continue cracking
+    this.x += 0.42 * Math.cos(this.t * Math.PI / 180);
+    this.y += 0.42 * Math.sin(this.t * Math.PI / 180);
+
+    // bound check
+    const z = 0.33;
+    const cx = Math.floor(this.x + z * (-1 + Math.random() * 2));
+    const cy = Math.floor(this.y + z * (-1 + Math.random() * 2));
+
+    // draw sand painter
+    this.regionColor();
+
+    // draw black crack
+    ctx.fillStyle = "#000";
+    ctx.globalAlpha = 1.0;
+    ctx.fillRect(this.x + z * (-1 + Math.random() * 2),
+      this.y + z * (-1 + Math.random() * 2), 1, 1);
+
+    if (cx >= 0 && cx < W && cy >= 0 && cy < H) {
+      // safe to check
+      if (cgrid[cy * W + cx] > 10000 || Math.abs(cgrid[cy * W + cx] - this.t) < 5) {
+        // continue cracking
+        cgrid[cy * W + cx] = Math.floor(this.t);
+      } else if (Math.abs(cgrid[cy * W + cx] - this.t) > 2) {
+        // crack encountered (not self), stop cracking
+        this.findStart();
+        makeCrack();
+      }
+    } else {
+      // out of bounds, stop cracking
+      this.findStart();
+      makeCrack();
+    }
+  }
+
+  regionColor() {
+    let rx = this.x;
+    let ry = this.y;
+    let openspace = true;
+
+    // find extents of open space
+    while (openspace) {
+      // move perpendicular to crack
+      rx += 0.81 * Math.sin(this.t * Math.PI / 180);
+      ry -= 0.81 * Math.cos(this.t * Math.PI / 180);
+      const cx = Math.floor(rx);
+      const cy = Math.floor(ry);
+      if (cx >= 0 && cx < W && cy >= 0 && cy < H) {
+        // safe to check
+        if (cgrid[cx + cy * W]>10000) {
+          // space is open
+        } else {
+          openspace=false;
+        }
+      } else {
+        openspace=false;
+      }
+    }
+    // draw sand painter
+    this.sp.render(rx, ry, this.x, this.y);
+  }
+}
+
+function makeCrack() {
+  if (cracks.length < MAX) {
+    cracks.push(new Crack());
+  }
+}
+
+function update(dt, ts) {
+  for (const c of cracks) {
+    c.move();
+  }
+}
+
+function begin() {
+  for (let y = 0; y < H; ++y) {
+    for (let x = 0; x < W; ++x) {
+      cgrid[x + y * W] = 10001;
+    }
+  }
+
+  for (let k = 0; k < 16; ++k) {
+    const i = Math.floor(Math.random() * W * H);
+    cgrid[i] = Math.floor(Math.random() * 360);
+  }
+
+  for (let k = 0; k < 3; ++k) {
+    makeCrack();
+  }
+
+  ctx.fillStyle = "#FFF";
+  ctx.fillRect(0, 0, W, H);
+}
+
+let last = 0;
+function frame(ts) {
+  ts /= 1000;
+  const dt = (ts - last);
+  last = ts;
+  if (dt === ts) {
+    return requestAnimationFrame(frame);
+  }
+
+  update(dt, ts);
+
+  requestAnimationFrame(frame);
+}
+
+begin();
+frame(0);
+
+</script>
