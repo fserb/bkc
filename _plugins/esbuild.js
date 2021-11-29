@@ -23,7 +23,7 @@ export default function (options) {
         const {outputFiles, warnings, errors} = await esbuild.build({
           bundle: true,
           format: 'esm',
-          minify: true,
+          minify: !site.options.dev,
           keepNames: true,
           platform: 'browser',
           target: 'esnext',

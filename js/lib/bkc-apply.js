@@ -219,7 +219,7 @@ function runApply() {
   postApplyLens(alives, lens);
 }
 
-function clearLine(s) {
+export function clearLine(s) {
   return s
     .replaceAll('&amp;', '&')
     .replaceAll('&lt;', '<')

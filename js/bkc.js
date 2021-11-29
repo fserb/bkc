@@ -20,7 +20,7 @@ new ASIDE. This happens at scroll time.
 bkc-editor.js - open current code in different web editors.
 */
 import {buildState, rebuildPRE, mergeState} from "./lib/bkc-builder.js";
-import {apply} from "./lib/bkc-apply.js";
+import {clearLine, apply} from "./lib/bkc-apply.js";
 import {connectEditor, updateEditorCode} from "./lib/bkc-editor.js";
 
 const VALID_KEYS = ["add", "sub", "lens", "label", "debug", "spawn"];
@@ -81,9 +81,7 @@ function setup() {
 
   for (const el of document.querySelectorAll("main pre code, canvas-demo")) {
     if (el.tagName == "CANVAS-DEMO") {
-      const doc = new DOMParser().parseFromString(
-        state.code.join('\n'), 'text/html');
-      el.code = doc.body.textContent ?? "";
+      el.code = clearLine(state.code.join('\n').replace(/<[^>]+>/gm, ''));
       el.reRender();
       continue;
     }
@@ -91,11 +89,11 @@ function setup() {
     if (el.tagName != "CODE") continue;
     const cmd = {code: el.innerHTML};
     for (const k of VALID_KEYS) {
-      const v = el.getAttribute(k);
-      if (v !== undefined) {
-        cmd[k] = v;
-      }
+      cmd[k] = el.getAttribute(k);
     }
+    const langstr = /\blanguage-(.+?)\b/.exec(el.classList.value);
+    cmd.lang = langstr !== null ? langstr[1] : null;
+
     state = buildState(state, cmd);
 
     rebuildPRE(state, el);
@@ -123,7 +121,6 @@ function setup() {
     }
   }
 
-  resizeRulers();
   connectEditor(document.head.baseURI, {
     jsfiddle: document.getElementById("ed_jsfiddle"),
     codepen: document.getElementById("ed_codepen"),

@@ -868,7 +868,7 @@ And finally we apply the shaking as a translation before rendering anything. The
 multiplication by `shaketime` is not strictly needed, but it makes it more
 nature, as it decays slowly its magnitude instead of abruptly stopping.
 
-```add:render+5,lens:render
+```add:render+5,lens:#render
 
   if (shaketime > 0) {
     ctx.translate(

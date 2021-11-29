@@ -10,7 +10,6 @@ function _label(prev, out, str) {
   const cur = out.code !== null ? out : prev;
 
   const order = RANGE_RE.exec(str).groups;
-
   let rng = null;
 
   if (order.label == "all") {
@@ -25,6 +24,10 @@ function _label(prev, out, str) {
     }
     rng = [...out.this];
   } else {
+    if (order.label[0] == '#') {
+      autoGenerateLabels(out);
+    }
+
     const labels = out.labels !== null ? out.labels : prev.labels;
     if (labels[order.label] === undefined) {
       throw ReferenceError(`Unknown label "${order.label}".`);
@@ -143,6 +146,8 @@ Update @prev.labels into @out.labels depending on current edit.
 function propagateOldLabels(prev, out) {
   for (const k of Object.keys(prev.labels)) {
     if (out.labels[k]) continue;
+    if (k[0] == '#') continue;
+
     let [start, len] = prev.labels[k];
     if (start > out.range[0]) {
       start += out.range[2];
@@ -150,6 +155,65 @@ function propagateOldLabels(prev, out) {
       len += out.range[2];
     }
     out.labels[k] = [start, len];
+  }
+}
+
+/*
+Super-hacky JS parser, to get functions, class names and methods.
+*/
+const HTML_RE = /<[^>]+>/gm;
+const JS_RE =
+  /^((function\s+(?<fname>.+?)\s*\()|(class\s+(?<cname>.+?)\s)|((?<mname>.*?)\s*\(.*?\)\s*\{)|(?<close>}$))/;
+const JS_INVALID = new Set(["for", "while", "switch", "if"]);
+function* _autogenJS(out) {
+  const stack = [];
+  const starts = [];
+  for (let i = 0; i < out.code.length; ++i) {
+    const l = out.code[i];
+    if (l.length == 0) continue;
+    if (l.startsWith("  ".repeat(stack.length + 1))) continue;
+
+    const c = l.replace(HTML_RE, '').trim();
+
+    const M = JS_RE.exec(c);
+    if (!M) continue;
+    const g = M.groups;
+
+    const name = g.fname ?? g.cname ?? g.mname;
+
+    if (name) {
+      stack.push(name);
+      starts.push(i);
+    } else if (g.close) {
+      if (stack.length == 0) continue;
+      const final = '#' + stack.join('#');
+      const bname = stack.pop();
+      const start = starts.pop();
+      if (JS_INVALID.has(bname)) continue;
+      yield [final, [start, i - start + 1]];
+    }
+  }
+}
+
+/*
+Auto-generate labels based on the language.
+
+This is only called if a label is referenced that starts with #.
+*/
+function autoGenerateLabels(out) {
+  if (out._lang === null) return;
+  if (out._autogen) return;
+  out._autogen = true;
+  if (out.labels === null) out.labels = {};
+
+  const FN = {
+    "js": _autogenJS,
+  };
+
+  if (!FN[out._lang]) return;
+
+  for (const [l, r] of FN[out._lang](out)) {
+    out.labels[l] = r;
   }
 }
 
@@ -233,6 +297,8 @@ function determineHighlight(prev, out) {
 
 export function buildState(prev, cmd) {
   const out = {
+    _lang: cmd.lang,
+    _codegen: false,
     code: null,     // [] of lines of code
     highlight: [],  // [] of lines to be highlighted
     labels: null,   // {label: [start, length]} of references
@@ -248,6 +314,9 @@ export function buildState(prev, cmd) {
   determineHighlight(prev, out);
 
   if (cmd.debug) console.log(out);
+
+  delete out._lang;
+  delete out._codegen;
 
   return out;
 }
