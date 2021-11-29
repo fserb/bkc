@@ -456,7 +456,12 @@ aside #ed:hover #ed_opts {
   transition: all 0.25s ease-in-out 0.25s;
 }
 
-aside #ed,
+aside #ed, aside #ed_opts, aside #ed_jsfiddle, aside #ed_codepen {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
 
 aside #ed_jsfiddle, aside #ed_codepen {
   cursor: pointer;
