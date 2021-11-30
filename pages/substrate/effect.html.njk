@@ -12,17 +12,12 @@ draft: true
 
 /*
 TODO:
-- stop criteria
-- isolate noise
 - color function instead of sampling?
-- better grid values
-- what if grid has smaller dim than screen?
+- mask?
 
 */
-
+import {normal} from "{{baseURL}}extend.js";
 const canvas = document.querySelector("canvas");
-
-const {rgba} = await import("{{baseURL}}extend.js");
 
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
@@ -62,197 +57,193 @@ function getColor() {
   return COLORS[Math.floor(Math.random() * COLORS.length)];
 }
 
-const MAX = 200;
+function drawPoint(x, y, color, alpha = 1.0) {
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, 1, 1);
+}
+
+const MAX_CRACKS = 128;
+const MAX_TOTAL_CRACKS = 16384;
 const cgrid = new Array(W * H);
 const cracks = [];
 
-class SandPainter {
-  constructor() {
-    this.c = getColor();
-    this.g = 0.01 + Math.random() * 0.09;
-  }
+const EMPTY = Infinity;
+const INVALID = null;
 
-  render(x, y, ox, oy) {
-    // modulate gain
-    this.g += -0.050 + 0.1 * Math.random();
-    this.g = Math.clamp(this.g, 0, 1.0);
+let totalCracks = 0;
 
-    // calculate grains by distance
-    //int grains = int(sqrt((ox-x)*(ox-x)+(oy-y)*(oy-y)));
-    const grains = Math.floor(Math.hypot(ox - x, oy - y));
-    // const grains = 64;
+function get(x, y) {
+  x = Math.floor(x);
+  y = Math.floor(y);
+  if (x < 0 || x >= W || y < 0 || y >= H) return INVALID;
+  return cgrid[x + y * W];
+}
 
-    // lay down grains of sand (transparent pixels)
-    const w = this.g / (grains - 1);
-    for (let i = 0; i < grains; i++) {
-      const a = 0.1 - i / (grains * 10.0);
-      ctx.fillStyle = this.c;
-      ctx.globalAlpha = a;
-      ctx.fillRect(
-        ox + (x - ox) * Math.sin(Math.sin(i * w)),
-        oy + (y - oy) * Math.sin(Math.sin(i * w)),
-        1, 1);
-    }
-    ctx.globalAlpha = 1.0;
-  }
+function set(x, y, v) {
+  x = Math.floor(x);
+  y = Math.floor(y);
+  if (x < 0 || x >= W || y < 0 || y >= H) return;
+  cgrid[x + y * W] = v;
+}
+
+function step(pos, angle) {
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+
+  const dtX = (Math.floor(pos.x) + Math.sign(cos) - pos.x) / cos;
+  const dtY = (Math.floor(pos.y) + Math.sign(sin) - pos.y) / sin;
+  const t = Math.min(dtX, dtY);
+
+  let x = pos.x + t * cos;
+  let y = pos.y + t * sin;
+
+  return {x, y};
 }
 
 class Crack {
-  constructor() {
-    this.x = 0;
-    this.y = 0;
-    this.t = 0;
-    this.findStart();
-    this.sp = new SandPainter();
-  }
+  constructor(x, y, angle) {
+    this.angle = angle;
+    this.pos = step({x, y}, this.angle);
 
-  findStart() {
-    let px = 0;
-    let py = 0;
-
-    let found = false;
-    let timeout = 0;
-    while (!found || timeout++ > 1000) {
-      px = Math.floor(Math.random() * W);
-      py = Math.floor(Math.random() * H);
-      if (cgrid[px + py * W] < 10000) {
-        found = true;
-      }
-    }
-
-    if (!found) {
-      console.log("timeout");
-      return;
-    }
-
-    let a = cgrid[px + py * W];
-    if (Math.random() < 0.5) {
-      a -= 90 + Math.floor(-2 + Math.random() * 4);
-    } else {
-      a += 90 + Math.floor(-2 + Math.random() * 4);
-    }
-    this.startCrack(px, py, a);
-  }
-
-  startCrack(x, y, t) {
-    this.x = x;
-    this.y = y;
-    this.t = t;
-    this.x += 0.61 * Math.cos(t * Math.PI / 180);
-    this.y += 0.61 * Math.sin(t * Math.PI / 180);
+    this.color = getColor();
+    this.mod = 0.5 * Math.random();
   }
 
   move() {
     // continue cracking
-    this.x += 0.42 * Math.cos(this.t * Math.PI / 180);
-    this.y += 0.42 * Math.sin(this.t * Math.PI / 180);
-
-    // bound check
-    const z = 0.33;
-    const cx = Math.floor(this.x + z * (-1 + Math.random() * 2));
-    const cy = Math.floor(this.y + z * (-1 + Math.random() * 2));
+    this.pos = step(this.pos, this.angle);
 
     // draw sand painter
     this.regionColor();
 
     // draw black crack
-    ctx.fillStyle = "#000";
-    ctx.globalAlpha = 1.0;
-    ctx.fillRect(this.x + z * (-1 + Math.random() * 2),
-      this.y + z * (-1 + Math.random() * 2), 1, 1);
-
-    if (cx >= 0 && cx < W && cy >= 0 && cy < H) {
-      // safe to check
-      if (cgrid[cy * W + cx] > 10000 || Math.abs(cgrid[cy * W + cx] - this.t) < 5) {
-        // continue cracking
-        cgrid[cy * W + cx] = Math.floor(this.t);
-      } else if (Math.abs(cgrid[cy * W + cx] - this.t) > 2) {
-        // crack encountered (not self), stop cracking
-        this.findStart();
-        makeCrack();
-      }
-    } else {
-      // out of bounds, stop cracking
-      this.findStart();
-      makeCrack();
+    for (let i = 0 ; i < 2; ++i) {
+      drawPoint(
+        this.pos.x + 0.33 * normal(), this.pos.y + 0.33 * normal(), "#000", 1.0);
     }
+
+    const v = get(this.pos.x, this.pos.y);
+
+    if (v === INVALID) {
+      return false;
+    }
+
+    if (v == EMPTY) {
+      set(this.pos.x, this.pos.y, this.angle);
+    } else if (Math.abs(v - this.angle) > 0.05) {
+      return false;
+    }
+
+    return true;
   }
 
   regionColor() {
-    let rx = this.x;
-    let ry = this.y;
-    let openspace = true;
+    let rx = this.pos.x;
+    let ry = this.pos.y;
 
-    // find extents of open space
-    while (openspace) {
-      // move perpendicular to crack
-      rx += 0.81 * Math.sin(this.t * Math.PI / 180);
-      ry -= 0.81 * Math.cos(this.t * Math.PI / 180);
-      const cx = Math.floor(rx);
-      const cy = Math.floor(ry);
-      if (cx >= 0 && cx < W && cy >= 0 && cy < H) {
-        // safe to check
-        if (cgrid[cx + cy * W]>10000) {
-          // space is open
-        } else {
-          openspace=false;
-        }
-      } else {
-        openspace=false;
-      }
+    let r = {...this.pos};
+    while (true) {
+      r = step(r, this.angle + Math.TAU / 4);
+      const v = get(r.x, r.y);
+      if (v === INVALID || v != EMPTY) break;
     }
-    // draw sand painter
-    this.sp.render(rx, ry, this.x, this.y);
+
+    this.paintTo(r.x, r.y);
+  }
+
+  paintTo(x, y) {
+    this.mod = Math.clamp(this.mod + 0.05 * normal(), 0, 1.0);
+
+    const tx = this.pos.x + (x - this.pos.x) * this.mod;
+    const ty = this.pos.y + (y - this.pos.y) * this.mod;
+
+    const g = ctx.createLinearGradient(this.pos.x, this.pos.y, tx, ty);
+    const S = 5;
+    for (let i = 0; i < S; ++i) {
+      const f = i / (S - 1);
+      const a = 0.25 * ((1 - f) ** 0.25);
+      g.addColorStop(f,
+        this.color + Math.floor(256 * a).toString(16).padStart(2, '0'));
+    }
+
+    ctx.strokeStyle = g;
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 1.0;
+    ctx.beginPath();
+    ctx.moveTo(this.pos.x, this.pos.y);
+    ctx.lineTo(tx, ty);
+    ctx.stroke();
+    ctx.globalCompositeOperation = "source-over";
   }
 }
 
 function makeCrack() {
-  if (cracks.length < MAX) {
-    cracks.push(new Crack());
-  }
-}
+  if (cracks.length >= MAX_CRACKS) return;
+  if (totalCracks >= MAX_TOTAL_CRACKS) return;
 
-function update(dt, ts) {
-  for (const c of cracks) {
-    c.move();
+  let px = 0;
+  let py = 0;
+
+  let found = false;
+  for (let i = 0; i < W * H; ++i) {
+    px = Math.random() * W;
+    py = Math.random() * H;
+    if (get(px, py) != EMPTY) {
+      found = true;
+      break;
+    }
   }
+  if (!found) {
+    console.log("timeout");
+    return;
+  }
+
+  const dir = Math.sign(Math.random() - 0.5);
+  const angle = get(px, py) + dir * ((Math.TAU / 4) + 0.05 * normal());
+
+  cracks.push(new Crack(px, py, angle));
+  totalCracks++;
 }
 
 function begin() {
-  for (let y = 0; y < H; ++y) {
-    for (let x = 0; x < W; ++x) {
-      cgrid[x + y * W] = 10001;
-    }
+  for (let i = 0; i < W * H; ++i) {
+    cgrid[i] = EMPTY;
   }
 
   for (let k = 0; k < 16; ++k) {
     const i = Math.floor(Math.random() * W * H);
-    cgrid[i] = Math.floor(Math.random() * 360);
+    cgrid[i] = Math.random() * Math.TAU;
   }
+
+  totalCracks = 0;
+  cracks.length = 0;
 
   for (let k = 0; k < 3; ++k) {
     makeCrack();
   }
 
+  ctx.reset();
   ctx.fillStyle = "#FFF";
   ctx.fillRect(0, 0, W, H);
 }
 
-let last = 0;
-function frame(ts) {
-  ts /= 1000;
-  const dt = (ts - last);
-  last = ts;
-  if (dt === ts) {
-    return requestAnimationFrame(frame);
+function frame() {
+  for (let i = 0; i < 4; ++i) {
+    cracks.filterIn(c => {
+      if (!c.move()) {
+        makeCrack();
+        makeCrack();
+        return false;
+      }
+      return true;
+    });
   }
-
-  update(dt, ts);
 
   requestAnimationFrame(frame);
 }
 
 begin();
-frame(0);
+frame();
 
 </script>
