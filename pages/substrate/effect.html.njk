@@ -25,25 +25,26 @@ const W = canvas.width = 1920;
 const H = canvas.height = 1080;
 
 const N = 256;
-const NC = Color('#000000').steps(N, '#FFFF00');
-for (let i = 0; i < N; ++i) {
-  const f = i / (N - 1);
-  NC[i] = NC[i].luminance(f ** 1.2)
-    .saturate(4 * Math.abs(Math.sin(f * 7)))
-    .rotate(-40 + 50 * (Math.cos(f * 5)))
-    .multiply(Color('#FFFF0050'))
-}
-const LINE = '#3B2618';
-
-// const NC = Color('#000000').steps(N, '#00AAFF');
+// const BG = '#FFF';
+// const NC = Color('#000000').steps(N, '#FFFF00');
 // for (let i = 0; i < N; ++i) {
 //   const f = i / (N - 1);
 //   NC[i] = NC[i].luminance(f ** 1.2)
 //     .saturate(4 * Math.abs(Math.sin(f * 7)))
-//     .multiply(Color('#FF00FF25'))
+//     .rotate(-40 + 50 * (Math.cos(f * 5)))
+//     .multiply(Color('#FFFF0050'))
 // }
-// const LINE = '#323E51AA';
+// const LINE = '#3B2618';
 
+const BG = '#FFF';
+const NC = Color('#000000').steps(N, '#00AAFF');
+for (let i = 0; i < N; ++i) {
+  const f = i / (N - 1);
+  NC[i] = NC[i].luminance((f * 0.9) ** 1.2)
+    .saturate(4 * Math.abs(Math.sin(f * 7)))
+    .multiply(Color('#FF00FF40'))
+}
+const LINE = '#323E51AA';
 
 function getColor() {
   return NC[Math.floor(Math.random() * NC.length)];
@@ -56,7 +57,7 @@ function drawPoint(x, y, color, alpha = 1.0) {
 }
 
 const MAX_CRACKS = 128;
-const MAX_TOTAL_CRACKS = 16384;
+const MAX_TOTAL_CRACKS = 2000; 16384;
 const cgrid = new Array(W * H);
 const cracks = [];
 
@@ -83,8 +84,8 @@ function step(pos, angle) {
   const cos = Math.cos(angle);
   const sin = Math.sin(angle);
 
-  const dtX = (Math.floor(pos.x) + Math.sign(cos) - pos.x) / cos;
-  const dtY = (Math.floor(pos.y) + Math.sign(sin) - pos.y) / sin;
+  const dtX = cos != 0 ? (Math.floor(pos.x) + Math.sign(cos) - pos.x) / cos : Infinity;
+  const dtY = sin != 0 ? (Math.floor(pos.y) + Math.sign(sin) - pos.y) / sin : Infinity;
   const t = Math.min(dtX, dtY);
 
   let x = pos.x + t * cos;
@@ -100,27 +101,25 @@ class Crack {
 
     this.color = getColor();
     this.mod = 0.5 * Math.random();
+
+    cracks.push(this);
+    totalCracks++;
   }
 
   move() {
-    // continue cracking
     this.pos = step(this.pos, this.angle);
 
-    // draw sand painter
     this.regionColor();
 
-    // draw black crack
     for (let i = 0 ; i < 2; ++i) {
       drawPoint(
         this.pos.x + 0.33 * normal(), this.pos.y + 0.33 * normal(), LINE, 1.0);
     }
 
     const v = get(this.pos.x, this.pos.y);
-
     if (v === INVALID) {
       return false;
     }
-
     if (v == EMPTY) {
       set(this.pos.x, this.pos.y, this.angle);
     } else if (Math.abs(v - this.angle) > 0.05) {
@@ -155,9 +154,7 @@ class Crack {
     for (let i = 0; i < S; ++i) {
       const f = i / (S - 1);
       const a = 0.25 * ((1 - f) ** 0.25);
-      g.addColorStop(f,
-        this.color.alpha(a));
-        // this.color + Math.floor(256 * a).toString(16).padStart(2, '0'));
+      g.addColorStop(f, this.color.alpha(a));
     }
 
     ctx.strokeStyle = g;
@@ -182,7 +179,8 @@ function makeCrack() {
   for (let i = 0; i < W * H; ++i) {
     px = Math.random() * W;
     py = Math.random() * H;
-    if (get(px, py) != EMPTY) {
+    const p = get(px, py);
+    if (p != EMPTY && p != INVALID) {
       found = true;
       break;
     }
@@ -195,34 +193,97 @@ function makeCrack() {
   const dir = Math.sign(Math.random() - 0.5);
   const angle = get(px, py) + dir * ((Math.TAU / 4) + 0.05 * normal());
 
-  cracks.push(new Crack(px, py, angle));
-  totalCracks++;
+  new Crack(px, py, angle);
+}
+
+function mask(c) {
+  const im = c.getImageData(0, 0, W, H).data;
+
+  for (let y = 0; y < H; ++y) {
+    for (let x = 0; x < W; ++x) {
+      const p = (x + y * W) * 4;
+      const c = im[p];
+
+      if (c == 0) {
+        set(x, y, INVALID);
+      } else if (c == 255) {
+        set(x, y, EMPTY);
+      }
+    }
+  }
+
 }
 
 function begin() {
+  totalCracks = 0;
+  cracks.length = 0;
+
   for (let i = 0; i < W * H; ++i) {
     cgrid[i] = EMPTY;
   }
 
-  for (let k = 0; k < 16; ++k) {
-    const i = Math.floor(Math.random() * W * H);
-    cgrid[i] = Math.random() * Math.TAU;
+  // for (let k = 0; k < 16; ++k) {
+  //   const i = Math.floor(Math.random() * W * H);
+  //   cgrid[i] = Math.random() * Math.TAU;
+  // }
+  // for (let k = 0; k < 3; ++k) {
+  //   makeCrack();
+  // }
+
+  const ofc = new OffscreenCanvas(W, H);
+  const c = ofc.getContext("2d");
+  c.reset();
+  c.fillStyle = "#000";
+  c.fillRect(0, 0, W, H);
+
+  const TOADD = [];
+
+  function line(x0, y0, x1, y1) {
+    const ang = Math.atan2(y1 - y0, x1 - x0);
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+    TOADD.push([x0, y0, ang]);
   }
 
-  totalCracks = 0;
-  cracks.length = 0;
-
-  for (let k = 0; k < 3; ++k) {
-    makeCrack();
+  function poly(...points) {
+    c.fillStyle = "#FFF";
+    c.strokeStyle = '#FFF';
+    c.beginPath();
+    for (let i = 0; i < points.length; i += 2) {
+      const n = (i + 2) % points.length;
+      c.lineTo(points[i], points[i+1]);
+      line(points[i], points[i+1], points[n], points[n+1]);
+    }
+    c.closePath();
+    c.fill();
+    c.stroke();
   }
 
   ctx.reset();
-  ctx.fillStyle = "#FFF";
+  ctx.fillStyle = BG;
   ctx.fillRect(0, 0, W, H);
+
+  // poly(964,167, 1288,353, 964,545, 638,353);
+  // poly(1288,353, 1288,739, 964,923, 964,545);
+  // poly(638,353, 964,545, 964,923, 638, 739);
+  poly(960, 88, 1177, 273, 1177, 549, 1177, 825, 960, 993, 742, 825, 742, 549, 742, 273);
+
+  mask(c);
+
+  for (const o of TOADD) {
+    new Crack(...o);
+  }
+
+
+
+
+
 }
 
 function frame() {
-  for (let i = 0; i < 4; ++i) {
+  for (let i = 0; i < 1; ++i) {
     cracks.filterIn(c => {
       if (!c.move()) {
         makeCrack();
@@ -233,18 +294,18 @@ function frame() {
     });
   }
 
-  for (let i = 0; i < NC.length; ++i) {
-    ctx.fillStyle = NC[i];
-    const w = 1500 / NC.length;
-    ctx.fillRect((W - 1500) / 2 + i * w, H - 25, w, 25);
-  }
+  // Show color palette:
+  // for (let i = 0; i < NC.length; ++i) {
+  //   ctx.fillStyle = NC[i];
+  //   const w = 1500 / NC.length;
+  //   ctx.fillRect((W - 1500) / 2 + i * w, H - 25, w, 25);
+  // }
 
   requestAnimationFrame(frame);
 }
 
 begin();
 frame();
-
 
 
 </script>
