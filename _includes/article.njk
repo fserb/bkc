@@ -34,8 +34,11 @@ import {BKC, SYSTEM} from "./js/bkc.js";
 BKC();
 
 {% if dev %}
-import BKCdev from "./js/bkc-dev.js";
+import BKCdev from "./js/dev/bkc-dev.js";
 BKCdev(SYSTEM);
+
+import "./js/dev/capture.js";
+
 {% endif %}
 
 import polyfillWarning from "./js/canvas-polyfill.js";

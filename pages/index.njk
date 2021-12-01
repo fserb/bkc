@@ -12,7 +12,12 @@ layout: page
 
 {%- for article in search.pages("layout=article.njk") | reverse -%}
 <div class="entry">
-<a href="{{article.data.relativePath}}"><img alt="{{ article.data.title }}" src="{{article.data.relativePath}}/shot.webp"></a>
+<a href="{{article.data.relativePath}}">
+<video poster="{{article.data.relativePath}}/shot.webp" muted playsinline  loop=true width=100% onmouseenter="this.play()" onmouseleave="this.pause()">
+<source src="{{article.data.relativePath}}/video.webm" type="video/webm">
+</video>
+</a>
+
 <a href="{{article.data.relativePath}}">{{ article.data.title }}</a></div>
 {%- endfor -%}
 
