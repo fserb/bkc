@@ -15,7 +15,7 @@ renderOrder: 1
     <email>fserb@fserb.com</email>
   </author>
 
-  {%- for article in search.pages("layout=article.njk") | reverse -%}
+  {%- for article in search.pages("layout=article.njk subpage!=true") | reverse -%}
   {% set absoluteURL %}{{ baseURL }}{{ article.data.url | url }}{% endset %}
   <entry>
     <title>{{ article.data.title }}</title>

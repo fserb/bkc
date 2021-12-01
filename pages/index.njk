@@ -10,7 +10,7 @@ layout: page
 
 <div id="display">
 
-{%- for article in search.pages("layout=article.njk") | reverse -%}
+{%- for article in search.pages("layout=article.njk subpage!=true") | reverse -%}
 <div class="entry" onmouseenter="this.querySelector('video').play()" onmouseleave="this.querySelector('video').pause()">
 <a href="{{article.data.relativePath}}">
 <video poster="{{article.data.relativePath}}/shot.webp" muted playsinline loop=true width=100%>
@@ -31,3 +31,4 @@ layout: page
 </footer>
 
 </div>
+\

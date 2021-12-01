@@ -28,11 +28,13 @@ function _label(prev, out, str) {
       autoGenerateLabels(out, prev);
     }
 
-    const labels = out.labels !== null ? out.labels : prev.labels;
-    if (labels[order.label] === undefined) {
+    if (out.labels && out.labels[order.label] !== undefined) {
+      rng = [...out.labels[order.label]];
+    } else if (prev.labels && prev.labels[order.label] !== undefined) {
+      rng = [...prev.labels[order.label]];
+    } else {
       throw ReferenceError(`Unknown label "${order.label}".`);
     }
-    rng = [...labels[order.label]];
   }
 
   const delta = order.delta !== undefined ? Number.parseInt(order.delta) : null;
