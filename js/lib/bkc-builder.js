@@ -25,7 +25,7 @@ function _label(prev, out, str) {
     rng = [...out.this];
   } else {
     if (order.label[0] == '#') {
-      autoGenerateLabels(out);
+      autoGenerateLabels(out, prev);
     }
 
     const labels = out.labels !== null ? out.labels : prev.labels;
@@ -112,6 +112,7 @@ Parse @cmd.label into ranges related to current edit.
 */
 function generateNewLabels(cmd, out) {
   out.labels = {};
+  out._autogen = false;
   if (cmd.label === null) {
     out.this = [out.range[0], out.range[1]];
     return;
@@ -165,11 +166,12 @@ const HTML_RE = /<[^>]+>/gm;
 const JS_RE =
   /^((function\s+(?<fname>.+?)\s*\()|(class\s+(?<cname>.+?)\s)|((?<mname>.*?)\s*\(.*?\)\s*\{)|(?<close>}$))/;
 const JS_INVALID = new Set(["for", "while", "switch", "if"]);
-function* _autogenJS(out) {
+function* _autogenJS(code) {
+  if (!code) return;
   const stack = [];
   const starts = [];
-  for (let i = 0; i < out.code.length; ++i) {
-    const l = out.code[i];
+  for (let i = 0; i < code.length; ++i) {
+    const l = code[i];
     if (l.length == 0) continue;
     if (l.startsWith("  ".repeat(stack.length + 1))) continue;
 
@@ -200,11 +202,12 @@ Auto-generate labels based on the language.
 
 This is only called if a label is referenced that starts with #.
 */
-function autoGenerateLabels(out) {
+function autoGenerateLabels(out, src = null) {
   if (out._lang === null) return;
   if (out._autogen) return;
   out._autogen = true;
   if (out.labels === null) out.labels = {};
+  if (src === null) out = src;
 
   const FN = {
     "js": _autogenJS,
@@ -212,7 +215,7 @@ function autoGenerateLabels(out) {
 
   if (!FN[out._lang]) return;
 
-  for (const [l, r] of FN[out._lang](out)) {
+  for (const [l, r] of FN[out._lang](src.code)) {
     out.labels[l] = r;
   }
 }
@@ -301,7 +304,7 @@ export function buildState(prev, cmd) {
     _codegen: false,
     code: null,     // [] of lines of code
     highlight: [],  // [] of lines to be highlighted
-    labels: null,   // {label: [start, length]} of references
+    labels: {},     // {label: [start, length]} of references
     lens: null,     // null|[[start, length]...] of lines to show
     range: null,    // [start, length, difflength] of current edit
     this: null,     // last label range OR current edit
