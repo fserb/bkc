@@ -102,8 +102,21 @@ h3 {
   margin: 0 5px;
 }
 
-#home footer p {
-  margin-top: 0;
+footer p {
+  margin: 0;
+  line-height: 1.5em;
+}
+
+footer b.arrow::first-letter {
+  letter-spacing: -0.6em;
+  vertical-align: -0.1em;
+  text-decoration: #F4EFE7 underline;
+}
+
+footer b.arrow {
+  display: inline-block;
+  letter-spacing: -0.2em;
+  text-decoration: underline;
 }
 
 #bkc {
