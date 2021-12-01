@@ -36,8 +36,6 @@ export default function() {
         if (page.data.layout.indexOf('.') == -1) {
           page.data.layout += '.njk';
         }
-      } else {
-        page.data.layout = "main.njk";
       }
     });
 

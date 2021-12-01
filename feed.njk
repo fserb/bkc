@@ -1,0 +1,32 @@
+---
+url: /feed.atom
+renderOrder: 1
+---
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Better Know Canvas</title>
+  <subtitle>A collection of advanced web graphics tutorials</subtitle>
+  <link href="{{ baseURL }}" />
+  <link href="{{ baseURL }}feed.atom" rel="self" />
+  {% for a in search.pages("layout=article.njk").slice(-1) %}<updated>{{ a.data.date | date }}</updated>{% endfor %}
+  <id>{{ baseURL }}feed.atom</id>
+  <author>
+    <name>Fernando Serboncini</name>
+    <email>fserb@fserb.com</email>
+  </author>
+
+  {%- for article in search.pages("layout=article.njk") | reverse -%}
+  {% set absoluteURL %}{{ baseURL }}{{ article.data.url | url }}{% endset %}
+  <entry>
+    <title>{{ article.data.title }}</title>
+    <link href="{{ absoluteURL }}"/>
+    <updated>{{ article.data.date | date }}</updated>
+    <id>{{ absoluteURL }}</id>
+    <content type="html">
+&lt;a href="{{baseURL}}/{{article.data.relativePath}}"&gt;
+&lt;img alt="{{ article.data.title }}" src="{{baseURL}}/{{article.data.relativePath}}/shot.webp"&gt;&lt;br&gt;
+{{ article.data.title }}&lt;/a&gt;
+    </content>
+  </entry>
+  {%- endfor %}
+</feed>

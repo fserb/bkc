@@ -29,7 +29,7 @@ code](https://github.com/fserb/bkc/blob/master/pages/extend.js), but the
 functions should be fairly obvious.
 
 ```add:
-const {rgba} = await import("{{baseURL}}extend.js");
+const {rgba} = await import("{{baseURL}}/extend.js");
 ```
 
 We will do the [usual boilerplate](fire), where we assume there's a `canvas`

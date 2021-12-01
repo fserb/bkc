@@ -95,7 +95,15 @@ h3 {
 }
 
 #home footer {
-  margin-top: 60px;
+  margin-top: 120px;
+}
+
+#home footer img {
+  margin: 0 5px;
+}
+
+#home footer p {
+  margin-top: 0;
 }
 
 #bkc {
@@ -424,7 +432,7 @@ aside #ed {
   width: 50px;
   height: 50px;
   opacity: 0.5;
-  background-image: url("assets/edit.png");
+  background-image: url("assets/edit.webp");
   background-size: 16px 16px;
   background-repeat: no-repeat;
   background-position: right bottom;
@@ -480,13 +488,13 @@ aside #ed_jsfiddle, aside #ed_codepen {
 aside #ed #ed_jsfiddle {
   top: 0;
   left: 25px;
-  background-image: url("assets/jsfiddle.png");
+  background-image: url("assets/jsfiddle.webp");
 }
 
 aside #ed #ed_codepen {
   top: 0;
   left: 90px;
-  background-image: url("assets/codepen.png");
+  background-image: url("assets/codepen.webp");
 }
 aside #ed_jsfiddle:hover, aside #ed_codepen:hover {
   opacity: 1;
