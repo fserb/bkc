@@ -8,7 +8,7 @@ renderOrder: 1
   <subtitle>A collection of advanced web graphics tutorials</subtitle>
   <link href="{{ baseURL }}" />
   <link href="{{ baseURL }}feed.atom" rel="self" />
-  {% for a in search.pages("layout=article.njk").slice(-1) %}<updated>{{ a.data.date | date }}</updated>{% endfor %}
+  {% for a in search.pages("layout=article.njk").slice(-1) %}<updated>{{ a.data.date | date('ATOM') }}</updated>{% endfor %}
   <id>{{ baseURL }}feed.atom</id>
   <author>
     <name>Fernando Serboncini</name>
@@ -20,7 +20,7 @@ renderOrder: 1
   <entry>
     <title>{{ article.data.title }}</title>
     <link href="{{ absoluteURL }}"/>
-    <updated>{{ article.data.date | date }}</updated>
+    <updated>{{ article.data.date | date('ATOM') }}</updated>
     <id>{{ absoluteURL }}</id>
     <content type="html">
 &lt;a href="{{baseURL}}/{{article.data.relativePath}}"&gt;
