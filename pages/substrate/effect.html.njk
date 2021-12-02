@@ -17,62 +17,6 @@ const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
 const H = canvas.height = 1080;
 
-const N = 256;
-const BG = '#FFF';
-const NC = Color('#000000').steps(N, '#FFFF00');
-for (let i = 0; i < N; ++i) {
-  const f = i / (N - 1);
-  NC[i] = NC[i].luminance(f ** 1.2)
-    .saturate(4 * Math.abs(Math.sin(f * 7)))
-    .rotate(-40 + 50 * (Math.cos(f * 5)))
-    .multiply(Color('#FFFF0050'))
-}
-const LINE = '#3B2618';
-
-// const BG = '#FFF';
-// const NC = Color('#000000').steps(N, '#00AAFF');
-// for (let i = 0; i < N; ++i) {
-//   const f = i / (N - 1);
-//   NC[i] = NC[i].luminance((f * 0.9) ** 1.2)
-//     .saturate(4 * Math.abs(Math.sin(f * 7)))
-//     .multiply(Color('#FF00FF40'))
-// }
-// const LINE = '#323E51AA';
-
-function getColor() {
-  return NC[Math.floor(Math.random() * NC.length)];
-}
-
-function drawPoint(x, y, color, alpha = 1.0) {
-  ctx.globalAlpha = alpha;
-  ctx.fillStyle = color;
-  ctx.fillRect(x, y, 1, 1);
-}
-
-const MAX_CRACKS = 128;
-const MAX_TOTAL_CRACKS = 16384;
-const cgrid = new Array(W * H);
-const cracks = [];
-
-const EMPTY = Infinity;
-const INVALID = null;
-
-let totalCracks = 0;
-
-function get(x, y) {
-  x = Math.floor(x);
-  y = Math.floor(y);
-  if (x < 0 || x >= W || y < 0 || y >= H) return INVALID;
-  return cgrid[x + y * W];
-}
-
-function set(x, y, v) {
-  x = Math.floor(x);
-  y = Math.floor(y);
-  if (x < 0 || x >= W || y < 0 || y >= H) return;
-  cgrid[x + y * W] = v;
-}
-
 function step(pos, angle) {
   const cos = Math.cos(angle);
   const sin = Math.sin(angle);
@@ -87,34 +31,162 @@ function step(pos, angle) {
   return {x, y};
 }
 
+const EMPTY = Infinity;
+const INVALID = null;
+
+class Substrate {
+  constructor() {
+    this.totalCracks = 0;
+    this.maxCracks = 128;
+    this.cracks = [];
+
+    this.grid = new Array(W, H);
+    for (let i = 0; i < W * H; ++i) {
+      this.grid[i] = EMPTY;
+    }
+
+    this.maxTotalCracks = -1;
+    this.colors = [];
+    this.lineColor = '#000';
+
+    this.angleVariance = 0.025;
+  }
+
+  clear(bgColor) {
+    ctx.reset();
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  begin({random = 0, start = 0, mask = null}) {
+    if (mask !== null) {
+      const add = mask.applyMask(this);
+      for (const a of add) {
+        this.newCrack(...a);
+      }
+    }
+
+    let k = 0;
+    while (k < random) {
+      const i = Math.floor(Math.random() * W * H);
+      const x = i % W;
+      const y = (i - W) / W;
+      if (this.get(x, y) !== EMPTY) continue;
+
+      this.set(x, y, Math.random() * Math.TAU);
+      k++;
+    }
+
+    for (let k = 0; k < start; ++k) {
+      ss.makeCrack();
+    }
+  }
+
+  update() {
+    this.cracks.filterIn(c => {
+      if (!c.move()) {
+        this.makeCrack();
+        this.makeCrack();
+        return false;
+      }
+      return true;
+    });
+    return this.cracks.length > 0;
+  }
+
+  makeCrack() {
+    if (this.cracks.length >= this.maxCracks) return;
+    if (this.maxTotalCracks > 0 && this.totalCracks >= this.maxTotalCracks) {
+      return;
+    }
+
+    let px = 0;
+    let py = 0;
+
+    let found = false;
+    for (let i = 0; i < W * H; ++i) {
+      px = Math.random() * W;
+      py = Math.random() * H;
+      const p = this.get(px, py);
+      if (p != EMPTY && p != INVALID) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) return;
+
+    const dir = Math.sign(Math.random() - 0.5);
+    const variance = this.angleVariance * normal();
+    const angle = this.get(px, py) + dir * ((Math.TAU / 4) + variance);
+
+    this.newCrack(px, py, angle);
+  }
+
+
+  newCrack(x, y, angle) {
+    this.cracks.push(new Crack(this, x, y, angle));
+    this.totalCracks++;
+  }
+
+  getColor() {
+    if (this.colors === null) return null;
+    return this.colors[Math.floor(Math.random() * this.colors.length)];
+  }
+
+  get(x, y) {
+    x = Math.floor(x);
+    y = Math.floor(y);
+    if (x < 0 || x >= W || y < 0 || y >= H) return INVALID;
+    return this.grid[x + y * W];
+  }
+
+  set(x, y, v) {
+    x = Math.floor(x);
+    y = Math.floor(y);
+    if (x < 0 || x >= W || y < 0 || y >= H) return;
+    this.grid[x + y * W] = v;
+  }
+}
+
 class Crack {
-  constructor(x, y, angle) {
+  constructor(sub, x, y, angle) {
+    this.sub = sub;
+
     this.angle = angle;
     this.pos = step({x, y}, this.angle);
 
-    this.color = getColor();
+    if (this.sub.get(this.pos.x, this.pos.y) === INVALID) {
+      this.pos = null;
+    }
+
     this.mod = 0.5 * Math.random();
 
-    cracks.push(this);
-    totalCracks++;
+    this.color = this.sub.getColor();
   }
 
   move() {
+    if (this.pos === null) return false;
+
     this.pos = step(this.pos, this.angle);
 
-    this.regionColor();
-
-    for (let i = 0 ; i < 2; ++i) {
-      drawPoint(
-        this.pos.x + 0.33 * normal(), this.pos.y + 0.33 * normal(), LINE, 1.0);
+    if (this.color !== null) {
+      this.paintRegion();
     }
 
-    const v = get(this.pos.x, this.pos.y);
+    for (let i = 0 ; i < 2; ++i) {
+      ctx.fillStyle = this.sub.lineColor;
+      ctx.fillRect(
+        this.pos.x + 0.33 * normal(),
+        this.pos.y + 0.33 * normal(),
+        1, 1);
+    }
+
+    const v = this.sub.get(this.pos.x, this.pos.y);
     if (v === INVALID) {
       return false;
     }
     if (v == EMPTY) {
-      set(this.pos.x, this.pos.y, this.angle);
+      this.sub.set(this.pos.x, this.pos.y, this.angle);
     } else if (Math.abs(v - this.angle) > 0.05) {
       return false;
     }
@@ -122,25 +194,21 @@ class Crack {
     return true;
   }
 
-  regionColor() {
+  paintRegion() {
     let rx = this.pos.x;
     let ry = this.pos.y;
 
     let r = {...this.pos};
     while (true) {
       r = step(r, this.angle + Math.TAU / 4);
-      const v = get(r.x, r.y);
+      const v = this.sub.get(r.x, r.y);
       if (v === INVALID || v != EMPTY) break;
     }
 
-    this.paintTo(r.x, r.y);
-  }
-
-  paintTo(x, y) {
     this.mod = Math.clamp(this.mod + 0.05 * normal(), 0, 1.0);
 
-    const tx = this.pos.x + (x - this.pos.x) * this.mod;
-    const ty = this.pos.y + (y - this.pos.y) * this.mod;
+    const tx = this.pos.x + (r.x - this.pos.x) * this.mod;
+    const ty = this.pos.y + (r.y - this.pos.y) * this.mod;
 
     const g = ctx.createLinearGradient(this.pos.x, this.pos.y, tx, ty);
     const S = 5;
@@ -152,152 +220,151 @@ class Crack {
 
     ctx.strokeStyle = g;
     ctx.lineWidth = 2;
-    ctx.globalAlpha = 1.0;
     ctx.beginPath();
     ctx.moveTo(this.pos.x, this.pos.y);
     ctx.lineTo(tx, ty);
     ctx.stroke();
-    ctx.globalCompositeOperation = "source-over";
   }
 }
 
-function makeCrack() {
-  if (cracks.length >= MAX_CRACKS) return;
-  if (totalCracks >= MAX_TOTAL_CRACKS) return;
+class Mask {
+  constructor() {
+    this.ofc = new OffscreenCanvas(W, H);
+    this.ctx = this.ofc.getContext("2d");
+    this.ctx.reset();
+    this.ctx.fillStyle = "#000";
+    this.ctx.fillRect(0, 0, W, H);
+    this.ctx.fillStyle = "#FFF";
 
-  let px = 0;
-  let py = 0;
-
-  let found = false;
-  for (let i = 0; i < W * H; ++i) {
-    px = Math.random() * W;
-    py = Math.random() * H;
-    const p = get(px, py);
-    if (p != EMPTY && p != INVALID) {
-      found = true;
-      break;
-    }
-  }
-  if (!found) {
-    console.log("timeout");
-    return;
+    this.toAdd = [];
   }
 
-  const dir = Math.sign(Math.random() - 0.5);
-  const angle = get(px, py) + dir * ((Math.TAU / 4) + 0.05 * normal());
+  applyMask(ss) {
+    const im = this.ctx.getImageData(0, 0, W, H).data;
 
-  new Crack(px, py, angle);
-}
-
-function mask(c) {
-  const im = c.getImageData(0, 0, W, H).data;
-
-  for (let y = 0; y < H; ++y) {
-    for (let x = 0; x < W; ++x) {
-      const p = (x + y * W) * 4;
-      const c = im[p];
-
-      if (c == 0) {
-        set(x, y, INVALID);
-      } else if (c == 255) {
-        set(x, y, EMPTY);
+    for (let y = 0; y < H; ++y) {
+      for (let x = 0; x < W; ++x) {
+        const p = (x + y * W) * 4;
+        const c = im[p];
+        ss.set(x, y, c == 0 ? INVALID : EMPTY);
       }
     }
+    return this.toAdd;
   }
 
-}
-
-function begin() {
-  totalCracks = 0;
-  cracks.length = 0;
-
-  for (let i = 0; i < W * H; ++i) {
-    cgrid[i] = EMPTY;
-  }
-
-  for (let k = 0; k < 16; ++k) {
-    const i = Math.floor(Math.random() * W * H);
-    cgrid[i] = Math.random() * Math.TAU;
-  }
-  for (let k = 0; k < 3; ++k) {
-    makeCrack();
-  }
-  ctx.reset();
-  ctx.fillStyle = BG;
-  ctx.fillRect(0, 0, W, H);
-
-  return;
-
-  const ofc = new OffscreenCanvas(W, H);
-  const c = ofc.getContext("2d");
-  c.reset();
-  c.fillStyle = "#000";
-  c.fillRect(0, 0, W, H);
-
-  const TOADD = [];
-
-  function line(x0, y0, x1, y1) {
+  line(x0, y0, x1, y1) {
     const ang = Math.atan2(y1 - y0, x1 - x0);
     ctx.beginPath();
     ctx.moveTo(x0, y0);
     ctx.lineTo(x1, y1);
     ctx.stroke();
-    TOADD.push([x0, y0, ang]);
+    this.toAdd.push([x0, y0, ang]);
   }
 
-  function poly(...points) {
-    c.fillStyle = "#FFF";
-    c.strokeStyle = '#FFF';
-    c.beginPath();
+  poly(...points) {
+    this.ctx.fillStyle = "#FFF";
+    this.ctx.strokeStyle = '#FFF';
+    this.ctx.beginPath();
     for (let i = 0; i < points.length; i += 2) {
       const n = (i + 2) % points.length;
-      c.lineTo(points[i], points[i+1]);
-      line(points[i], points[i+1], points[n], points[n+1]);
+      this.ctx.lineTo(points[i], points[i+1]);
+      this.line(points[i], points[i+1], points[n], points[n+1]);
     }
-    c.closePath();
-    c.fill();
-    c.stroke();
+    this.ctx.closePath();
+    this.ctx.fill();
+    this.ctx.stroke();
   }
-
-  ctx.reset();
-  ctx.fillStyle = BG;
-  ctx.fillRect(0, 0, W, H);
-
-  // poly(964,167, 1288,353, 964,545, 638,353);
-  // poly(1288,353, 1288,739, 964,923, 964,545);
-  // poly(638,353, 964,545, 964,923, 638, 739);
-  // poly(960, 88, 1177, 273, 1177, 549, 1177, 825, 960, 993, 742, 825, 742, 549, 742, 273);
-
-  mask(c);
-
-  for (const o of TOADD) {
-    new Crack(...o);
-  }
-
 }
+
+function basicEffect(ss) {
+  const colors = Color('#000000').steps(256, '#FFFF00');
+  for (let i = 0; i < colors.length; ++i) {
+    const f = i / (colors.length - 1);
+    colors[i] = colors[i].luminance(f ** 1.2)
+      .saturate(2 * Math.abs(Math.sin(f * 7)))
+      .rotate(-40 + 50 * (Math.cos(f * 5)))
+      .multiply(Color('#FFFF0050'))
+  }
+  ss.colors = colors;
+  ss.clear('#FFFFFF');
+  ss.lineColor = '#3B2618';
+  ss.maxTotalCracks = 12000;
+
+  ss.begin({start: 3, random: 16});
+}
+
+function blueDiamond(ss) {
+  const colors = Color('#000000').steps(256, '#00AAFF');
+  for (let i = 0; i < colors.length; ++i) {
+    const f = i / (colors.length - 1);
+    colors[i] = colors[i].luminance((f * 0.9) ** 1.2)
+      .saturate(4 * Math.abs(Math.sin(f * 7)))
+      .multiply(Color('#FF00FF40'))
+  }
+  ss.colors = colors;
+  ss.clear('#FFFFFF');
+  ss.lineColor = '#323E51AA';
+  ss.maxTotalCracks = 4000;
+  ss.maxCracks = 64;
+
+  ctx.strokeStyle = ss.lineColor;
+  const m = new Mask();
+  m.poly(960, 88, 1177, 273, 1177, 549, 1177, 825, 960, 993, 742, 825, 742, 549, 742, 273);
+  ss.begin({mask: m});
+}
+
+function cube(ss) {
+  ss.colors = null;
+  ss.clear('#FFFFFF');
+  ss.lineColor = ctx.strokeStyle = '#083648';
+  ss.maxTotalCracks = 1000;
+
+  const m = new Mask();
+  m.poly(964,167, 1288,353, 964,545, 638,353);
+  m.poly(1288,353, 1288,739, 964,923, 964,545);
+  m.poly(638,353, 964,545, 964,923, 638, 739);
+  ss.begin({mask: m, random: 16});
+}
+
+function area(ss) {
+  ss.clear('#FFF');
+  ss.maxTotalCracks = 4000;
+  ss.maxCracks = 32;
+  ss.lineColor = ctx.strokeStyle = '#083648';
+  ss.angleVariance = 0;
+
+  const colors = Color('#28C9FF').steps(64, '#E313AF');
+  for (let i = 0; i < colors.length; ++i) {
+    const f = i / (colors.length - 1);
+    colors[i] = colors[i].luminance(Math.abs(Math.sin(f * 4)) * 0.65)
+      .saturate(0.25 * Math.abs(Math.sin(f * 7)))
+  }
+  ss.colors = colors;
+
+  const m = new Mask();
+  const a = 50;
+  const b = 200;
+
+  m.poly(a + b, a,
+    W - a, a,
+    W - a, H - a - b,
+    W - a - b, H - a,
+    a, H - a,
+    a, a + b);
+
+  ss.begin({mask: m});
+}
+
+const ss = new Substrate();
+basicEffect(ss);
+// blueDiamond(ss);
+// cube(ss);
+// area(ss);
 
 function frame() {
-  for (let i = 0; i < 4; ++i) {
-    cracks.filterIn(c => {
-      if (!c.move()) {
-        makeCrack();
-        makeCrack();
-        return false;
-      }
-      return true;
-    });
+  if (ss.update()) {
+    requestAnimationFrame(frame);
   }
-
-  // for (let i = 0; i < NC.length; ++i) {
-  //   ctx.fillStyle = NC[i];
-  //   const w = 1500 / NC.length;
-  //   ctx.fillRect((W - 1500) / 2 + i * w, H - 25, w, 25);
-  // }
-
-  requestAnimationFrame(frame);
 }
-
-begin();
 frame();
-
 </script>
