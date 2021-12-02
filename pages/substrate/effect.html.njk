@@ -10,41 +10,34 @@ draft: true
 // Albuquerque, New Mexico
 // complexification.net
 
-/*
-TODO:
-- mask?
-*/
-
-import {normal} from "{{baseURL}}extend.js";
+import {normal, Color} from "{{baseURL}}/js/extend.js";
 const canvas = document.querySelector("canvas");
-
-import Color from "{{baseURL}}/js/color.js";
 
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
 const H = canvas.height = 1080;
 
 const N = 256;
-// const BG = '#FFF';
-// const NC = Color('#000000').steps(N, '#FFFF00');
-// for (let i = 0; i < N; ++i) {
-//   const f = i / (N - 1);
-//   NC[i] = NC[i].luminance(f ** 1.2)
-//     .saturate(4 * Math.abs(Math.sin(f * 7)))
-//     .rotate(-40 + 50 * (Math.cos(f * 5)))
-//     .multiply(Color('#FFFF0050'))
-// }
-// const LINE = '#3B2618';
-
 const BG = '#FFF';
-const NC = Color('#000000').steps(N, '#00AAFF');
+const NC = Color('#000000').steps(N, '#FFFF00');
 for (let i = 0; i < N; ++i) {
   const f = i / (N - 1);
-  NC[i] = NC[i].luminance((f * 0.9) ** 1.2)
+  NC[i] = NC[i].luminance(f ** 1.2)
     .saturate(4 * Math.abs(Math.sin(f * 7)))
-    .multiply(Color('#FF00FF40'))
+    .rotate(-40 + 50 * (Math.cos(f * 5)))
+    .multiply(Color('#FFFF0050'))
 }
-const LINE = '#323E51AA';
+const LINE = '#3B2618';
+
+// const BG = '#FFF';
+// const NC = Color('#000000').steps(N, '#00AAFF');
+// for (let i = 0; i < N; ++i) {
+//   const f = i / (N - 1);
+//   NC[i] = NC[i].luminance((f * 0.9) ** 1.2)
+//     .saturate(4 * Math.abs(Math.sin(f * 7)))
+//     .multiply(Color('#FF00FF40'))
+// }
+// const LINE = '#323E51AA';
 
 function getColor() {
   return NC[Math.floor(Math.random() * NC.length)];
@@ -57,7 +50,7 @@ function drawPoint(x, y, color, alpha = 1.0) {
 }
 
 const MAX_CRACKS = 128;
-const MAX_TOTAL_CRACKS = 2000; 16384;
+const MAX_TOTAL_CRACKS = 16384;
 const cgrid = new Array(W * H);
 const cracks = [];
 
@@ -109,7 +102,7 @@ class Crack {
   move() {
     this.pos = step(this.pos, this.angle);
 
-    // this.regionColor();
+    this.regionColor();
 
     for (let i = 0 ; i < 2; ++i) {
       drawPoint(
@@ -222,13 +215,18 @@ function begin() {
     cgrid[i] = EMPTY;
   }
 
-  // for (let k = 0; k < 16; ++k) {
-  //   const i = Math.floor(Math.random() * W * H);
-  //   cgrid[i] = Math.random() * Math.TAU;
-  // }
-  // for (let k = 0; k < 3; ++k) {
-  //   makeCrack();
-  // }
+  for (let k = 0; k < 16; ++k) {
+    const i = Math.floor(Math.random() * W * H);
+    cgrid[i] = Math.random() * Math.TAU;
+  }
+  for (let k = 0; k < 3; ++k) {
+    makeCrack();
+  }
+  ctx.reset();
+  ctx.fillStyle = BG;
+  ctx.fillRect(0, 0, W, H);
+
+  return;
 
   const ofc = new OffscreenCanvas(W, H);
   const c = ofc.getContext("2d");
@@ -265,9 +263,9 @@ function begin() {
   ctx.fillStyle = BG;
   ctx.fillRect(0, 0, W, H);
 
-  poly(964,167, 1288,353, 964,545, 638,353);
-  poly(1288,353, 1288,739, 964,923, 964,545);
-  poly(638,353, 964,545, 964,923, 638, 739);
+  // poly(964,167, 1288,353, 964,545, 638,353);
+  // poly(1288,353, 1288,739, 964,923, 964,545);
+  // poly(638,353, 964,545, 964,923, 638, 739);
   // poly(960, 88, 1177, 273, 1177, 549, 1177, 825, 960, 993, 742, 825, 742, 549, 742, 273);
 
   mask(c);
@@ -276,14 +274,10 @@ function begin() {
     new Crack(...o);
   }
 
-
-
-
-
 }
 
 function frame() {
-  for (let i = 0; i < 1; ++i) {
+  for (let i = 0; i < 4; ++i) {
     cracks.filterIn(c => {
       if (!c.move()) {
         makeCrack();
@@ -294,7 +288,6 @@ function frame() {
     });
   }
 
-  // Show color palette:
   // for (let i = 0; i < NC.length; ++i) {
   //   ctx.fillStyle = NC[i];
   //   const w = 1500 / NC.length;
@@ -306,6 +299,5 @@ function frame() {
 
 begin();
 frame();
-
 
 </script>
