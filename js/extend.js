@@ -26,13 +26,6 @@ if (Math.clamp === undefined) {
 }
 
 /*
-Convenient way to generate RGBA strings, while we wait for TypedOM Colors.
-*/
-export function rgba(r, g, b, a = 1.0) {
-  return `rgba(${r}, ${g}, ${b}, ${a})`;
-}
-
-/*
 In-place array filter.
 
 The algorithm is: keep a index `j` of the position after the last valid element.
@@ -51,4 +44,17 @@ if (Array.prototype.filterIn === undefined) {
     this.length = j;
     return this;
   }
+}
+
+/*
+color manipulation library.
+*/
+import color from "./lib/color.js";
+export {color};
+
+/*
+Convenient way to generate RGBA strings, while we wait for TypedOM Colors.
+*/
+export function rgba(r, g, b, a = 1.0) {
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
