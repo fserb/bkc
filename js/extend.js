@@ -28,7 +28,7 @@ if (Math.clamp === undefined) {
 /*
 Convenient way to generate RGBA strings, while we wait for TypedOM Colors.
 */
-export function rgba(r, g, b, a=1.0) {
+export function rgba(r, g, b, a = 1.0) {
   return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 

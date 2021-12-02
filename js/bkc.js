@@ -1,9 +1,10 @@
 // bkc.js
 
+import "./extend.js";
+
 // import WebComponents.
 import "./lib/canvas-demo.js";
 import "./lib/color-show.js";
-import "../pages/extend.js";
 
 /*
 BKC is split in 4 parts:

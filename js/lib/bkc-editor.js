@@ -9,13 +9,10 @@ const HTML = url => `
 <canvas id=c></canvas>
 <script type="module">
 import * as poly from "${url}js/canvas-polyfill.js";
-import * as extend from "${url}extend.js";
+import * as extend from "${url}js/extend.js";
 
 // JSFiddle and Codepen don't accept JS Modules. Shame on them.
-// And shame on me for writing this hack around it.
-for (const k of Object.keys(extend)) {
-  window[k] = extend[k];
-}
+window.__bkc_extend = extend;
 
 run(document.getElementById("c"));
 </script>
@@ -38,6 +35,7 @@ export function connectEditor(siteurl, target) {
 
   track(target.jsfiddle, openJSFiddle);
   track(target.codepen, openCodepen);
+
 }
 
 export function updateEditorCode(newcode) {
@@ -49,7 +47,8 @@ function getCode() {
   const actual = doc.body.textContent ?? "";
 
   const filtered = actual
-    .replace(/const.*?await import\(".*?\/extend.js"\);\n/s, "");
+    .replace(/const\s+(.*?)\s*=\s*await import\(".*?\/extend.js"\);/s,
+      "const $1 = window.__bkc_extend;");
   return `
 async function run(canvas) {
 ${filtered}

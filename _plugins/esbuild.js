@@ -2,9 +2,7 @@
 import * as esbuild from 'https://deno.land/x/esbuild@v0.13.12/mod.js'
 import * as path from "https://deno.land/std@0.113.0/path/mod.ts";
 
-export default function (options) {
-  const built = new Set();
-
+export default function(_options) {
   return site => {
     site.loadAssets([".js"]);
 
@@ -16,7 +14,6 @@ export default function (options) {
       const name = `${page.src.path}${page.src.ext}`;
       const filename = path.relative(site.src(), path.join(site.src(), name));
 
-      if (name == "/pages/extend.js") return;
       console.log("📦", name);
 
       try {
@@ -47,7 +44,6 @@ export default function (options) {
         }
 
         page.content = outputFiles[0].contents;
-
       } catch (e) {
         console.warn('esbuild throw', e);
       }

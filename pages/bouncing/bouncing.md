@@ -25,11 +25,11 @@ We start by importing our common library that includes some things like
 `Math.TAU` (the one true [circle constant](https://tauday.com/tau-manifesto)),
 `Math.SQRT3`, `Math.clamp()`, in-place array filter and a convenience `rgba()`
 function to generate color strings. You can check the commented [source
-code](https://github.com/fserb/bkc/blob/master/pages/extend.js), but the
+code](https://github.com/fserb/bkc/blob/master/js/extend.js), but the
 functions should be fairly obvious.
 
 ```add:
-const {rgba} = await import("{{baseURL}}/extend.js");
+const {rgba} = await import("{{baseURL}}/js/extend.js");
 ```
 
 We will do the [usual boilerplate](fire), where we assume there's a `canvas`
