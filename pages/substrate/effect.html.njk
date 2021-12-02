@@ -3,35 +3,14 @@ layout: effect
 title: Substrate
 draft: true
 ---
-
 <script type="module">
-// Substrate Watercolor
-// j.tarbell   June, 2004
-// Albuquerque, New Mexico
-// complexification.net
-
-import {normal, Color} from "{{baseURL}}/js/extend.js";
 const canvas = document.querySelector("canvas");
+
+import {normal, Color, gridRaystep} from "{{baseURL}}/js/extend.js";
 
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
 const H = canvas.height = 1080;
-
-function step(pos, angle) {
-  const cos = Math.cos(angle);
-  const sin = Math.sin(angle);
-
-  const dtX =
-    cos != 0 ? (Math.floor(pos.x) + Math.sign(cos) - pos.x) / cos : Infinity;
-  const dtY =
-    sin != 0 ? (Math.floor(pos.y) + Math.sign(sin) - pos.y) / sin : Infinity;
-  const t = Math.min(dtX, dtY);
-
-  return {
-    x: pos.x + t * cos,
-    y: pos.y + t * sin
-  };
-}
 
 const EMPTY = Infinity;
 const INVALID = null;
@@ -43,7 +22,7 @@ class Substrate {
     this.maxCracks = 128;
     this.cracks = [];
 
-    this.grid = new Array(W, H);
+    this.grid = new Array(W * H);
     for (let i = 0; i < W * H; ++i) {
       this.grid[i] = EMPTY;
     }
@@ -195,7 +174,7 @@ class Crack {
 
     let r = {...this.pos};
     while (true) {
-      r = step(r, this.angle + Math.TAU / 4);
+      r = gridRaystep(r, this.angle + Math.TAU / 4);
       const v = this.sub.get(r.x, r.y);
       if (v === INVALID || v != EMPTY) break;
     }
