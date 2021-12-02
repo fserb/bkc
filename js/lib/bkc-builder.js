@@ -9,7 +9,12 @@ function _label(prev, out, str) {
   // we may not have generated code yet.
   const cur = out.code !== null ? out : prev;
 
-  const order = RANGE_RE.exec(str).groups;
+  let order = null;
+  try {
+    order = RANGE_RE.exec(str).groups;
+  } catch (e) {
+    throw ReferenceError(`Can't parse label "${str}".`);
+  }
   let rng = null;
 
   if (order.label == "all") {
@@ -204,12 +209,12 @@ Auto-generate labels based on the language.
 
 This is only called if a label is referenced that starts with #.
 */
-function autoGenerateLabels(out, src = null) {
+function autoGenerateLabels(out, prev) {
   if (out._lang === null) return;
   if (out._autogen) return;
   out._autogen = true;
   if (out.labels === null) out.labels = {};
-  if (src === null) out = src;
+  const code = out.code ?? prev.code;
 
   const FN = {
     "js": _autogenJS,
@@ -217,7 +222,7 @@ function autoGenerateLabels(out, src = null) {
 
   if (!FN[out._lang]) return;
 
-  for (const [l, r] of FN[out._lang](src.code)) {
+  for (const [l, r] of FN[out._lang](code)) {
     out.labels[l] = r;
   }
 }

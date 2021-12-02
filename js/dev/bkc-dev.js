@@ -2,7 +2,7 @@
 
 const CSS_STYLE = `
 #bkcdev {
-  width: 520px;
+  width: 600px;
   height: calc(100vh - 50px);
   position: fixed;
   background-color: #181923;
