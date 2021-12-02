@@ -350,11 +350,27 @@ function area(ss) {
   ss.begin({mask: m});
 }
 
+function bezier(ss) {
+  ss.clear('#FFF');
+  ss.maxTotalCracks = 4000;
+  ss.maxCracks = 128;
+  ss.lineColor = ctx.strokeStyle = '#000';
+  ss.angleVariance = 0;
+  ss.color = null;
+
+  const m = new Mask();
+
+
+
+  ss.begin({mask: m});
+}
+
 const ss = new Substrate();
-basicEffect(ss);
+// basicEffect(ss);
 // blueDiamond(ss);
 // cube(ss);
 // area(ss);
+bezier(ss);
 
 function frame() {
   if (ss.update()) {

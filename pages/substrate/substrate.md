@@ -13,7 +13,7 @@ this new community of creative coders and generative programs. Shortly after,
 I remember seeing the substrate algorithm running and being overwhelmed by the
 movement and complexity of it. I couldn't understand the code. I couldn't come
 to terms with a small piece of code generating so much information. When I
-started[Better Know Canvas](https://canvas.rocks), I knew I had to revisit
+started [Better Know Canvas](https://canvas.rocks), I knew I had to revisit
 Substrate and write about it. So here it is. Let's write substrate again.
 
 
