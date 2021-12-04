@@ -36,7 +36,7 @@ function keypress(ev) {
   let down;
 
   const t = performance.now();
-  const behavior = t - lastScroll < 500 ? "auto" :"smooth";
+  const behavior = t - lastScroll < 500 ? "auto" : "smooth";
   lastScroll = t;
 
   if (ev.key == "j" || ev.key == "k") {
