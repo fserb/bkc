@@ -29,6 +29,65 @@ const VALID_KEYS = ["add", "sub", "lens", "label", "debug", "spawn"];
 // contains all BKC states referenced by rulers.
 export const SYSTEM = [];
 
+let lastScroll = 0;
+
+function keypress(ev) {
+  let selector;
+  let down;
+
+  const t = performance.now();
+  const behavior = t - lastScroll < 500 ? "auto" :"smooth";
+  lastScroll = t;
+
+  if (ev.key == "j" || ev.key == "k") {
+    selector = "main p";
+    down = ev.key == "j";
+  } else if (ev.key == "n" || ev.key == "p") {
+    selector = "canvas-demo";
+    down = ev.key == "n";
+  } else if (ev.key == "J" || ev.key == "K") {
+    selector = "main h3";
+    down = ev.key == "J";
+  } else if (ev.key == "N") {
+    window.scrollTo({top: document.body.scrollHeight, behavior});
+    return;
+  } else if (ev.key == "P") {
+    window.scrollTo({top: 0, behavior});
+    return;
+  }
+
+  const center = window.scrollY + window.innerHeight / 2;
+
+  let prev = null;
+  let next = null;
+  let passed = false;
+  for (const el of document.querySelectorAll(selector)) {
+    const top = el.offsetTop;
+    const bottom = el.offsetTop + el.offsetHeight;
+    if (passed) {
+      next = el;
+      break;
+    }
+
+    if (center < bottom) {
+      passed = true;
+    }
+
+    if (center >= bottom) {
+      prev = el;
+    } else if (center <= top) {
+      next = el;
+    }
+  }
+
+  const target = down ? next : prev;
+  if (target === null) {
+    return;
+  }
+
+  target.scrollIntoView({behavior, block: "center"});
+}
+
 function resizeRulers() {
   const rulers = document.querySelectorAll("main .ruler");
   for (const el of rulers) {
@@ -126,6 +185,8 @@ function setup() {
     jsfiddle: document.getElementById("ed_jsfiddle"),
     codepen: document.getElementById("ed_codepen"),
   });
+
+  addEventListener("keypress", keypress);
 }
 
 function onReady() {
