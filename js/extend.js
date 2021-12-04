@@ -35,12 +35,13 @@ When we find a valid element, we copy it to the `j`th position and increment
 if (Array.prototype.filterIn === undefined) {
   Array.prototype.filterIn = function(cond) {
     let j = 0;
-    this.forEach((e, i) => {
+    for (let i = 0; i < this.length; ++i) {
+      const e = this[i];
       if (cond(e)) {
         if (i !== j) this[j] = e;
         j++;
       }
-    });
+    }
     this.length = j;
     return this;
   };
@@ -49,8 +50,8 @@ if (Array.prototype.filterIn === undefined) {
 /*
 color manipulation library.
 */
-import color from "./lib/color.js";
-export {color};
+import Color from "./lib/color.js";
+export {Color};
 
 /*
 Convenient way to generate RGBA strings, while we wait for TypedOM Colors.
@@ -69,6 +70,9 @@ export function normal() {
   return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(Math.TAU * v);
 }
 
+/*
+Ray cast step in a 2d integer grid.
+*/
 export function gridRaystep(pos, angle) {
   const cos = Math.cos(angle);
   const sin = Math.sin(angle);

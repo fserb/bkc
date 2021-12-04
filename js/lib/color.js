@@ -359,7 +359,7 @@ class Color {
       this.lin[0] * (1 - other.a) + other.a * this.lin[0] * other.lin[0],
       this.lin[1] * (1 - other.a) + other.a * this.lin[1] * other.lin[1],
       this.lin[2] * (1 - other.a) + other.a * this.lin[2] * other.lin[2]],
-        this.a);
+    this.a);
   }
 
   steps(n, ...others) {
@@ -495,7 +495,7 @@ class Color {
     return [this, this.rotate(120), this.rotate(240)];
   }
 
-  makeTetrad(d=90) {
+  makeTetrad(d = 90) {
     return [this, this.rotate(d), this.rotate(180), this.rotate(180 + d)];
   }
 

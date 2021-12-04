@@ -142,6 +142,7 @@ function buildDev(system) {
   const stacked = [];
 
   for (const label of keys) {
+    if (label[0] == "#") continue;
     const range = state.labels[label];
     const l = document.createElement("div");
     const t = document.createElement("span");

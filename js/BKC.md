@@ -31,6 +31,10 @@ everything after is the value.
     * `this` the last created label (if any) or the same as `edit`
     * `all` the whole code content
 
+  * you can reference the end of a range by appending `.` to the end label.
+
+    * `last.-1` one line before the last edit.
+
 * `add:<range>` appends the current code to the end of `<range>`. If no range
   is specified, it defaults to the last code.
 

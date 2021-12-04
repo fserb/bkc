@@ -3,7 +3,7 @@ import diff from "./diff.js";
 
 // label-3+4
 const RANGE_RE =
-  /(?<label>[a-zA-Z#_][a-zA-Z0-9#_]*)((?<delta>[+-]\d+)(\+(?<len>\d+))?)?/;
+  /(?<label>[a-zA-Z#_][a-zA-Z0-9#_]*)(?<collapse>\.)?((?<delta>[+-]\d+)(\+(?<len>\d+))?)?/;
 
 function _label(prev, out, str) {
   // we may not have generated code yet.
@@ -40,6 +40,10 @@ function _label(prev, out, str) {
     } else {
       throw ReferenceError(`Unknown label "${order.label}".`);
     }
+  }
+
+  if (order.collapse !== undefined) {
+    rng = [rng[0] + rng[1], 0];
   }
 
   const delta = order.delta !== undefined ? Number.parseInt(order.delta) : null;
@@ -79,20 +83,26 @@ Apply add/sub.
 function applyEdit(prev, cmd, out) {
   let action = null;
   let deftarget;
-  if (cmd.add !== null) {
-    action = "add";
-    deftarget = "last";
-  }
+
   if (cmd.sub !== null) {
-    if (action === "add") {
-      throw ReferenceError("Cannot have add and sum operators together");
-    }
     action = "sub";
     deftarget = "all";
   }
-  if (action === null) return;
 
-  const target = cmd[action] !== "" ? cmd[action] : deftarget;
+  if (cmd.add !== null) {
+    if (action === "sub") {
+      throw ReferenceError("Cannot have add and sum operators together");
+    }
+    action = "add";
+    deftarget = "last";
+  }
+
+  if (action === null) {
+    action = "add";
+    deftarget = "last";
+  }
+
+  const target = cmd[action] ? cmd[action] : deftarget;
 
   const newcode = cmd.code.split('\n').slice(0, -1);
   let start, length, delta;
