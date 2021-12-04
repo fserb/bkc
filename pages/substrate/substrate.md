@@ -387,5 +387,64 @@ stop).
     this.totalCracks++;
 ```
 
-
 @[canvas-demo]
+```add:,lens:
+```
+
+### colors
+
+We already have the core algorithm of Substrate down. Now it's time to add some
+colors to it.
+
+```add:#Substrate#constructor+11,lens:#Substrate#constructor-1>#Substrate#begin-1+0&#Substrate.-1
+
+    this.colors = null;
+    this.lineColor = '#000000';
+```
+
+We are also going to set diferent background colors, so we can extract this from
+our `begin()`.
+
+```add:#Substrate#constructor.
+
+  clear(bgColor) {
+    ctx.reset();
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, W, H);
+  }
+```
+
+```sub:#Substrate#begin+1+4,lens:#Substrate#constructor-1>#Substrate#begin&#Substrate.-1
+```
+
+We will be random sampling from the available colors for each crack.
+
+```add:#Substrate#get-1
+
+  getColor() {
+    if (this.colors === null) return null;
+    return this.colors[Math.floor(Math.random() * this.colors.length)];
+  }
+```
+
+```add:#Crack#constructor.-1,lens:#Substrate#constructor-1+1&#Substrate#getColor&#Substrate.-1&#Crack#constructor-1
+    this.color = this.ss.getColor();
+```
+
+And how are using the color? Well there are two ways: we are going to use the
+new `lineColor` for lines and we are going to paint the region by the side of
+the crack.
+
+```sub:#Crack#move+5+2,lens:#Crack#constructor-1+1&#Crack#move
+    if (this.color !== null) {
+      this.paintRegion();
+    }
+
+    for (let i = 0 ; i < 2; ++i) {
+      ctx.fillStyle = this.ss.lineColor;
+```
+
+So what does `paintRegion()` do?
+
+
+
