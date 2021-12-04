@@ -20,24 +20,23 @@ Substrate and write about it. So here it is. Let's code substrate again.
 ### the plan
 
 The core algorithm of Substrate is: we keep track of a moving line, that, as it
-draws a line on the screen, also registers its angle on a separate array. This
-array, that we call the `grid`, is the core of Substrate algorithm.
+draws a line on the screen, also registers its angle on a separate grid. Each
+line moves forward, writing down its angle, until it reaches the end of the
+screen or until it touches another line on the `grid`. When it stops, we spawn
+two other moving lines. The only rule is that a new moving line must start
+perpendicular to a previous line in the `grid`. That's it.
 
-Each line moves forward, writing down its angle, until it reaches the end of the
-screen or if touches another line on the `grid`. When it stops, we spawn two
-other moving lines. The only rule is that a new moving line must start
-perpendicular to an existing line. That's it.
-
-After that we will add a paint effect on top of the lines. Finally we will build
-some color palettes and create different effects with the core Substrate
-algorithm.
+The rest is mostly aesthetics. We will add a watercolor paint effect around the
+lines, and will build different color palettes. Finally we are going to explore
+how to create different effects with the core Substrate algorithm.
 
 
 ### the grid
 
 We start, as always, assuming there's a `canvas` element available and doing a
 simple `requestAnimationFrame`. Our animation will not be time-based, but
-frame-based.
+frame-based. I.e., we won't be frame rate independent.
+
 
 ```add:
 const ctx = canvas.getContext("2d");
@@ -55,7 +54,9 @@ be a perfect encapsulation (as we will use the global `ctx` for rendering), this
 will still allow us to experiment with the effect later on.
 
 Since our effect builds up and then stops rendering, we will return from
-`update()` whether we want to continue the RAF or not.
+`update()` whether we want to continue the RAF or not. This also means that we
+will only end up cleaning the canvas once, and after that making each draw on
+top of the previous one.
 
 ```sub:all+4,label:instance+6+1,spawn:2
 class Substrate {
@@ -95,10 +96,10 @@ const INVALID = null;
 
 ```
 
-When you have an abstract data structure, it's usually better to map it to the
-operations you care about. In our case, we care about setting and getting
-values from `x, y` positions. On both of them, we make sure we get the integer
-positions and check for boundaries condition.
+When you have an abstract data structure, it's always useful to hide it behind
+operations you actually care about. In our case, we care about setting and
+getting values from the `x, y` position. On both of them, we make sure we get
+the integer positions and check for boundaries condition.
 
 ```add:#Substrate#update+3
 
@@ -122,4 +123,269 @@ We don't have anything to show yet, but this is all there's to the grid.
 
 ### the crack
 
+We now build our moving line, called a `Crack`. A `Crack` has a starting
+position and an angle. We also keep a reference to our main class, as we need
+access to the `grid`.
 
+```add:#Substrate,lens:#Crack
+
+class Crack {
+  constructor(ss, x, y, angle) {
+    this.ss = ss;
+    this.angle = angle;
+  }
+}
+```
+
+Since we will be moving in a random direction on a grid, it will be useful to
+have a function that marches in a given direction for square grids. It's simple
+to move a position in a certain direction, but by how much should you move each
+time? In the case you want to walk on a grid, if you move by too little, you
+will end up doing a lot of unnecessary extra work (as multiple steps will be
+redundant and fall on the same position). If you move by too much, you will end
+up skipping certain positions and your path will be full of holes.
+
+This is a generic enough problem, that it's useful to have a function lying
+around that returns the next optimal position in a given direction. We are also
+going to need a function that returns a normal distribution. For now let's just
+import them both. Both of those functions are super interesting, but we won't
+go in detail on how they work right now. Hopefully we will have a separate
+article on support functions.
+
+```add:all+0,lens:all+0+5&#Crack,spawn:2
+const {gridRaystep, normal} = await import("{{baseURL}}/js/extend.js");
+
+```
+
+Back to our `Crack`. The first thing we do is come up with our next position, as
+the current position will probably be occupied by the line that we originated
+from.
+
+```add:#Crack#constructor+3,lens:#Crack
+    this.pos = gridRaystep({x, y}, this.angle);
+    if (this.ss.get(this.pos.x, this.pos.y) === INVALID) {
+      this.pos = null;
+    }
+```
+
+The core of this class is a `move()` function that moves us to the next
+position, renders the line, and checks and updates the grid. We are going to
+return whether this line is still alive or not.
+
+```add:#Crack#constructor
+
+  move() {
+    if (this.pos === null) return false;
+    const oldpos = this.pos;
+    this.pos = gridRaystep(oldpos, this.angle);
+  }
+```
+
+To render, instead of just adding the proper point on canvas, we are going to
+render a couple of them, but nudging them a bit. This will make the line look a
+bit more natural, like a pen writing.
+
+```add:#Crack#move+4
+
+    for (let i = 0 ; i < 2; ++i) {
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(
+        this.pos.x + 0.33 * normal(),
+        this.pos.y + 0.33 * normal(),
+        1, 1);
+    }
+```
+
+Finally, we need to check if we hit another line and update the `grid`. If we
+hit an invalid position (i.e., out of bounds), or another line we stop.
+Otherwise, update the grid with the line's angle and move on.
+
+We need to be a bit careful here on which position to check on the grid. It
+could be the case that our line is moving diagonally to the grid and jump from
+position `(x, y)` to `(x + 1, y + 1)`. In this case, there's a chance it can
+actually misses a collision and goes across another line. It's not the end of
+the world, and we could just ignore the problem. But the solution may be
+applied in other situations, so it's worth looking into it. What we can do here
+is check all positions from the old value to the new in a square.
+
+We compute the delta in grid positions, and for each position in the square,
+check if that position is either empty or part of our line.
+
+```add:,spawn:3
+
+    const delta = {
+      x: Math.floor(this.pos.x) - Math.floor(oldpos.x),
+      y: Math.floor(this.pos.y) - Math.floor(oldpos.y),
+    };
+    for (let dx = 0; dx <= Math.abs(delta.x); ++dx) {
+      for (let dy = 0; dy <= Math.abs(delta.y); ++dy) {
+        const v = this.ss.get(
+          oldpos.x + Math.sign(delta.x) * dx,
+          oldpos.y + Math.sign(delta.y) * dy);
+        if (v === INVALID || (v !== EMPTY && v != this.angle)) return false;
+      }
+    }
+
+    this.ss.set(this.pos.x, this.pos.y, this.angle);
+    return true;
+```
+
+
+### dynamics
+
+The last part missing is the dynamics of the effect: how to create cracks, how
+to set up the initial ones, how to update them over time, and when to stop.
+
+```add:#Substrate#constructor+1,lens:#Substrate#constructor-1>#Substrate#constructor
+    this.cracks = [];
+
+```
+
+Every time we need to create a new crack, we find a random place in the grid
+that a lane has already passed on. The safe way to do this would be to keep a
+list of all valid points. We could do that and be proud of it. Instead, we are
+going for the hacky solution: try a random point in the grid and see if it's a
+valid part of a line. Keep trying until you find one. In theory, this could
+lead to an infinite loop, never finding a valid point. In practice, life is
+short and there is no shame in doing what you must.
+
+```add:#Substrate#update,lens:#Substrate#constructor-1>#Substrate#newCrack
+
+  newCrack() {
+    let x = 0;
+    let y = 0;
+
+    let found = false;
+    for (let i = 0; i < W * H; ++i) {
+      x = Math.random() * W;
+      y = Math.random() * H;
+      const p = this.get(x, y);
+      if (p != EMPTY && p != INVALID) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) return;
+  }
+```
+
+Once we find a place, we need to pick an angle for it to go. We want to go
+perpendicular to the original line, but we are not particularly picky about
+which direction, so we pick at random.
+
+```add:last.-1
+
+    const dir = Math.sign(Math.random() - 0.5);
+    const angle = this.get(x, y) + dir * (Math.TAU / 4);
+```
+
+We can also add a bit of variety to the effect by wiggling the angle a bit.
+
+```sub:last.-1
+    const variance = this.angleVariance * normal();
+    const angle = this.get(x, y) + dir * ((Math.TAU / 4) + variance);
+```
+
+```add:#Substrate#constructor+2
+    this.angleVariance = 0.025;
+```
+
+Once we have a position and an angle, we create the `Crack`.
+
+```add:#Substrate#newCrack.-1
+
+    this.cracks.push(new Crack(this, x, y, angle));
+```
+
+Now it would be a good time to figure out the main loop, i.e., how the
+`move()` function will be called and how `Cracks` are going to be stopped. We
+are going to use the `cracks` array filter as our main loop, calling `move()`.
+If it returns `false`, it means the line should stop, so we pop up two new
+cracks and remove it from the array. Otherwise we keep it.
+
+In the end, we want to signal to `frame` that we want to keep on RAF while there
+are still cracks left.
+
+```sub:#Substrate#update,spawn:2
+  update() {
+    this.cracks.filterIn(c => {
+      if (!c.move()) {
+        this.newCrack();
+        this.newCrack();
+        return false;
+      }
+      return true;
+    });
+    return this.cracks.length > 0;
+  }
+```
+
+There's one more thing left before we can see something. We need to set up an
+initial condition. First, we clean the canvas.
+
+```add:#Substrate#constructor.
+
+  begin() {
+    ctx.reset();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, W, H);
+  }
+```
+
+```add:instance+1,lens:#Substrate#constructor-1+1&#Substrate#begin&#Substrate.-1&instance+0+2
+ss.begin();
+```
+
+We are going to leave some random points on the grid with angles, to be catch by
+the initial crack creation (remember that it randomly samples the grid until it
+finds a point that is part of a line).
+
+```add:#Substrate#begin.-1,lens:#Substrate#constructor-1+1&#Substrate#begin&#Substrate.-1
+
+    let k = 0;
+    while (k < 16) {
+      const x = Math.random() * W;
+      const y = Math.random() * H;
+      if (this.get(x, y) !== EMPTY) continue;
+
+      this.set(x, y, Math.random() * Math.TAU);
+      k++;
+    }
+```
+
+Finally we are going to create a few cracks to start things up.
+
+```add:last.
+
+    for (let k = 0; k < 3; ++k) {
+      this.newCrack();
+    }
+```
+
+If we ran the code now, it would work mostly fine, except it would eventually
+explode, as every crack creates two more forever. To tackle this, we are going
+to apply two limits to the system. First, we are going to have a maximum number
+of simultaneous cracks allowed (`maxActiveCracks`) and a maximum
+number of total cracks ever created (which will allow the whole animation to
+stop).
+
+```add:#Substrate#constructor+3
+    this.totalCracks = 0;
+    this.maxTotalCracks = 12000;
+    this.maxActiveCracks = 128;
+```
+
+```add:#Substrate#newCrack+1
+    if (this.cracks.length >= this.maxActiveCracks) return;
+    if (this.maxTotalCracks > 0 && this.totalCracks >= this.maxTotalCracks) {
+      return;
+    }
+
+```
+
+```add:#Substrate#newCrack.-1,lens:#Substrate#constructor-1&#Substrate#newCrack
+    this.totalCracks++;
+```
+
+
+@[canvas-demo]

@@ -6,7 +6,7 @@ draft: true
 <script type="module">
 const canvas = document.querySelector("canvas");
 
-import {normal, Color, gridRaystep} from "{{baseURL}}/js/extend.js";
+const {gridRaystep, normal, Color} = await import("{{baseURL}}/js/extend.js");
 
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
@@ -19,8 +19,9 @@ class Substrate {
   constructor() {
     this.totalCracks = 0;
     this.maxTotalCracks = -1;
-    this.maxCracks = 128;
+    this.maxActiveCracks = 128;
     this.cracks = [];
+    this.angleVariance = 0.025;
 
     this.grid = new Array(W * H);
     for (let i = 0; i < W * H; ++i) {
@@ -29,8 +30,6 @@ class Substrate {
 
     this.colors = [];
     this.lineColor = '#000';
-
-    this.angleVariance = 0.025;
   }
 
   clear(bgColor) {
@@ -43,7 +42,8 @@ class Substrate {
     if (mask !== null) {
       const add = mask.applyMask(this);
       for (const a of add) {
-        this.newCrack(...a);
+        this.cracks.push(new Crack(this, ...a));
+        this.totalCracks++;
       }
     }
 
@@ -58,15 +58,15 @@ class Substrate {
     }
 
     for (let k = 0; k < start; ++k) {
-      ss.makeCrack();
+      this.newCrack();
     }
   }
 
   update() {
     this.cracks.filterIn(c => {
       if (!c.move()) {
-        this.makeCrack();
-        this.makeCrack();
+        this.newCrack();
+        this.newCrack();
         return false;
       }
       return true;
@@ -74,20 +74,20 @@ class Substrate {
     return this.cracks.length > 0;
   }
 
-  makeCrack() {
-    if (this.cracks.length >= this.maxCracks) return;
-    if (this.maxTotalCracks > 0 && this.totalCracks >= this.maxTotalCracks) {
+  newCrack() {
+    if (this.cracks.length >= this.maxActiveCracks) return;
+    if (this.maxTotalCracks >= 0 && this.totalCracks >= this.maxTotalCracks) {
       return;
     }
 
-    let px = 0;
-    let py = 0;
+    let x = 0;
+    let y = 0;
 
     let found = false;
     for (let i = 0; i < W * H; ++i) {
-      px = Math.random() * W;
-      py = Math.random() * H;
-      const p = this.get(px, py);
+      x = Math.random() * W;
+      y = Math.random() * H;
+      const p = this.get(x, y);
       if (p != EMPTY && p != INVALID) {
         found = true;
         break;
@@ -97,12 +97,8 @@ class Substrate {
 
     const dir = Math.sign(Math.random() - 0.5);
     const variance = this.angleVariance * normal();
-    const angle = this.get(px, py) + dir * ((Math.TAU / 4) + variance);
+    const angle = this.get(x, y) + dir * ((Math.TAU / 4) + variance);
 
-    this.newCrack(px, py, angle);
-  }
-
-  newCrack(x, y, angle) {
     this.cracks.push(new Crack(this, x, y, angle));
     this.totalCracks++;
   }
@@ -128,43 +124,48 @@ class Substrate {
 }
 
 class Crack {
-  constructor(sub, x, y, angle) {
-    this.sub = sub;
+  constructor(ss, x, y, angle) {
+    this.ss = ss;
     this.angle = angle;
-    this.pos = step({x, y}, this.angle);
-    if (this.sub.get(this.pos.x, this.pos.y) === INVALID) {
+    this.pos = gridRaystep({x, y}, this.angle);
+    if (this.ss.get(this.pos.x, this.pos.y) === INVALID) {
       this.pos = null;
     }
     this.mod = 0.5 * Math.random();
-    this.color = this.sub.getColor();
+    this.color = this.ss.getColor();
   }
 
   move() {
     if (this.pos === null) return false;
-    this.pos = step(this.pos, this.angle);
+    const oldpos = this.pos;
+    this.pos = gridRaystep(oldpos, this.angle);
 
     if (this.color !== null) {
       this.paintRegion();
     }
 
     for (let i = 0 ; i < 2; ++i) {
-      ctx.fillStyle = this.sub.lineColor;
+      ctx.fillStyle = this.ss.lineColor;
       ctx.fillRect(
         this.pos.x + 0.33 * normal(),
         this.pos.y + 0.33 * normal(),
         1, 1);
     }
 
-    const v = this.sub.get(this.pos.x, this.pos.y);
-    if (v === INVALID) {
-      return false;
-    }
-    if (v == EMPTY) {
-      this.sub.set(this.pos.x, this.pos.y, this.angle);
-    } else if (Math.abs(v - this.angle) > 0.05) {
-      return false;
+    const delta = {
+      x: Math.floor(this.pos.x) - Math.floor(oldpos.x),
+      y: Math.floor(this.pos.y) - Math.floor(oldpos.y),
+    };
+    for (let dx = 0; dx <= Math.abs(delta.x); ++dx) {
+      for (let dy = 0; dy <= Math.abs(delta.y); ++dy) {
+        const v = this.ss.get(
+          oldpos.x + Math.sign(delta.x) * dx,
+          oldpos.y + Math.sign(delta.y) * dy);
+        if (v === INVALID || (v !== EMPTY && v != this.angle)) return false;
+      }
     }
 
+    this.ss.set(this.pos.x, this.pos.y, this.angle);
     return true;
   }
 
@@ -175,7 +176,7 @@ class Crack {
     let r = {...this.pos};
     while (true) {
       r = gridRaystep(r, this.angle + Math.TAU / 4);
-      const v = this.sub.get(r.x, r.y);
+      const v = this.ss.get(r.x, r.y);
       if (v === INVALID || v != EMPTY) break;
     }
 
@@ -257,15 +258,16 @@ class Mask {
 }
 
 function basicEffect(ss) {
-  const colors = Color('#000000').steps(256, '#FFFF00');
-  for (let i = 0; i < colors.length; ++i) {
-    const f = i / (colors.length - 1);
-    colors[i] = colors[i].luminance(f ** 1.2)
-      .saturate(2 * Math.abs(Math.sin(f * 7)))
-      .rotate(-40 + 50 * (Math.cos(f * 5)))
-      .multiply(Color('#FFFF0050'))
-  }
-  ss.colors = colors;
+  // const colors = Color('#000000').steps(256, '#FFFF00');
+  // for (let i = 0; i < colors.length; ++i) {
+  //   const f = i / (colors.length - 1);
+  //   colors[i] = colors[i].luminance(f ** 1.2)
+  //     .saturate(2 * Math.abs(Math.sin(f * 7)))
+  //     .rotate(-40 + 50 * (Math.cos(f * 5)))
+  //     .multiply(Color('#FFFF0050'))
+  // }
+  // ss.colors = colors;
+  ss.colors = null;
   ss.clear('#FFFFFF');
   ss.lineColor = '#3B2618';
   ss.maxTotalCracks = 12000;
@@ -285,7 +287,7 @@ function blueDiamond(ss) {
   ss.clear('#FFFFFF');
   ss.lineColor = '#323E51AA';
   ss.maxTotalCracks = 4000;
-  ss.maxCracks = 64;
+  ss.maxActiveCracks = 64;
 
   ctx.strokeStyle = ss.lineColor;
   const m = new Mask();
@@ -309,7 +311,7 @@ function cube(ss) {
 function area(ss) {
   ss.clear('#FFF');
   ss.maxTotalCracks = 4000;
-  ss.maxCracks = 32;
+  ss.maxActiveCracks = 32;
   ss.lineColor = ctx.strokeStyle = '#083648';
   ss.angleVariance = 0;
 
@@ -337,7 +339,7 @@ function area(ss) {
 
 function bezier(ss) {
   ss.maxTotalCracks = 10000;
-  ss.maxCracks = 400;
+  ss.maxActiveCracks = 400;
   ss.angleVariance = 0;
 
   const c = Color(`hsv(${Math.random() * 360}, 50, 75)`);
@@ -401,16 +403,47 @@ function bezier(ss) {
 }
 
 const ss = new Substrate();
-// basicEffect(ss);
+basicEffect(ss);
 // blueDiamond(ss);
 // cube(ss);
 // area(ss);
-bezier(ss);
+// bezier(ss);
 
 function frame() {
   if (ss.update()) {
     requestAnimationFrame(frame);
   }
+
+  // const r = [432,347,20,20];
+
+  // ctx.strokeStyle = 'red';
+  // ctx.strokeRect(...r);
+
+  // for (let x = r[0]; x < r[0] + r[2]; x++) {
+  //   for (let y = r[1]; y < r[1] + r[3]; y++) {
+  //     const g = ss.grid[x + y * W];
+  //     const px = 900 + (x - r[0]) * 50;
+  //     const py = 50 + (y - r[1]) * 50;
+  //     ctx.textAlign = "center";
+  //     ctx.textBaseline = "middle";
+
+  //     ctx.fillStyle = "#FFF";
+  //     ctx.fillRect(px, py, 50, 50);
+  //     ctx.strokeRect(px, py, 50, 50);
+
+  //     ctx.fillStyle = "#000";
+
+  //     let val = "";
+  //     if (val != EMPTY) {
+  //       val = Math.round(360 * g / Math.TAU);
+  //     }
+
+  //     ctx.fillText(val, px + 25, py + 25);
+
+  //   }
+  // }
+
+
 }
 frame();
 </script>
