@@ -346,7 +346,7 @@ export function buildState(prev, cmd) {
     lens: null,     // null|[[start, length]...] of lines to show
     range: null,    // [start, length, difflength] of current edit
     this: null,     // last label range OR current edit
-    focus: [],
+    focus: new Set(),
   };
 
   applyEdit(prev, cmd, out);
@@ -400,7 +400,9 @@ Merge @prev and @state into a new state.
 TODO: we could also manually merge lens.
 */
 export function mergeState(parent, prev, state) {
-  const out = {...state};
-  determineHighlight(parent, out);
-  return out;
+  for (const f of prev.focus) {
+    state.focus.add(f);
+  }
+  determineHighlight(parent, state);
+  return state;
 }

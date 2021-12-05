@@ -192,7 +192,7 @@ function setup() {
   ro.observe(main);
 
   let state = {code: [], highlight: [], labels: {}, lens: null, range: [0, 0],
-    focus: []};
+    focus: new Set()};
 
   main.insertBefore(createRuler(io, state), main.firstElementChild);
 
@@ -228,26 +228,26 @@ function setup() {
     for (let i = 0; i < spawn; ++i) {
       const n = target.previousElementSibling;
       if (!n) break;
+      target = n;
 
       if (mergingCode) {
         if (n.tagName == 'PRE' && n.firstElementChild?.tagName == 'CODE') {
-          const prev = SYSTEM[SYSTEM.length - 1];
           SYSTEM[SYSTEM.length - 1] = mergeState(SYSTEM[SYSTEM.length - 2],
-            prev, state);
-          for (const f of prev.focus) {
-            SYSTEM[SYSTEM.length - 1].focus.push(f);
-          }
-
+            SYSTEM[SYSTEM.length - 1], state);
           needNewRuler = false;
           continue;
         }
         mergingCode = false;
       }
-      if (n.tagName == "PRE") mergedCode = true;
 
+      if (n.tagName == "PRE") mergedCode = true;
       mergeBlocks.push(n);
-      target = n;
+
+      // We don't count the rulers we add as part of the spawn, but we still
+      // add them, so we can group them below.
+      if (n.classList.contains("ruler")) i--;
     }
+
     if (mergedCode) {
       const placement = mergeBlocks[0].nextElementSibling;
       mergeBlocks.reverse();
@@ -271,23 +271,23 @@ function setup() {
       mergeBlocks.reverse();
     }
 
-    state.focus = [];
+    state.focus = new Set();
     for (const n of mergeBlocks) {
       if (n.tagName == "PRE" || n.classList.contains("ruler")) break;
-      state.focus.push(n);
+      state.focus.add(n);
     }
 
     if (needNewRuler) {
       main.insertBefore(createRuler(io, state), target);
     }
   }
+
   fuzzy._cache.clear();
 
   connectEditor(document.head.baseURI, {
     jsfiddle: document.getElementById("ed_jsfiddle"),
     codepen: document.getElementById("ed_codepen"),
   });
-
 
   addEventListener("keypress", keypress);
 }
