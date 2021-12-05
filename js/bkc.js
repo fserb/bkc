@@ -93,6 +93,9 @@ function resizeRulers() {
   for (const el of rulers) {
     el.style.height = "0px";
   }
+
+  const stack = [];
+
   for (let i = 0; i < rulers.length; ++i) {
     const el = rulers[i];
     let end = 0;
@@ -103,7 +106,49 @@ function resizeRulers() {
       end = document.querySelector("main").scrollHeight;
     }
 
-    el.style.height = `${end - el.offsetTop}px`;
+    const height = end - el.offsetTop;
+
+    if (height == 0) {
+      stack.push(el);
+      continue;
+    }
+
+    if (stack.length == 0) {
+      el.style.height = `${height}px`;
+      continue;
+    }
+
+    stack.push(el);
+
+    const fs = [];
+    let total = 0;
+    const lineHeight = parseFloat(getComputedStyle(document.body).lineHeight);
+    for (const r of stack) {
+      const s = SYSTEM[Number.parseInt(r.getAttribute('bkc-state'))];
+      let h = 0;
+      for (const f of s.focus) {
+        h += f.offsetHeight;
+      }
+      fs.push(h);
+      total += h;
+    }
+
+    let base = 0;
+    for (let j = 0; j < stack.length; ++j) {
+      const h = height * fs[j] / total;
+      if (h < lineHeight) {
+        base = lineHeight;
+        break;
+      }
+    }
+
+    const diff = height - base * stack.length;
+
+    for (let j = 0; j < stack.length; ++j) {
+      const h = base + diff * fs[j] / total;
+      stack[j].style.height = `${h}px`;
+    }
+    stack.length = 0;
   }
 }
 
@@ -119,12 +164,21 @@ function createRuler(io, state) {
 
 function setup() {
   const io = new IntersectionObserver(entries => {
+
     for (const e of entries) {
       if (!e.isIntersecting) continue;
+
       const id = Number.parseInt(e.target.getAttribute('bkc-state'));
       SYSTEM.id = id;
       apply(SYSTEM[id]);
       updateEditorCode(SYSTEM[id].code);
+
+      for (const el of document.querySelectorAll("main .focused")) {
+        el.classList.remove("focused");
+      }
+      for (const el of SYSTEM[id].focus) {
+        el.classList.add("focused");
+      }
     }
   }, {
     rootMargin: '-50% 0% -50% 0%',
@@ -135,7 +189,8 @@ function setup() {
   const main = document.querySelector("main");
   ro.observe(main);
 
-  let state = {code: [], highlight: [], labels: {}, lens: null, range: [0, 0]};
+  let state = {code: [], highlight: [], labels: {}, lens: null, range: [0, 0],
+    focus: []};
 
   main.insertBefore(createRuler(io, state), main.firstElementChild);
 
@@ -158,25 +213,69 @@ function setup() {
 
     rebuildPRE(state, el);
 
+    // Do merge.
     const spawn = Number.parseInt(el.getAttribute('spawn') ?? 1);
+
     let target = el.parentNode;
-    let merged = false;
+    let mergingCode = true;
+    let needNewRuler = true;
+
+    const mergeBlocks = [];
+    let mergedCode = false;
+
     for (let i = 0; i < spawn; ++i) {
       const n = target.previousElementSibling;
       if (!n) break;
 
-      // if one of the spawn targets is a `pre code`, merge the state.
-      if (n.tagName == 'PRE') {
-        if (n.firstElementChild?.tagName == 'CODE') {
+      if (mergingCode) {
+        if (n.tagName == 'PRE' && n.firstElementChild?.tagName == 'CODE') {
+          const prev = SYSTEM[SYSTEM.length - 1];
           SYSTEM[SYSTEM.length - 1] = mergeState(SYSTEM[SYSTEM.length - 2],
-            SYSTEM[SYSTEM.length - 1], state);
-          merged = true;
+            prev, state);
+          for (const f of prev.focus) {
+            SYSTEM[SYSTEM.length - 1].focus.push(f);
+          }
+
+          needNewRuler = false;
+          continue;
+        }
+        mergingCode = false;
+      }
+      if (n.tagName == "PRE") mergedCode = true;
+
+      mergeBlocks.push(n);
+      target = n;
+    }
+    if (mergedCode) {
+      const placement = mergeBlocks[0].nextElementSibling;
+      mergeBlocks.reverse();
+
+      target = mergeBlocks[0];
+      for (const m of mergeBlocks) {
+        if (m.classList.contains("ruler")) {
+          main.insertBefore(m, target);
         }
       }
 
-      target = n;
+      const g = document.createElement("div");
+      for (const m of mergeBlocks) {
+        if (!m.classList.contains("ruler")) {
+          g.appendChild(m);
+        }
+      }
+      g.classList.add("merged");
+      main.insertBefore(g, placement);
+      target = g;
+      mergeBlocks.reverse();
     }
-    if (!merged) {
+
+    state.focus = [];
+    for (const n of mergeBlocks) {
+      if (n.tagName == "PRE" || n.classList.contains("ruler")) break;
+      state.focus.push(n);
+    }
+
+    if (needNewRuler) {
       main.insertBefore(createRuler(io, state), target);
     }
   }

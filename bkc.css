@@ -212,6 +212,31 @@ main pre li:before {
   margin-right: 1ch;
 }
 
+main div.merged {
+  display: block;
+}
+
+main div.merged p {
+  display: inline;
+  transition: background-color 0.25s linear;
+}
+
+main div.merged p ~ p {
+  margin-left: 1ch;
+}
+
+main div.merged p.focused {
+  background-color: rgba(0,0,0,0.05);
+  padding: 2px 10px 2px 1ch;
+  margin: -3px -11px -3px -1px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.2);
+}
+
+main div.merged p.focused:first-child {
+  padding: 2px 10px 2px 10px;
+  margin: -3px -11px -3px -11px !important;
+}
 
 main .ruler {
   position: relative;

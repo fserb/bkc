@@ -52,11 +52,15 @@ everything after is the value.
   * `label:a+2` defines label `a` as the current edit starting at the 2nd line.
   * `label:a+0+4` defines label `a` as the first 4 lines of the current edit.
 
-* `spawn` defines how many block before the `pre code` this content refers to.
+* `spawn` defines how many blocks before the `pre code` this content refers to.
   Default is `spawn:1`.
 
   * `spawn:n` declares this code block as relevant to the previous `n`
-    paragraphs.
+    blocks.
+
+  When spawning multiples paragraphs, spawn makes the code refers to all of
+  them. When spawning multiple codes, spawn merges the final result into a
+  single state.
 
 * `lens:<range>` declares the range of lines that should be focused on. If
   ommited, repeat the last lens.

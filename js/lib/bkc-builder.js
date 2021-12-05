@@ -325,6 +325,7 @@ export function buildState(prev, cmd) {
     lens: null,     // null|[[start, length]...] of lines to show
     range: null,    // [start, length, difflength] of current edit
     this: null,     // last label range OR current edit
+    focus: [],
   };
 
   applyEdit(prev, cmd, out);
