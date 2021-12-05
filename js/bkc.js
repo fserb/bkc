@@ -6,6 +6,8 @@ import "./extend.js";
 import "./lib/canvas-demo.js";
 import "./lib/color-show.js";
 
+import fuzzy from "./lib/fuzzy.js";
+
 /*
 BKC is split in 4 parts:
 
@@ -279,11 +281,13 @@ function setup() {
       main.insertBefore(createRuler(io, state), target);
     }
   }
+  fuzzy._cache.clear();
 
   connectEditor(document.head.baseURI, {
     jsfiddle: document.getElementById("ed_jsfiddle"),
     codepen: document.getElementById("ed_codepen"),
   });
+
 
   addEventListener("keypress", keypress);
 }

@@ -1,5 +1,26 @@
 // BKC builder
 import diff from "./diff.js";
+import fuzzy from "./fuzzy.js";
+
+function _fuzzySearch(labels, name) {
+  let bestScore = 0;
+  let best = null;
+
+  for (const k of Object.keys(labels)) {
+    const s = fuzzy(k, name);
+    if (s > bestScore) {
+      bestScore = s;
+      best = k;
+    }
+  }
+
+  if (best === null) return null;
+
+  if (bestScore <= 0.6) {
+    console.log(name, "MATCHED", best, "SCORE", bestScore);
+  }
+  return [...labels[best]];
+}
 
 // label-3+4
 const RANGE_RE =
@@ -33,11 +54,11 @@ function _label(prev, out, str) {
       autoGenerateLabels(out, prev);
     }
 
-    if (out.labels && out.labels[order.label] !== undefined) {
-      rng = [...out.labels[order.label]];
-    } else if (prev.labels && prev.labels[order.label] !== undefined) {
-      rng = [...prev.labels[order.label]];
-    } else {
+    rng = _fuzzySearch(out.labels, order.label);
+    if (rng === null) {
+      rng = _fuzzySearch(prev.labels, order.label);
+    }
+    if (rng === null) {
       throw ReferenceError(`Unknown label "${order.label}".`);
     }
   }
@@ -383,4 +404,3 @@ export function mergeState(parent, prev, state) {
   determineHighlight(parent, out);
   return out;
 }
-
