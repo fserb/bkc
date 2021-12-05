@@ -269,9 +269,8 @@ short and there is no shame in doing what you must.
   }
 ```
 
-Once we find a place, we need to pick an angle for it to go. We want to go
-perpendicular to the original line, but we are not particularly picky about
-which direction, so we pick at random.
+Once we find a place, we need to choose an angle for it. We want to be
+perpendicular to the original line, on either direction.
 
 ```add:last.-1
 
@@ -286,7 +285,7 @@ We can also add a bit of variety to the effect by wiggling the angle a bit.
     const angle = this.get(x, y) + dir * ((Math.TAU / 4) + variance);
 ```
 
-```add:#Sub#const+2
+```add:#Sub#const+2,spawn:4
     this.angleVariance = 0.025;
 ```
 
@@ -306,7 +305,7 @@ cracks and remove it from the array. Otherwise we keep it.
 In the end, we want to signal to `frame` that we want to keep on RAF while there
 are still cracks left.
 
-```sub:#Sub#update,spawn:2
+```sub:#Sub#update,spawn:2,lens:#Sub+0+1&#Sub#update
   update() {
     this.cracks.filterIn(c => {
       if (!c.move()) {
@@ -320,8 +319,8 @@ are still cracks left.
   }
 ```
 
-There's one more thing left before we can see something. We need to set up an
-initial condition. First, we clean the canvas.
+There's one more thing left before we can see the results. We need to set up an
+initial condition. First, we should clean the canvas.
 
 ```add:#Sub#const.
 
@@ -353,9 +352,9 @@ finds a point that is part of a line).
     }
 ```
 
-Finally we are going to create a few cracks to start things up.
+And then we are going to create a few cracks to start things up.
 
-```add:last.
+```add:last.,spawn:3
 
     for (let k = 0; k < 3; ++k) {
       this.newCrack();
