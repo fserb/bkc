@@ -161,7 +161,7 @@ Back to our `Crack`. The first thing we do is come up with our next position, as
 the current position will probably be occupied by the line that we originated
 from.
 
-```add:#Crack#constructor+3,lens:#Crack
+```add:#Crack#const+3,lens:#Crack
     this.pos = gridRaystep({x, y}, this.angle);
     if (this.ss.get(this.pos.x, this.pos.y) === INVALID) {
       this.pos = null;
@@ -172,7 +172,7 @@ The core of this class is a `move()` function that moves us to the next
 position, renders the line, and checks and updates the grid. We are going to
 return whether this line is still alive or not.
 
-```add:#Crack#constructor
+```add:#Crack#const
 
   move() {
     if (this.pos === null) return false;
@@ -286,13 +286,13 @@ We can also add a bit of variety to the effect by wiggling the angle a bit.
     const angle = this.get(x, y) + dir * ((Math.TAU / 4) + variance);
 ```
 
-```add:#Substrate#constructor+2
+```add:#Sub#const+2
     this.angleVariance = 0.025;
 ```
 
 Once we have a position and an angle, we create the `Crack`.
 
-```add:#Substrate#newCrack.-1
+```add:#Sub#newCrack.-1
 
     this.cracks.push(new Crack(this, x, y, angle));
 ```
@@ -306,7 +306,7 @@ cracks and remove it from the array. Otherwise we keep it.
 In the end, we want to signal to `frame` that we want to keep on RAF while there
 are still cracks left.
 
-```sub:#Substrate#update,spawn:2
+```sub:#Sub#update,spawn:2
   update() {
     this.cracks.filterIn(c => {
       if (!c.move()) {
@@ -323,7 +323,7 @@ are still cracks left.
 There's one more thing left before we can see something. We need to set up an
 initial condition. First, we clean the canvas.
 
-```add:#Substrate#constructor.
+```add:#Sub#const.
 
   begin() {
     ctx.reset();
@@ -332,7 +332,7 @@ initial condition. First, we clean the canvas.
   }
 ```
 
-```add:instance+1,lens:#Substrate#constructor-1+1&#Substrate#begin&#Substrate.-1&instance+0+2
+```add:instance+1,lens:#Sub#const-1+1&#Sub#begin&#Sub.-1&instance+0+2
 ss.begin();
 ```
 
@@ -340,7 +340,7 @@ We are going to leave some random points on the grid with angles, to be catch by
 the initial crack creation (remember that it randomly samples the grid until it
 finds a point that is part of a line).
 
-```add:#Substrate#begin.-1,lens:#Substrate#constructor-1+1&#Substrate#begin&#Substrate.-1
+```add:#Sub#begin.-1,lens:#Sub#const-1+1&#Sub#begin&#Sub.-1
 
     let k = 0;
     while (k < 16) {
@@ -369,13 +369,13 @@ of simultaneous cracks allowed (`maxActiveCracks`) and a maximum
 number of total cracks ever created (which will allow the whole animation to
 stop).
 
-```add:#Substrate#constructor+3
+```add:#Sub#constr+3
     this.totalCracks = 0;
     this.maxTotalCracks = 12000;
     this.maxActiveCracks = 128;
 ```
 
-```add:#Substrate#newCrack+1
+```add:#Sub#newCrack+1
     if (this.cracks.length >= this.maxActiveCracks) return;
     if (this.maxTotalCracks > 0 && this.totalCracks >= this.maxTotalCracks) {
       return;
@@ -383,7 +383,7 @@ stop).
 
 ```
 
-```add:#Substrate#newCrack.-1,lens:#Substrate#constructor-1&#Substrate#newCrack
+```add:#Sub#newCrack.-1,lens:#Sub#constr-1&#Sub#newCrack
     this.totalCracks++;
 ```
 
@@ -396,7 +396,7 @@ stop).
 We already have the core algorithm of Substrate down. Now it's time to add some
 colors to it.
 
-```add:#Substrate#constructor+11,lens:#Substrate#constructor-1>#Substrate#begin-1+0&#Substrate.-1
+```add:#Sub#constructor+11,lens:#Sub#constructor-1>#Sub#begin-1+0&#Sub.-1
 
     this.colors = null;
     this.lineColor = '#000000';
@@ -405,7 +405,7 @@ colors to it.
 We are also going to set diferent background colors, so we can extract this from
 our `begin()`.
 
-```add:#Substrate#constructor.
+```add:#Sub#constructor.
 
   clear(bgColor) {
     ctx.reset();
@@ -414,7 +414,7 @@ our `begin()`.
   }
 ```
 
-```sub:#Substrate#begin+1+4,lens:#Substrate#constructor-1>#Substrate#begin&#Substrate.-1
+```sub:#Sub#begin+1+4,lens:#Sub#constr-1>#Sub#begin&#Sub.-1
 ```
 
 We will be random sampling from the available colors for each crack.
@@ -427,7 +427,7 @@ We will be random sampling from the available colors for each crack.
   }
 ```
 
-```add:#Crack#constructor.-1,lens:#Substrate#constructor-1+1&#Substrate#getColor&#Substrate.-1&#Crack#constructor-1
+```add:#Crack#constr.-1,lens:#Sub#constr-1+1&#Sub#getColor&#Sub.-1&#Crack#constr-1
     this.color = this.ss.getColor();
 ```
 
@@ -435,7 +435,7 @@ And how are using the color? Well there are two ways: we are going to use the
 new `lineColor` for lines and we are going to paint the region by the side of
 the crack.
 
-```sub:#Crack#move+5+2,lens:#Crack#constructor-1+1&#Crack#move
+```sub:#Crack#move+5+2,lens:#Crack#constr-1+1&#Crack#move
     if (this.color !== null) {
       this.paintRegion();
     }
