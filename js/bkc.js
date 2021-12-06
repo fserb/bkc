@@ -271,7 +271,6 @@ function setup() {
       mergeBlocks.reverse();
     }
 
-    state.focus = new Set();
     for (const n of mergeBlocks) {
       if (n.tagName == "PRE" || n.classList.contains("ruler")) break;
       state.focus.add(n);
