@@ -393,7 +393,12 @@ stop).
 ### colors
 
 We already have the core algorithm of Substrate down. Now it's time to add some
-colors to it.
+colors to it. There are three ways we can introduce color to the effect:
+setting the background and line color, and also creating a watercolor-like
+effect near the lines.
+
+The first thing is to allow for line colors and an array for
+potential paint colors.
 
 ```add:#Sub#constructor+11,lens:#Sub#constructor-1>#Sub#begin-1+0&#Sub.-1
 
@@ -401,8 +406,8 @@ colors to it.
     this.lineColor = '#000000';
 ```
 
-We are also going to set diferent background colors, so we can extract this from
-our `begin()`.
+We will allow diferent background colors, so we can extract this from our
+`begin()`.
 
 ```add:#Sub#constructor.
 
@@ -416,7 +421,7 @@ our `begin()`.
 ```sub:#Sub#begin+1+4,lens:#Sub#constr-1>#Sub#begin&#Sub.-1
 ```
 
-We will be random sampling from the available colors for each crack.
+We will also be random sampling from the available colors for each crack.
 
 ```add:#Substrate#get-1
 
@@ -426,7 +431,7 @@ We will be random sampling from the available colors for each crack.
   }
 ```
 
-```add:#Crack#constr.-1,lens:#Sub#constr-1+1&#Sub#getColor&#Sub.-1&#Crack#constr-1
+```add:#Crack#constr.-1,lens:#Sub#constr-1+1&#Sub#getColor&#Sub.-1&#Crack#constr-1,spawn:7
     this.color = this.ss.getColor();
 ```
 
@@ -443,7 +448,7 @@ the crack.
       ctx.fillStyle = this.ss.lineColor;
 ```
 
-So what does `paintRegion()` do?
+So how `paintRegion()` does the watercolor effect?
 
 
 
