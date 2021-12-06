@@ -153,7 +153,8 @@ go in detail on how they work right now. Hopefully we will have a separate
 article on support functions.
 
 ```add:all+0,lens:all+0+5&#Crack,spawn:2
-const {gridRaystep, normal} = await import("{{baseURL}}/js/extend.js");
+const {gridRaystep, normal} =
+  await import("{{baseURL}}/js/extend.js");
 
 ```
 
@@ -363,26 +364,34 @@ And then we are going to create a few cracks to start things up.
 
 If we ran the code now, it would work mostly fine, except it would eventually
 explode, as every crack creates two more forever. To tackle this, we are going
-to apply two limits to the system. First, we are going to have a maximum number
-of simultaneous cracks allowed (`maxActiveCracks`) and a maximum
-number of total cracks ever created (which will allow the whole animation to
-stop).
+to apply two limits to the system.
+
+First, we are going to have a maximum number of simultaneous cracks allowed.
 
 ```add:#Sub#constr+3
-    this.totalCracks = 0;
-    this.maxTotalCracks = 12000;
     this.maxActiveCracks = 128;
 ```
 
-```add:#Sub#newCrack+1
+```add:#Sub#newCrack+1,lens:#Sub#constr-1&#Sub#newCrack,spawn:2
     if (this.cracks.length >= this.maxActiveCracks) return;
-    if (this.maxTotalCracks > 0 && this.totalCracks >= this.maxTotalCracks) {
-      return;
-    }
 
 ```
 
-```add:#Sub#newCrack.-1,lens:#Sub#constr-1&#Sub#newCrack
+And then we are also having a maximum number of total cracks ever created
+(which will allow for the whole animation to stop).
+
+```add:#Sub#constr+4
+    this.totalCracks = 0;
+    this.maxTotalCracks = 12000;
+```
+
+```add:#Sub#newCrack+2
+    if (this.maxTotalCracks > 0 && this.totalCracks >= this.maxTotalCracks) {
+      return;
+    }
+```
+
+```add:#Sub#newCrack.-1,spawn:6
     this.totalCracks++;
 ```
 
