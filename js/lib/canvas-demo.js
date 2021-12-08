@@ -110,7 +110,8 @@ class CanvasDemo extends Tonic {
 
     if (!this.visible) return;
 
-    this.shadowRoot.querySelector('iframe').updateFPS = this.updateFPS.bind(this);
+    this.shadowRoot.querySelector('iframe').updateFPS =
+      this.updateFPS.bind(this);
 
     // When pressing on reload, we simply rebuild the internal DOM, which
     // will create a new iframe and restart the code.

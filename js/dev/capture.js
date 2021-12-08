@@ -16,6 +16,7 @@ const mo = new MutationObserver((ml, o) => {
   e.style.cssText = `
 font-size: 12px;
 padding-right: 10px;
+line-height: 24px;
 float: right;
 cursor: pointer;
 `;
