@@ -27,11 +27,11 @@ export function apply(state) {
   }
 }
 
-function scheduleApplyAfter(evname) {
+function scheduleApplyAfter(evname, delay = 0) {
   pending++;
   document.querySelector("aside ol").addEventListener(evname, () => {
     pending--;
-    runApply();
+    setTimeout(runApply, delay * 1000);
   }, {once: true});
 }
 
@@ -116,6 +116,7 @@ function postApplyLens(alives, lens) {
       }
     }
   }
+
   return changed;
 }
 
