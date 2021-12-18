@@ -106,7 +106,7 @@ function runApply() {
 
   const lens = state.lens ?? [[0, output.length]];
   if (applyFocus(lens, aside.children.length == 0)) {
-    return scheduleApplyAfter(null, 0.1);
+    return scheduleApplyAfter();
   }
 
   const alives = [];
@@ -118,6 +118,31 @@ function runApply() {
   const diff = diffCode(input, output);
 
   let changed = false;
+
+  // Pre-apply outlens highlight. We have to go through diff, to map lens to
+  // the old code.
+  let l = 0;
+  for (const [op, line] of diff) {
+    if (op == "+") {
+      l++;
+      continue;
+    }
+
+    const o = alives[line];
+    if (changeClass(o, "outlens", lensMatch(lens, l) === null)) {
+      changed = true;
+    }
+    if (changeClass(o, "low", !highlight.has(l))) {
+      changed = true;
+    }
+
+    if (op == "=") l++;
+  }
+
+  if (changed) {
+    return scheduleApplyAfter(null, 0.5);
+  }
+
   let pos = 0;
   let rel = 0;
   let relsub = 0;
@@ -168,18 +193,9 @@ function runApply() {
   // Apply highlight.
   for (let i = 0; i < alives.length; ++i) {
     const o = alives[i];
-    if (highlight.has(i)) {
-      o.classList.remove("low");
-    } else {
-      o.classList.add("low");
-    }
-    if (lensMatch(lens, i)) {
-      o.classList.remove("outlens");
-    } else {
-      o.classList.add("outlens");
-    }
+    changeClass(o, "low", !highlight.has(i));
+    changeClass(o, "outlens", !lensMatch(lens, i));
   }
-  console.log("DONE");
 }
 
 export function setupScroll() {
@@ -210,3 +226,15 @@ function lensMatch(lens, pos) {
   }
   return null;
 }
+
+function changeClass(obj, className, want) {
+  const has = obj.classList.contains(className);
+  if (want === has) return false;
+  if (want) {
+    obj.classList.add(className);
+  } else {
+    obj.classList.remove(className);
+  }
+  return true;
+}
+
