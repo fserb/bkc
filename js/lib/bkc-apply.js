@@ -69,7 +69,20 @@ function applyFocus(lens, quick) {
 
   const s = viewportHeight / 2 + (lensFocus + 0.5) * lineHeight;
 
-  aside.scrollTo({top: s, left: 0, behavior: quick ? "auto": "smooth"});
+  aside.scrollTo({top: s, left: 0, behavior: quick ? "auto" : "smooth"});
+
+  // If we tried to scroll past the height of the content, we let apply finish,
+  // but we book a second one after, to redo the scrolling.
+  // The reason we remove viewportHeight, is that the content includes a padding
+  // of viewportHeight on top and on the bottom. As long as we have enough
+  // content to fill half of the screen with this scroll, we are good.
+  // This is a bit scary, as it may lead to an infinite loop if the lens area is
+  // half viewport bigger than the content.
+  if (s > aside.scrollHeight - viewportHeight * 3 / 2) {
+    scheduleApplyAfter();
+    return false;
+  }
+
   lastScrollPosition = aside.scrollTop;
 
   // if the scroll will keep us at the same screen area, we don't block until
@@ -166,6 +179,7 @@ function runApply() {
       o.classList.add("outlens");
     }
   }
+  console.log("DONE");
 }
 
 export function setupScroll() {
