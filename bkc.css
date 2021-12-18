@@ -242,20 +242,36 @@ main .ruler {
   position: relative;
   float: left;
   clear: left;
-  left: -40px;
+  left: -50px;
+  z-index: 0;
   margin-right: -40px;
-  background-color: #000;
-  width: 30px;
+  width: 25px;
+  background-color: #999;
   opacity: 0;
 }
 
+main .ruler:nth-of-type(odd) {
+  background-color: #000;
+}
+
+/*main .ruler:after {
+  content: "";
+  background-color: #181923;
+  width: 0.5em;
+  height: 0.5em;
+  opacity: 1;
+  left: calc(-3.125em + 30px + 0.75em);
+  position: absolute;
+  border-radius: 35%;
+}
+
+main .ruler:nth-of-type(1):after {
+  display: none;
+}
+*/
 canvas-demo {
   display: block;
   max-width: 100%;
-}
-
-main .ruler:nth-of-type(even) {
-  background-color: #666;
 }
 
 aside {
@@ -277,6 +293,7 @@ aside {
   left: 0;
   overflow-x: hidden;
   scrollbar-width: none;
+  z-index: 100;
 }
 
 aside::after {
@@ -289,6 +306,7 @@ aside::after {
   border-top: var(--arrow-size) solid transparent;
   border-bottom: var(--arrow-size) solid transparent;
   border-left: var(--arrow-size) solid #181923;
+  z-index: 100;
 }
 
 aside::-webkit-scrollbar {
@@ -299,7 +317,7 @@ aside ol {
   counter-reset: code-line;
   list-style: none;
   width: 84ch;
-  padding: 25px 0;
+  padding: 100vh 0 100vh 0;
   margin: auto;
   top: 0;
   max-width: calc(var(--split-size) - 50px);
@@ -418,6 +436,14 @@ aside *::selection {
 
 aside .low {
   filter: opacity(0.5) contrast(0.5);
+}
+
+aside .outlens {
+  filter: opacity(0.1) contrast(0.1);
+}
+
+aside.scrolled .outlens, aside.scrolled .low {
+  filter: opacity(0.6) contrast(0.75) !important;
 }
 
 main svg[display=true] {
@@ -555,5 +581,3 @@ pre code ::selection, pre code::selection { background-color:#32374d;color:#959d
 .token.important, .token.bold { font-weight: bold; }
 .token.italic { font-style: italic; }
 .token.entity { cursor: help; }
-
-

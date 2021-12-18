@@ -12,112 +12,72 @@ import diffCode from "./diff.js";
 
 // this is the line-height em attribute for the `aside li`.
 // in theory, we could query this from the stylesheet, but why bother?
-const LINE_HEIGHT = 1.1;
-const HIDE_ANIMATION = `ease-in forwards lens_hide 0.5s`;
-const UNHIDE_ANIMATION = `ease-in forwards lens_show 0.5s`;
+const LINE_HEIGHT_EM = 1.1;
 
 // We do this little apply() dance, so we can re-run apply after transitions.
 let pending = 0;
 let applyState = null;
+let lastScrollPosition = Infinity;
 
 export function apply(state) {
   applyState = state;
+  lastScrollPosition = Infinity;
   if (pending == 0) {
     runApply();
   }
 }
 
-function scheduleApplyAfter(evname, delay = 0) {
+function scheduleApplyAfter(evname = null, delay = 0) {
   pending++;
-  document.querySelector("aside ol").addEventListener(evname, () => {
-    pending--;
-    setTimeout(runApply, delay * 1000);
-  }, {once: true});
+  const cb = () => {
+    setTimeout(() => {
+      pending--;
+      runApply();
+    }, delay * 1000);
+  };
+
+  if (evname === null) {
+    requestAnimationFrame(cb);
+  } else {
+    document.querySelector("aside ol").addEventListener(
+      evname, cb, {once: true, passive: true});
+  }
 }
 
-function preApplyLens(alives, diff, lens) {
-  const hideState = [];
-  let allHidden = true;
-  let inputPos = 0;
-  let outputPos = 0;
-  for (const [op, _] of diff) {
-    if (inputPos >= alives.length) break;
-    if (op == "+") {
-      outputPos++;
-      continue;
+function applyFocus(lens, quick) {
+  const aside = document.querySelector("aside");
+  if (lastScrollPosition !== Infinity) {
+    const lsp = lastScrollPosition;
+    lastScrollPosition = aside.scrollTop;
+    if (lsp == aside.scrollTop) {
+      return false;
     }
-
-    const hide = lensMatch(lens, outputPos) === null;
-    hideState.push(hide);
-    if (!hide) {
-      allHidden = false;
-    }
-    inputPos++;
-
-    if (op == "=") {
-      outputPos++;
-    }
+    return true;
   }
 
-  if (allHidden) return false;
+  const lineHeight =
+    parseFloat(window.getComputedStyle(aside).fontSize) * LINE_HEIGHT_EM;
+  const viewportHeight = parseFloat(window.getComputedStyle(aside).height);
 
-  let changed = false;
-  for (let i = 0; i < alives.length; ++i) {
-    const el = alives[i];
-    const hide = hideState[i];
-    const isHidden = el.classList.contains("hidden");
-    if (!hide && isHidden) {
-      changed = true;
-      el.classList.remove("hidden");
-      el.style.animation = UNHIDE_ANIMATION;
-    }
+  let minLens = 1e9;
+  let maxLens = 0;
+  for (const l of lens) {
+    minLens = Math.min(l[0], minLens);
+    maxLens = Math.max(l[0] + l[1] - 1, maxLens);
   }
+  const lensFocus = (minLens + maxLens) / 2;
 
-  const lbs = lensBorderSet(lens);
-  for (let i = 0; i < alives.length; ++i) {
-    const el = alives[i];
-    if (lbs.has(i)) {
-      el.classList.add("spacer");
-    } else {
-      el.classList.remove("spacer");
-    }
-  }
+  const s = viewportHeight / 2 + (lensFocus + 0.5) * lineHeight;
 
-  if (changed) return true;
+  aside.scrollTo({top: s, left: 0, behavior: quick ? "auto": "smooth"});
+  lastScrollPosition = aside.scrollTop;
 
-  for (let i = 0; i < alives.length; ++i) {
-    const el = alives[i];
-    const hide = hideState[i];
-    const isHidden = el.classList.contains("hidden");
-    if (hide && !isHidden) {
-      changed = true;
-      el.classList.add("hidden");
-      el.style.animation = HIDE_ANIMATION;
-    }
-  }
-
-  return changed;
-}
-
-function postApplyLens(alives, lens) {
-  let changed = false;
-  for (let i = 0; i < alives.length; ++i) {
-    const el = alives[i];
-    const hide = lensMatch(lens, i) === null;
-    const isHidden = el.classList.contains("hidden");
-    if (hide != isHidden) {
-      changed = true;
-      if (hide) {
-        el.classList.add("hidden");
-        el.style.animation = HIDE_ANIMATION;
-      } else {
-        el.classList.remove("hidden");
-        el.style.animation = UNHIDE_ANIMATION;
-      }
-    }
-  }
-
-  return changed;
+  // if the scroll will keep us at the same screen area, we don't block until
+  // the scrolling is over. This has a potential problem: the next call to
+  // applyFocus() will block. But at point, we hope the new lines have already
+  // been added.
+  const delta = Math.abs(s - lastScrollPosition);
+  return delta > viewportHeight / 4;
 }
 
 // Every time runApply() does any DOM animation, we can leave the function and
@@ -128,8 +88,14 @@ function runApply() {
   const state = applyState;
   const highlight = new Set(state.highlight);
   const output = clearLine(state.code.join("\n")).split("\n");
-
   const aside = document.querySelector("aside ol");
+  aside.parentNode.classList.remove("scrolled");
+
+  const lens = state.lens ?? [[0, output.length]];
+  if (applyFocus(lens, aside.children.length == 0)) {
+    return scheduleApplyAfter(null, 0.1);
+  }
+
   const alives = [];
   const input = [];
   for (const li of aside.querySelectorAll("li.alive")) {
@@ -137,14 +103,6 @@ function runApply() {
     alives.push(li);
   }
   const diff = diffCode(input, output);
-
-  const lens = state.lens ?? [[0, output.length]];
-
-  // we try to apply lens before editing. If this would lead to an empty area,
-  // we give up and let postApplyLens do the actual lensing.
-  if (preApplyLens(alives, diff, lens)) {
-    return scheduleApplyAfter("animationend");
-  }
 
   let changed = false;
   let pos = 0;
@@ -156,11 +114,11 @@ function runApply() {
       changed = true;
       const o = alives[pos];
       o.addEventListener("transitionend", () => { o.replaceWith(); },
-        {once: true});
+        {once: true, passive: true});
       o.classList.add("dead");
       o.classList.remove("alive");
       alives.splice(pos, 1);
-      o.style.top = `${LINE_HEIGHT * relsub++}em`;
+      o.style.top = `${LINE_HEIGHT_EM * relsub++}em`;
       rel = 0;
     } else if (op == "=") {
       pos++;
@@ -171,15 +129,9 @@ function runApply() {
       o.classList.add("alive");
       o.innerHTML = output[line];
 
-      const ln = lensMatch(lens, pos);
-      if (ln !== null) {
-        const begin = (alives.length == 0 ? ln[0] : 0) + 1;
-        o.classList.add("born");
-        o.style.top = `${LINE_HEIGHT * (rel++ - begin)}em`;
-        pendingAlive.push(o);
-      } else {
-        o.classList.add("hidden");
-      }
+      o.classList.add("born");
+      o.style.top = `${LINE_HEIGHT_EM * (rel++ - 1)}em`;
+      pendingAlive.push(o);
 
       aside.insertBefore(o, alives[pos]);
       alives.splice(pos, 0, o);
@@ -208,16 +160,22 @@ function runApply() {
     } else {
       o.classList.add("low");
     }
+    if (lensMatch(lens, i)) {
+      o.classList.remove("outlens");
+    } else {
+      o.classList.add("outlens");
+    }
   }
+}
 
-  if (changed) {
-    return scheduleApplyAfter("transitionend");
+export function setupScroll() {
+  const aside = document.querySelector("aside");
+  const cb = () => {
+    aside.classList.add("scrolled");
+  };
+  for (const evname of ["wheel", "mousedown", "wheel", "keyup"]) {
+    aside.addEventListener(evname, cb, {passive: true});
   }
-
-  // After all animations have passed, we force-apply the lens. This catches the
-  // case where we didn't apply lens initially, because it would lead to an
-  // empty list.
-  postApplyLens(alives, lens);
 }
 
 export function clearLine(s) {
@@ -237,23 +195,4 @@ function lensMatch(lens, pos) {
     }
   }
   return null;
-}
-
-function lensBorderSet(lens) {
-  const ret = new Set();
-  if (lens.length == 1) return ret;
-
-  const start = new Set();
-  let last = 0;
-  for (const d of lens) {
-    start.add(d[0]);
-    last = Math.max(last, d[0] + d[1]);
-  }
-  for (const d of lens) {
-    const e = d[0] + d[1];
-    if (!start.has(e) && last != e) {
-      ret.add(e - 1);
-    }
-  }
-  return ret;
 }

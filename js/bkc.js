@@ -23,7 +23,7 @@ new ASIDE. This happens at scroll time.
 bkc-editor.js - open current code in different web editors.
 */
 import {buildState, rebuildPRE, mergeState} from "./lib/bkc-builder.js";
-import {clearLine, apply} from "./lib/bkc-apply.js";
+import {clearLine, apply, setupScroll} from "./lib/bkc-apply.js";
 import {connectEditor, updateEditorCode} from "./lib/bkc-editor.js";
 
 const VALID_KEYS = ["add", "sub", "lens", "label", "debug", "spawn"];
@@ -165,6 +165,7 @@ function createRuler(io, state) {
 }
 
 function setup() {
+  setupScroll();
   const io = new IntersectionObserver(entries => {
 
     for (const e of entries) {
