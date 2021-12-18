@@ -132,10 +132,9 @@ function runApply() {
     if (changeClass(o, "outlens", lensMatch(lens, l) === null)) {
       changed = true;
     }
-    if (changeClass(o, "low", !highlight.has(l))) {
+    if (changeClass(o, "low", true)) {
       changed = true;
     }
-
     if (op == "=") l++;
   }
 

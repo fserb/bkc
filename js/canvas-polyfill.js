@@ -3,7 +3,7 @@
 
 import boxBlurCanvasRGBA from "./lib/canvasFastBoxBlur.js";
 
-const polyfilled = globalThis.canvasPolyfill = new Set();
+const polyfilled = new Set();
 
 export default function polyfillWarning(target) {
   if (polyfilled.size == 0) return;
@@ -244,8 +244,12 @@ function applyNewAPI(canvas, context) {
   }
 }
 
-applyNewAPI(HTMLCanvasElement, CanvasRenderingContext2D);
+if (!globalThis.canvasPolyfill) {
+  globalThis.canvasPolyfill = polyfilled;
 
-if (has2DOffscreenCanvas) {
-  applyNewAPI(OffscreenCanvas, OffscreenCanvasRenderingContext2D);
+  applyNewAPI(HTMLCanvasElement, CanvasRenderingContext2D);
+
+  if (has2DOffscreenCanvas) {
+    applyNewAPI(OffscreenCanvas, window.OffscreenCanvasRenderingContext2D);
+  }
 }

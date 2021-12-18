@@ -49,7 +49,7 @@ setInterval(() => {
 
 const SAFE_SRC = code => BASE(`<script type='module'>
 import "./js/canvas-polyfill.js";
-function run(canvas) {
+async function run(canvas) {
 ${code}
 }
 ${FPS}
