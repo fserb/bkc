@@ -190,7 +190,7 @@ and if it is, we move it back in and invert the velocity in that axis.
 We do this for both axis and we also return whether we have touched the side or
 not.
 
-```sub:bounce
+```sub:bounce,spawn:3
 function bounce(obj) {
   let bounced = false;
   if (obj.pos.x <= obj.radius || obj.pos.x >= W - obj.radius) {
@@ -332,7 +332,7 @@ We can replace our current circles with a function to render crystals. Apart
 from the control points, we will take a `size` parameter (for the axis
 perpendicular to the `a-b` direction) and a color for each control point.
 
-```sub:render,label:render+3:renderCrystal+0+2
+```sub:render,label:render+3:renderCrystal+0+2,lens:this
 function renderCrystal(a, b, size, colorA, colorB) {
 }
 
@@ -479,12 +479,12 @@ const crystal = {
 
 And update it so it pulsates in a sine wave over time.
 
-```add:update+1,lens:update
+```add:update+1,lens:update,spawn:3
   crystal.pulse = Math.sin(t * 5);
 
 ```
 
-Now are ready to use it to improve our render. First, we are going to use
+Now we are ready to use it to improve our render. First, we are going to use
 `pulse` to animate the size of the crystal on the $[60, 100]$ range.
 
 ```sub:render,label:render,lens:render
@@ -502,7 +502,7 @@ function render() {
 Let's draw a second crystal inside the first, where it shrinks to 0 in half the
 period of the pulse (that we can get with `abs`).
 
-```add:render+8,
+```add:render+8,spawn:3
   renderCrystal(crystal.control[0].pos, crystal.control[1].pos,
     outer * Math.abs(crystal.pulse), "#be2633", "#e06f8b");
 ```
@@ -593,7 +593,7 @@ Now we should use the color for rendering. We use our utility `rgba()` function
 to convert the RGB array into a CSS color string and pass that along to
 `renderCrystal`.
 
-```sub:render+6,lens:render
+```sub:render+6,lens:render,spawn:3
   ctx.globalAlpha = 0.5;
   const colorA = rgba(...COLORS[crystal.control[0].color]);
   const colorB = rgba(...COLORS[crystal.control[1].color]);
@@ -781,19 +781,19 @@ is a subtle effect: every time a control bounces, we will flash the background
 very slightly into that color, which will give the impression the crystal is
 shining.
 
-First things first, we are going to keep track of the background...
+First things first, we are going to keep track of the background
 
 ```add:init+3,label:init-3+4,lens:init
 const BG = [16, 16, 16];
 ```
 
-... and render it.
+and use it to clear the background (instead of the default color we had before).
 
-```sub:render+2+1lens:render
+```sub:render+2+1,lens:render,spawn:3
   ctx.fillStyle = rgba(...BG);
 ```
 
-Then there are two things that will change `BG`. First, we are going to update
+There are two things that will change `BG`. First, we are going to update
 its value every time a control bounces to a darker version of the original
 color.
 
