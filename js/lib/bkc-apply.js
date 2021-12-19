@@ -83,10 +83,8 @@ function scrollToFocus() {
   if (applyState.hasScrolled) {
     return false;
   }
-  console.log("SCR");
   if (applyState.state.lens === null && applyState.aside.scrollTop !== 0) {
     applyState.hasScrolled = true;
-    console.log("SKIP");
     return false;
   }
 
