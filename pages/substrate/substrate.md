@@ -19,16 +19,17 @@ Substrate and write about it. So here it is. Let's code substrate again.
 
 ### the plan
 
-The core algorithm of Substrate is: we keep track of a moving line, that, as it
-draws a line on the screen, also registers its angle on a separate grid. Each
-line moves forward, writing down its angle, until it reaches the end of the
-screen or until it touches another line on the `grid`. When it stops, we spawn
+The core algorithm of Substrate is: we keep track of a set of moving lines. Each
+line, as it moves, draws a line on the screen, and also registers its angle on
+a separate `grid`. Each line moves forward until it reaches the end of the
+screen or until it touches another line on the `grid`. When it stops, it spawn
 two other moving lines. The only rule is that a new moving line must start
 perpendicular to a previous line in the `grid`. That's it.
 
 The rest is mostly aesthetics. We will add a watercolor paint effect around the
-lines, and will build different color palettes. Finally we are going to explore
-how to create different effects with the core Substrate algorithm.
+lines (as the original demo), and will build different color palettes. Finally
+we are going to explore how to create different effects with the core Substrate
+algorithm.
 
 
 ### the grid
@@ -38,7 +39,7 @@ simple `requestAnimationFrame`. Our animation will not be time-based, but
 frame-based. I.e., we won't be frame rate independent.
 
 
-```add:
+```add:,lens:edit
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
 const H = canvas.height = 1080;
