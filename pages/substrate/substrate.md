@@ -125,8 +125,8 @@ We don't have anything to show yet, but this is all there's to the grid.
 ### the crack
 
 We now build our moving line, called a `Crack`. A `Crack` has a starting
-position and an angle. We also keep a reference to our main class, as we need
-access to the `grid`.
+position and an angle. We also keep a reference to our main class (`ss`), as we
+need access to the `grid`.
 
 ```add:#Substrate,lens:#Crack
 
@@ -150,7 +150,7 @@ This is a generic enough problem, that it's useful to have a function lying
 around that returns the next optimal position in a given direction. We are also
 going to need a function that returns a normal distribution. For now let's just
 import them both. Both of those functions are super interesting, but we won't
-go in detail on how they work right now. Hopefully we will have a separate
+go in detail on how they work right now. Eventually we will have a separate
 article on support functions.
 
 ```add:all+0,lens:all+0+5&#Crack,spawn:2
@@ -161,7 +161,7 @@ const {gridRaystep, normal} =
 
 Back to our `Crack`. The first thing we do is come up with our next position, as
 the current position will probably be occupied by the line that we originated
-from.
+from. In the off-chance that we end up on top of another line, let's mark it, so we can kill this crack on the next update.
 
 ```add:#Crack#const+3,lens:#Crack
     this.pos = gridRaystep({x, y}, this.angle);
@@ -206,9 +206,8 @@ We need to be a bit careful here on which position to check on the grid. It
 could be the case that our line is moving diagonally to the grid and jump from
 position `(x, y)` to `(x + 1, y + 1)`. In this case, there's a chance it can
 actually misses a collision and goes across another line. It's not the end of
-the world, and we could just ignore the problem. But the solution may be
-applied in other situations, so it's worth looking into it. What we can do here
-is check all positions from the old value to the new in a square.
+the world, and we could just ignore the problem. But to avoid this, we can
+check all positions from the old value to the new in a square.
 
 We compute the delta in grid positions, and for each position in the square,
 check if that position is either empty or part of our line.
@@ -249,7 +248,7 @@ list of all valid points. We could do that and be proud of it. Instead, we are
 going for the hacky solution: try a random point in the grid and see if it's a
 valid part of a line. Keep trying until you find one. In theory, this could
 lead to an infinite loop, never finding a valid point. In practice, life is
-short and there is no shame in doing what you must.
+short.
 
 ```add:#Substrate#update,lens:#Substrate#constructor-1>#Substrate#newCrack
 
@@ -280,7 +279,7 @@ perpendicular to the original line, on either direction.
     const angle = this.get(x, y) + dir * (Math.TAU / 4);
 ```
 
-We can also add a bit of variety to the effect by wiggling the angle a bit.
+We can also add a bit of variety by wiggling the angle a bit.
 
 ```sub:last.-1
     const variance = this.angleVariance * normal();
@@ -321,8 +320,8 @@ are still cracks left.
   }
 ```
 
-There's one more thing left before we can see the results. We need to set up an
-initial condition. First, we should clean the canvas.
+There's one more thing left before we can see the results: we need to set up an
+initial condition. First, let's clean the canvas.
 
 ```add:#Sub#const.
 
@@ -367,18 +366,21 @@ If we ran the code now, it would work mostly fine, except it would eventually
 explode, as every crack creates two more forever. To tackle this, we are going
 to apply two limits to the system.
 
+```add:,lens:#Sub#update
+```
+
 First, we are going to have a maximum number of simultaneous cracks allowed.
 
 ```add:#Sub#constr+3
     this.maxActiveCracks = 128;
 ```
 
-```add:#Sub#newCrack+1,lens:#Sub#constr-1&#Sub#newCrack,spawn:2
+```add:#Sub#newCrack+1,lens:#Sub#constr-1>#Sub#newCrack+0+4,spawn:2
     if (this.cracks.length >= this.maxActiveCracks) return;
 
 ```
 
-And then we are also having a maximum number of total cracks ever created
+And then we set a maximum number of total cracks that can ever be created
 (which will allow for the whole animation to stop).
 
 ```add:#Sub#constr+4
@@ -397,6 +399,7 @@ And then we are also having a maximum number of total cracks ever created
 ```
 
 @[canvas-demo]
+
 ```add:,lens:
 ```
 
@@ -410,7 +413,7 @@ effect near the lines.
 The first thing is to allow for line colors and an array for
 potential paint colors.
 
-```add:#Sub#constructor+11,lens:#Sub#constructor-1>#Sub#begin-1+0&#Sub.-1
+```add:#Sub#constructor+11,lens:#Sub#constructor-1>#Sub#begin-1+0
 
     this.colors = null;
     this.lineColor = '#000000';
@@ -428,7 +431,7 @@ We will allow diferent background colors, so we can extract this from our
   }
 ```
 
-```sub:#Sub#begin+1+4,lens:#Sub#constr-1>#Sub#begin&#Sub.-1
+```sub:#Sub#begin+1+4,lens:#Sub#constr-1>#Sub#begin
 ```
 
 We will also be random sampling from the available colors for each crack.
@@ -441,7 +444,7 @@ We will also be random sampling from the available colors for each crack.
   }
 ```
 
-```add:#Crack#constr.-1,lens:#Sub#constr-1+1&#Sub#getColor&#Sub.-1&#Crack#constr-1,spawn:7
+```add:#Crack#constr.-1,lens:#Sub#getColor>#Crack#constr-1,spawn:7
     this.color = this.ss.getColor();
 ```
 
@@ -449,7 +452,7 @@ And how are using the color? Well there are two ways: we are going to use the
 new `lineColor` for lines and we are going to paint the region by the side of
 the crack.
 
-```sub:#Crack#move+5+2,lens:#Crack#constr-1+1&#Crack#move
+```sub:#Crack#move+5+2,lens:#Crack#move
     if (this.color !== null) {
       this.paintRegion();
     }
