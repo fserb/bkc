@@ -214,6 +214,8 @@ main pre li:before {
 
 main div.merged {
   display: block;
+  margin-block-start: 1em;
+  margin-block-end: 1em;
 }
 
 main div.merged p {

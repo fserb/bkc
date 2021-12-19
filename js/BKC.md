@@ -28,7 +28,7 @@ everything after is the value.
 
     * `edit` the range of the current edited text
     * `last` the range of the last edited text
-    * `this` the last created label (if any) or the same as `edit`
+    * `this` same as `edit`, except it's sticky (i.e., it doesn't get updated).
     * `all` the whole code content
 
   * you can reference the end of a range by appending `.` to the end label.
@@ -73,5 +73,3 @@ everything after is the value.
 
   * `lens:a>b` sets the lens to the smallest continuous range that includes `a`
     and `b`.
-
-  * `lens:a&b` sets the lens to the (possible disjoint) range of `a` and `b`.

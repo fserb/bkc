@@ -40,15 +40,10 @@ function _label(prev, out, str) {
 
   if (order.label == "all") {
     rng = [0, cur.code.length];
-  } else if (order.label == "edit") {
+  } else if (order.label == "edit" || order.label == "this") {
     rng = [cur.range[0], cur.range[1]];
   } else if (order.label == "last") {
     rng = [prev.range[0], prev.range[1]];
-  } else if (order.label == "this") {
-    if (out.this === null) {
-      throw ReferenceError("'this' used ahead of construction");
-    }
-    rng = [...out.this];
   } else {
     if (order.label[0] == '#') {
       autoGenerateLabels(out, prev);
@@ -152,7 +147,6 @@ function generateNewLabels(cmd, out) {
   out.labels = {};
   out._autogen = false;
   if (cmd.label === null) {
-    out.this = [out.range[0], out.range[1]];
     return;
   }
   let rng;
@@ -176,7 +170,6 @@ function generateNewLabels(cmd, out) {
     }
     out.labels[name] = [...rng];
   }
-  out.this = rng;
 }
 
 /*
@@ -262,56 +255,47 @@ function autoGenerateLabels(out, prev) {
 Update @out.lens, either with the current edit, or by using new labels.
 */
 function calculateLens(prev, cmd, out) {
+  let req = out.lensCmd = cmd.lens ?? prev.lensCmd ?? "";
   out.lens = null;
-  // deep copy previous, if it exists.
-  if (prev.lens) {
-    out.lens = [];
-    for (const d of prev.lens) {
-      out.lens.push([...d]);
-    }
-  }
-
-  if (cmd.lens === null) {
-    // if lens AND there's no edit operation, this is probably an empty PRE, so
-    // default to showing everything.
-    if (out.range === null) {
-      out.lens = null;
-      return;
-    }
-    // if there's no lens update, just update the current lens range.
-    if (out.lens !== null) {
-      for (const d of out.lens) {
-        if (d[0] > out.range[0]) {
-          d[0] += out.range[1];
-        } else if (out.range[0] >= d[0] &&
-            out.range[0] < d[0] + d[1]) {
-          d[1] += out.range[2];
-        }
-      }
-    }
-    return;
-  }
 
   // reset lens.
-  if (cmd.lens == "") {
+  if (req == "") {
     out.lens = null;
     return;
   }
 
-  out.lens = [];
-  for (const d of cmd.lens.split('&')) {
-    let dis = null;
-    for (const l of d.split('>')) {
-      const t = range(prev, out, l);
-      if (dis === null) {
-        dis = [...t];
-        continue;
+  if (req === "fixed") {
+    out.lens = [];
+    for (const d of prev.lens) {
+      const o = [...d];
+      if (o[0] > out.range[0]) {
+        o[0] += out.range[1];
+      } else if (out.range[0] >= o[0] && out.range[0] < o[0] + o[1]) {
+        o[1] += out.range[2];
       }
-      const start = Math.min(dis[0], t[0]);
-      const end = Math.max(dis[0] + dis[1], t[0] + t[1]);
-      dis = [start, end - start];
+      out.lens.push(o);
     }
-    out.lens.push(dis);
+    return;
+  }
+
+  req = req.replace('&', '>');
+
+  out.lens = [];
+  let dis = null;
+  for (const l of req.split('>')) {
+    const t = range(prev, out, l);
+    if (dis === null) {
+      dis = [...t];
+      continue;
+    }
+    const start = Math.min(dis[0], t[0]);
+    const end = Math.max(dis[0] + dis[1], t[0] + t[1]);
+    dis = [start, end - start];
+  }
+  out.lens.push(dis);
+
+  if (out.lensCmd === "this") {
+    out.lensCmd = "fixed";
   }
 }
 
@@ -338,15 +322,16 @@ function determineHighlight(prev, out) {
 
 export function buildState(prev, cmd) {
   const out = {
-    _lang: cmd.lang,
-    _codegen: false,
-    code: null,     // [] of lines of code
-    highlight: [],  // [] of lines to be highlighted
-    labels: {},     // {label: [start, length]} of references
-    lens: null,     // null|[[start, length]...] of lines to show
-    range: null,    // [start, length, difflength] of current edit
-    this: null,     // last label range OR current edit
-    focus: new Set(),
+    _lang: cmd.lang,   // temp: specified language for code.
+    _codegen: false,   // temp: does labels contain auto labels?
+
+    code: null,        // [] of lines of code.
+    highlight: [],     // [] of lines to be highlighted.
+    labels: {},        // {label: [start, length]} of references.
+    lens: null,        // null|[[start, length]...] of lines to show.
+    lensCmd: null,     // actual request for lens.
+    range: null,       // [start, length, difflength] of current edit.
+    focus: new Set(),  // Elements that are mapped to this state.
   };
 
   applyEdit(prev, cmd, out);

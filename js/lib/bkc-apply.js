@@ -53,7 +53,6 @@ function prepareApply(state) {
   }
 
   applyState.diff = diffCode(applyState.input, applyState.output);
-  applyState.lens = state.lens ?? [[0, applyState.output.length]];
 }
 
 function scheduleApplyAfter(evname = null, delay = 0) {
@@ -84,7 +83,15 @@ function scrollToFocus() {
   if (applyState.hasScrolled) {
     return false;
   }
-  const lens = applyState.lens;
+  console.log("SCR");
+  if (applyState.state.lens === null && applyState.aside.scrollTop !== 0) {
+    applyState.hasScrolled = true;
+    console.log("SKIP");
+    return false;
+  }
+
+  const lens = applyState.state.lens ?? [[0, applyState.state.code.length]];
+
   const quick = (applyState.ol.children.length == 0);
   const aside = applyState.aside;
 
@@ -113,7 +120,7 @@ function scrollToFocus() {
   // There's a chance that even after merge we don't have enough scrolling to
   // get to where we want. So we only do this when merging hasn't happened yet.
   if (s > aside.scrollHeight - viewportHeight * 3 / 2) {
-      return false;
+    return false;
   }
 
   applyState.hasScrolled = true;
@@ -201,7 +208,7 @@ function applyPreHighlight() {
     }
 
     const o = applyState.alives[line];
-    if (changeClass(o, "outlens", lensMatch(applyState.lens, l) === null)) {
+    if (changeClass(o, "outlens", !lensMatch(l))) {
       changed = true;
     }
     if (changeClass(o, "low", true)) {
@@ -219,7 +226,7 @@ function applyHighlight() {
   for (let i = 0; i < applyState.alives.length; ++i) {
     const o = applyState.alives[i];
     changeClass(o, "low", !applyState.highlight.has(i));
-    changeClass(o, "outlens", !lensMatch(applyState.lens, i));
+    changeClass(o, "outlens", !lensMatch(i));
   }
 }
 
@@ -278,13 +285,15 @@ export function clearLine(s) {
     .replaceAll('&#x60;', '`');
 }
 
-function lensMatch(lens, pos) {
-  for (const d of lens) {
+function lensMatch(pos) {
+  if (applyState.state.lens === null) return true;
+
+  for (const d of applyState.state.lens) {
     if (pos >= d[0] && pos < d[0] + d[1]) {
-      return d;
+      return true;
     }
   }
-  return null;
+  return false;
 }
 
 function changeClass(obj, className, want) {
