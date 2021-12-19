@@ -22,13 +22,12 @@ cursor: pointer;
 `;
   e.innerHTML = "⚫";
 
-  let mr = null;
 
-  e.addEventListener("mousedown", () => {
+  e.addEventListener("mousedown", oev => {
     const ofc = document.createElement("canvas");
     const ofc2d = ofc.getContext("2d");
 
-    const S = 4;
+    const S = 1;
     ofc.width = 1920 / S;
     ofc.height = 1080 / S;
 
@@ -37,19 +36,19 @@ cursor: pointer;
       root.querySelector("iframe").contentDocument.getElementById("c");
 
     const captutedData = [];
-    mr = new MediaRecorder(ofc.captureStream(60), {
+    const mr = new MediaRecorder(ofc.captureStream(60), {
       videoBitsPerSecond: 4 * 1024 * 1024,
       mimeType: "video/webm; codecs=vp9"});
-    mr.addEventListener("stop", ev => {
+    mr.addEventListener("stop", () => {
       const blob = new Blob(captutedData, {type: "video/webm" });
       download(blob, "video.webm", "video/webm");
-    });
+    }, {once: true});
     mr.addEventListener("dataavailable", ev => {
       captutedData.push(ev.data);
     });
 
     mr.start();
-    let start = performance.now();
+    const start = performance.now();
     let frs = 0;
     function frame() {
       ofc2d.width = ofc.width;
@@ -65,11 +64,12 @@ cursor: pointer;
         requestAnimationFrame(frame);
       }
     }
-    frame();
-  });
 
-  e.addEventListener("mouseup", () => {
-    mr.stop();
+    oev.target.addEventListener("mouseup", () => {
+      mr.stop();
+    }, {once: true});
+
+    frame();
   });
 
   bar.appendChild(e);
