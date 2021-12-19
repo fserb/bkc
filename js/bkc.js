@@ -152,6 +152,9 @@ function resizeRulers() {
     }
     stack.length = 0;
   }
+
+  // we call for a re-apply of the state, to update scroll.
+  setTimeout(apply, 0);
 }
 
 function createRuler(io, state) {

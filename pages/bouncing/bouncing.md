@@ -352,8 +352,8 @@ basis for our crystal rendering. Notice that we both normalize and multiply by
 the passed `size`.
 
 A quick note on the perpendicular vector. We do it by rotating the original
-vector by $90^{\circ}$ counter-clockwise. A vector rotation by $\theta$ is a
-multiplication by $\left[\begin
+vector by $90^{\circ}$ clockwise (when $y$ is down). A vector rotation by
+$\theta$ is a multiplication by $\left[\begin
 {smallmatrix}\cos\theta & -\sin\theta\\ \sin\theta & \cos\theta\end
 {smallmatrix}\right]$. For $90^{\circ}$ it becomes $\left[\begin
 {smallmatrix}0 & -1 \\ 1 & 0\end{smallmatrix}\right]$, which is simply $(-y, x)$.
@@ -427,13 +427,13 @@ below marks each point in the order they are added to the path.
     {orient: "auto", markerWidth: 2, markerHeight: 4, refX: 0.1, refY: 2})
     .path({fill: '#000'}).M(0,0).V(4).L(2,2).Z();
 
-  const c = {x: 320, y: 90};
+  const c = {x: 320, y: 65};
   svg.path({'stroke-width': 2, 'stroke': '#000', 'marker-end': 'url(#head)'})
     .M(c.x, c.y).l(size,0);
   svg.path({'stroke-width': 2, 'stroke': '#000', 'marker-end': 'url(#head)'})
-    .M(c.x, c.y).l(0,-size);
-  svg.text(c.x + 12, c.y + 12.5, "dir", {"font-family": "Open Sans", "font-size": "10px"});
-  svg.text(c.x - 21, c.y - 14, "nor", {"font-family": "Open Sans", "font-size": "10px"});
+    .M(c.x, c.y).l(0,size);
+  svg.text(c.x + 12, c.y - 5, "dir", {"font-family": "Open Sans", "font-size": "10px"});
+  svg.text(c.x - 21, c.y + 17.5, "nor", {"font-family": "Open Sans", "font-size": "10px"});
 {% endsvg %}
 
 ```add:renderCrystal+7,spawn:2

@@ -15,45 +15,78 @@ import diffCode from "./diff.js";
 const LINE_HEIGHT_EM = 1.1;
 
 // We do this little apply() dance, so we can re-run apply after transitions.
-let pending = 0;
 let applyState = null;
-let lastScrollPosition = Infinity;
+let lastState = null;
 
-export function apply(state) {
-  applyState = state;
-  lastScrollPosition = Infinity;
-  if (pending == 0) {
+export function apply(state = null) {
+  const mustStart = applyState == null || applyState.pending == 0;
+
+  prepareApply(state ?? lastState.state);
+
+  if (mustStart) {
     runApply();
   }
 }
 
-function scheduleApplyAfter(evname = null, delay = 0) {
-  pending++;
-  const cb = () => {
-    setTimeout(() => {
-      pending--;
-      runApply();
-    }, delay * 1000);
+function prepareApply(state) {
+  lastState = applyState = {
+    state,
+    aside: document.querySelector("aside"),
+    ol: document.querySelector("aside ol"),
+    highlight: new Set(state.highlight),
+    output: clearLine(state.code.join("\n")).split("\n"),
+    alives: [],
+    input: [],
+
+    // state
+    pending: applyState?.pending ?? 0,
+    hasMerged: false,
+    hasScrolled: false,
+    hasPreHighlight: false,
+    lastScrollPosition: Infinity,
+
   };
 
+  for (const li of applyState.ol.querySelectorAll("li.alive")) {
+    applyState.input.push(clearLine(li.innerHTML));
+    applyState.alives.push(li);
+  }
+
+  applyState.diff = diffCode(applyState.input, applyState.output);
+  applyState.lens = state.lens ?? [[0, applyState.output.length]];
+}
+
+function scheduleApplyAfter(evname = null, delay = 0) {
+  if (applyState.pending > 0) return;
+
+  applyState.pending++;
+  const cbNow = () => {
+    applyState.pending--;
+    runApply();
+  };
+
+  const cb = () => setTimeout(cbNow, delay * 1000);
+
   if (evname === null) {
-    requestAnimationFrame(cb);
+    requestAnimationFrame(delay == 0 ? cbNow : cb);
   } else {
-    document.querySelector("aside ol").addEventListener(
-      evname, cb, {once: true, passive: true});
+    applyState.ol.addEventListener(evname, cb, {once: true, passive: true});
   }
 }
 
-function applyFocus(lens, quick) {
-  const aside = document.querySelector("aside");
-  if (lastScrollPosition !== Infinity) {
-    const lsp = lastScrollPosition;
-    lastScrollPosition = aside.scrollTop;
-    if (lsp == aside.scrollTop) {
-      return false;
-    }
-    return true;
+function waitForScroll() {
+  const lsp = applyState.lastScrollPosition;
+  applyState.lastScrollPosition = applyState.aside.scrollTop;
+  return lsp != applyState.lastScrollPosition;
+}
+
+function scrollToFocus() {
+  if (applyState.hasScrolled) {
+    return false;
   }
+  const lens = applyState.lens;
+  const quick = (applyState.ol.children.length == 0);
+  const aside = applyState.aside;
 
   const lineHeight =
     parseFloat(window.getComputedStyle(aside).fontSize) * LINE_HEIGHT_EM;
@@ -71,90 +104,43 @@ function applyFocus(lens, quick) {
 
   aside.scrollTo({top: s, left: 0, behavior: quick ? "auto" : "smooth"});
 
-  // If we tried to scroll past the height of the content, we let apply finish,
-  // but we book a second one after, to redo the scrolling.
+  // If we tried to scroll past the height of the content, let's allow merge to
+  // execute and then redo the scrolling after.
   // The reason we remove viewportHeight, is that the content includes a padding
   // of viewportHeight on top and on the bottom. As long as we have enough
   // content to fill half of the screen with this scroll, we are good.
-  // This is a bit scary, as it may lead to an infinite loop if the lens area is
-  // half viewport bigger than the content.
+
+  // There's a chance that even after merge we don't have enough scrolling to
+  // get to where we want. So we only do this when merging hasn't happened yet.
   if (s > aside.scrollHeight - viewportHeight * 3 / 2) {
-    scheduleApplyAfter();
-    return false;
+      return false;
   }
 
-  lastScrollPosition = aside.scrollTop;
+  applyState.hasScrolled = true;
 
   // if the scroll will keep us at the same screen area, we don't block until
-  // the scrolling is over. This has a potential problem: the next call to
-  // applyFocus() will block. But at point, we hope the new lines have already
-  // been added.
-  const delta = Math.abs(s - lastScrollPosition);
+  // the scrolling is over.
+  const delta = Math.abs(s - applyState.aside.scrollTop);
   return delta > viewportHeight / 4;
 }
 
-// Every time runApply() does any DOM animation, we can leave the function and
-// reschedule apply to re-run after the animation is over. This has two effects:
-// it allows CSS animations in sequence, AND it allows us to "give up" on a
-// certain animation and move to the next state.
-function runApply() {
-  const state = applyState;
-  const highlight = new Set(state.highlight);
-  const output = clearLine(state.code.join("\n")).split("\n");
-  const aside = document.querySelector("aside ol");
-  aside.parentNode.classList.remove("scrolled");
-
-  const lens = state.lens ?? [[0, output.length]];
-  if (applyFocus(lens, aside.children.length == 0)) {
-    return scheduleApplyAfter();
-  }
-
-  const alives = [];
-  const input = [];
-  for (const li of aside.querySelectorAll("li.alive")) {
-    input.push(clearLine(li.innerHTML));
-    alives.push(li);
-  }
-  const diff = diffCode(input, output);
+function mergeCode() {
+  if (applyState.hasMerged) return false;
+  applyState.hasMerged = true;
 
   let changed = false;
-
-  // Pre-apply outlens highlight. We have to go through diff, to map lens to
-  // the old code.
-  let l = 0;
-  for (const [op, line] of diff) {
-    if (op == "+") {
-      l++;
-      continue;
-    }
-
-    const o = alives[line];
-    if (changeClass(o, "outlens", lensMatch(lens, l) === null)) {
-      changed = true;
-    }
-    if (changeClass(o, "low", true)) {
-      changed = true;
-    }
-    if (op == "=") l++;
-  }
-
-  if (changed) {
-    return scheduleApplyAfter(null, 0.5);
-  }
-
   let pos = 0;
   let rel = 0;
   let relsub = 0;
-  const pendingAlive = [];
-  for (const [op, line] of diff) {
+  for (const [op, line] of applyState.diff) {
     if (op == "-") {
       changed = true;
-      const o = alives[pos];
+      const o = applyState.alives[pos];
       o.addEventListener("transitionend", () => { o.replaceWith(); },
         {once: true, passive: true});
       o.classList.add("dead");
       o.classList.remove("alive");
-      alives.splice(pos, 1);
+      applyState.alives.splice(pos, 1);
       o.style.top = `${LINE_HEIGHT_EM * relsub++}em`;
       rel = 0;
     } else if (op == "=") {
@@ -164,37 +150,112 @@ function runApply() {
       changed = true;
       const o = document.createElement("li");
       o.classList.add("alive");
-      o.innerHTML = output[line];
+      o.innerHTML = applyState.output[line];
 
       o.classList.add("born");
       o.style.top = `${LINE_HEIGHT_EM * (rel++ - 1)}em`;
-      pendingAlive.push(o);
 
-      aside.insertBefore(o, alives[pos]);
-      alives.splice(pos, 0, o);
+      applyState.ol.insertBefore(o, applyState.alives[pos]);
+      applyState.alives.splice(pos, 0, o);
       relsub = 0;
       pos++;
     }
   }
+  return changed;
+}
+
+function showPendingAlive() {
+  const pending = applyState.ol.querySelectorAll("li.born");
+
+  if (pending.length == 0) return false;
 
   // we need a re-layout before setting .born animation, so we group them into a
   // single place. In theory, we could do this as an animation and not do this.
-  // In practice, it's a bit hard to set up a proper animation for this.
-  if (pendingAlive.length > 0) {
-    pendingAlive[0].getBoundingClientRect();
+  // In practice, it's a bit hard to set up a proper animation.
+  pending[0].getBoundingClientRect();
 
-    for (const o of pendingAlive) {
-      o.classList.remove("born");
-      o.style.top = "0px";
+  for (const o of pending) {
+    o.classList.remove("born");
+    o.style.top = "0px";
+  }
+
+  return true;
+}
+
+/*
+pre-Highlight set up the lines for merging: everything outside lens is dark,
+everything inside lens is low (it's always the old code).
+*/
+function applyPreHighlight() {
+  if (applyState.hasPreHighlight) return false;
+  applyState.hasPreHighlight = true;
+
+  applyState.aside.classList.remove("scrolled");
+
+  let changed = false;
+  let l = 0;
+  for (const [op, line] of applyState.diff) {
+    if (op == "+") {
+      l++;
+      continue;
     }
+
+    const o = applyState.alives[line];
+    if (changeClass(o, "outlens", lensMatch(applyState.lens, l) === null)) {
+      changed = true;
+    }
+    if (changeClass(o, "low", true)) {
+      changed = true;
+    }
+    if (op == "=") l++;
+  }
+  return changed;
+}
+
+/*
+Highlight applies the final highlight: lens and low/high.
+*/
+function applyHighlight() {
+  for (let i = 0; i < applyState.alives.length; ++i) {
+    const o = applyState.alives[i];
+    changeClass(o, "low", !applyState.highlight.has(i));
+    changeClass(o, "outlens", !lensMatch(applyState.lens, i));
+  }
+}
+
+// Every time runApply() does any DOM animation, we can leave the function and
+// reschedule apply to re-run after the animation is over. This has two effects:
+// it allows CSS animations in sequence, AND it allows us to "give up" on a
+// certain animation and move to the next state.
+function runApply() {
+  if (waitForScroll()) {
+    return scheduleApplyAfter();
   }
 
-  // Apply highlight.
-  for (let i = 0; i < alives.length; ++i) {
-    const o = alives[i];
-    changeClass(o, "low", !highlight.has(i));
-    changeClass(o, "outlens", !lensMatch(lens, i));
+  applyPreHighlight();
+
+  if (scrollToFocus()) {
+    return scheduleApplyAfter(null, 0.5);
   }
+
+  mergeCode();
+
+  if (waitForScroll()) {
+    return scheduleApplyAfter();
+  }
+
+  showPendingAlive();
+
+  // In the case we added code before scrolling, let's go back and do the
+  // scroll.
+  if (!applyState.hasScrolled) {
+    return scheduleApplyAfter();
+  }
+
+  applyHighlight();
+
+  // If we reached the end, there's nothing pending and we can clean up.
+  applyState = null;
 }
 
 export function setupScroll() {
