@@ -17,7 +17,7 @@ Start by creating the 2D context and setting the canvas size. Remember that the
 are still allowed to layout the CSS of the canvas independently. For our
 effect, we are going to use `1080p`.
 
-```add:
+```add:,lens:all
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
 const H = canvas.height = 1080;
