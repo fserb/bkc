@@ -220,7 +220,6 @@ export default function BKCdev(system) {
     document.removeEventListener("readystatechange", onReady);
 
     for (const r of document.querySelectorAll("main .ruler")) {
-      r.style.opacity = "0.1";
       io.observe(r);
     }
 

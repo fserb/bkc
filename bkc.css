@@ -227,6 +227,10 @@ main div.merged p ~ p {
   margin-left: 1ch;
 }
 
+main .ruler.focused {
+  opacity: 0.1;
+}
+
 main div.merged p.focused {
   background-color: rgba(0,0,0,0.05);
   padding: 2px 10px 2px 1ch;
@@ -243,17 +247,14 @@ main div.merged p.focused:first-child {
 main .ruler {
   position: relative;
   float: left;
+  border-radius: 8px;
   clear: left;
-  left: -50px;
+  left: -3.2ch;
   z-index: 0;
   margin-right: -40px;
-  width: 25px;
-  background-color: #999;
-  opacity: 0;
-}
-
-main .ruler:nth-of-type(odd) {
+  width: 1.2ch;
   background-color: #000;
+  opacity: 0;
 }
 
 /*main .ruler:after {
@@ -271,6 +272,7 @@ main .ruler:nth-of-type(1):after {
   display: none;
 }
 */
+
 canvas-demo {
   display: block;
   max-width: 100%;
@@ -468,6 +470,9 @@ main svg[display=true] {
   }
   aside {
     display: none;
+  }
+  main .ruler {
+    opacity: 0 !important;
   }
 }
 

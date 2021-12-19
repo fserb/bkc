@@ -185,6 +185,7 @@ function setup() {
       for (const el of SYSTEM[id].focus) {
         el.classList.add("focused");
       }
+      e.target.classList.add("focused");
     }
   }, {
     rootMargin: '-50% 0% -50% 0%',
