@@ -454,10 +454,6 @@ aside.scrolled .outlens, aside.scrolled .low {
   filter: opacity(0.6) contrast(0.75) !important;
 }
 
-aside.scrolled ol {
-  padding: 50vh 0;
-}
-
 main svg[display=true] {
   object-fit: contain;
   display: block;
