@@ -302,6 +302,7 @@ aside {
   overflow-x: hidden;
   scrollbar-width: none;
   z-index: 100;
+  overscroll-behavior: contain;
 }
 
 aside::after {

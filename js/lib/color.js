@@ -267,8 +267,7 @@ let parseCtx;
 function cssParse(input) {
   // The first thing we do is let canvas parse the input.
   if (!parseCtx) {
-    const canvas = document.createElement("canvas");
-    canvas.width = canvas.height = 1;
+    const canvas = new OffscreenCanvas(0, 0);
     parseCtx = canvas.getContext("2d");
   }
   parseCtx.fillStyle = "#000";
