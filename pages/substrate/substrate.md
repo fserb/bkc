@@ -321,9 +321,14 @@ are still cracks left.
 ```
 
 There's one more thing left before we can see the results: we need to set up an
-initial condition. First, let's clean the canvas.
+initial condition. We can have a `begin` function to the effect.
 
-```add:#Sub#const.
+```add:instance+1,lens:instance+0+2
+ss.begin();
+```
+We can start by cleaning the canvas.
+
+```add:#Sub#const.,lens:this,spawn:3
 
   begin() {
     ctx.reset();
@@ -332,15 +337,11 @@ initial condition. First, let's clean the canvas.
   }
 ```
 
-```add:instance+1,lens:#Sub#const-1+1&#Sub#begin&#Sub.-1&instance+0+2
-ss.begin();
-```
-
 We are going to leave some random points on the grid with angles, to be catch by
 the initial crack creation (remember that it randomly samples the grid until it
 finds a point that is part of a line).
 
-```add:#Sub#begin.-1,lens:#Sub#const-1+1&#Sub#begin&#Sub.-1
+```add:#Sub#begin.-1,lens:#Sub#begin
 
     let k = 0;
     while (k < 16) {
@@ -463,5 +464,127 @@ the crack.
 
 So how `paintRegion()` does the watercolor effect?
 
+```add:#Crack#move.,lens:this
 
+  paintRegion() {
+  }
+```
 
+We want to draw a perpendicular line to the crack, that fades away and has
+varying sizes, but that never passes through other cracks. This gives a very
+"paint-y" feeling, as each color never passes the visual "box" that lines
+create.
+
+We are going to draw this region as one line for each position of the crack
+(i.e. each time this function is called). Our first step is to find, for the
+current position, how far the paint can go (i.e., how much space we have until
+we hit another crack.
+
+To do this, we do a ray-tracing: we walk (with `gridRaystep`) in a direction
+perpendicular to the current crack ($\tau / 4 = 90\degree$) until we hit an
+non-empty or invalid position. This will be our "maximum position".
+
+```add:#Crack#paintRegion+1
+    let r = {...this.pos};
+    while (true) {
+      r = gridRaystep(r, this.angle + Math.TAU / 4);
+      const v = this.ss.get(r.x, r.y);
+      if (v === INVALID || v != EMPTY) break;
+    }
+```
+
+We want to vary how far we will go on this max position, but instead of having
+just a random value, we want this distance to smoothly vary over time. This
+contributes to the watercolor effect, as different parts of the paint will
+end in different places, but in a continuous way.
+
+We keep track of how far to go on the maximum position
+
+```add:#Crack#const.-2,lens:#Crack#const
+    this.mod = 0.5 * Math.random();
+```
+
+and update it slightly every step.
+
+```add:#Crack#paintRegion+7,lens:#Crack#paintRegion,spawn:3
+
+    this.mod = Math.clamp(this.mod + 0.05 * normal(), 0, 1.0);
+```
+
+We then find our final paint position (`t`) by moving into `r` direction by
+`mod`.
+
+```add:
+
+    const t = {
+      x: this.pos.x + (r.x - this.pos.x) * this.mod,
+      y: this.pos.y + (r.y - this.pos.y) * this.mod
+    };
+```
+
+This means we will draw a line from the current position `pos` to `t`.
+
+```add:,spawn:5
+
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(this.pos.x, this.pos.y);
+    ctx.lineTo(t.x, t.y);
+    ctx.stroke();
+```
+
+The final piece missing is the color. We want to make the color to fade away
+near the end of the stroke. For this, we can create a linear gradient with
+alpha changing in power function ($a = 0.25(1 - f)^{0.25}$, where $f$ is the
+fraction of the total line).
+
+```add:last-0,spawn:2
+
+    const grad = ctx.createLinearGradient(this.pos.x, this.pos.y, t.x, t.y);
+    const S = 5;
+    for (let i = 0; i < S; ++i) {
+      const f = i / (S - 1);
+      const a = 0.25 * ((1 - f) ** 0.25);
+      grad.addColorStop(f, this.color.alpha(a));
+    }
+    ctx.strokeStyle = grad;
+```
+
+You may notice the `color.alpha()`. This is part of the Color API we will be
+using. It returns, as expected, the current color with alpha changed.
+
+```sub:all+0+2,lens:this
+const {gridRaystep, normal, Color} =
+  await import("{{baseURL}}/js/extend.js");
+```
+
+We are almost ready to see the final result. The last thing we need to do
+is to pick some initial values for our effect.
+
+```sub:instance+0+2,label:instance+3,lens:this
+function basicEffect(ss) {
+  ss.clear('#FFFFFF');
+  ss.lineColor = '#3B2618';
+
+  ss.begin();
+}
+
+const ss = new Substrate();
+basicEffect(ss);
+```
+
+We nee
+
+```add:#basicEffect+3
+  const colors = Color('#000000').steps(256, '#FFFF00');
+  for (let i = 0; i < colors.length; ++i) {
+    const f = i / (colors.length - 1);
+    colors[i] = colors[i].luminance(f ** 1.2)
+      .saturate(2 * Math.abs(Math.sin(f * 7)))
+      .rotate(-40 + 50 * (Math.cos(f * 5)))
+      .multiply(Color('#FFFF0050'))
+  }
+  ss.colors = colors;
+```
+
+@[canvas-demo]

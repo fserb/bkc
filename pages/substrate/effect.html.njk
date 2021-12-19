@@ -170,9 +170,6 @@ class Crack {
   }
 
   paintRegion() {
-    let rx = this.pos.x;
-    let ry = this.pos.y;
-
     let r = {...this.pos};
     while (true) {
       r = gridRaystep(r, this.angle + Math.TAU / 4);
@@ -182,22 +179,24 @@ class Crack {
 
     this.mod = Math.clamp(this.mod + 0.05 * normal(), 0, 1.0);
 
-    const tx = this.pos.x + (r.x - this.pos.x) * this.mod;
-    const ty = this.pos.y + (r.y - this.pos.y) * this.mod;
+    const t = {
+      x: this.pos.x + (r.x - this.pos.x) * this.mod,
+      y: this.pos.y + (r.y - this.pos.y) * this.mod
+    };
 
-    const grad = ctx.createLinearGradient(this.pos.x, this.pos.y, tx, ty);
+    const grad = ctx.createLinearGradient(this.pos.x, this.pos.y, t.x, t.y);
     const S = 5;
     for (let i = 0; i < S; ++i) {
       const f = i / (S - 1);
       const a = 0.25 * ((1 - f) ** 0.25);
       grad.addColorStop(f, this.color.alpha(a));
     }
-
     ctx.strokeStyle = grad;
+
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(this.pos.x, this.pos.y);
-    ctx.lineTo(tx, ty);
+    ctx.lineTo(t.x, t.y);
     ctx.stroke();
   }
 }
@@ -258,6 +257,9 @@ class Mask {
 }
 
 function basicEffect(ss) {
+  ss.clear('#FFFFFF');
+  ss.lineColor = '#3B2618';
+  ss.maxTotalCracks = 12000;
   // const colors = Color('#000000').steps(256, '#FFFF00');
   // for (let i = 0; i < colors.length; ++i) {
   //   const f = i / (colors.length - 1);
@@ -268,9 +270,6 @@ function basicEffect(ss) {
   // }
   // ss.colors = colors;
   ss.colors = null;
-  ss.clear('#FFFFFF');
-  ss.lineColor = '#3B2618';
-  ss.maxTotalCracks = 12000;
 
   ss.begin({start: 3, random: 16});
 }
