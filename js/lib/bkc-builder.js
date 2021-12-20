@@ -2,6 +2,9 @@
 import diff from "./diff.js";
 import fuzzy from "./fuzzy.js";
 
+/*
+Fuzzy search all available labels.
+*/
 function _fuzzySearch(labels, name) {
   let bestScore = 0;
   let best = null;
@@ -17,9 +20,44 @@ function _fuzzySearch(labels, name) {
   if (best === null) return null;
 
   if (bestScore <= 0.6) {
-    console.log(name, "MATCHED", best, "SCORE", bestScore);
+    console.warn(name, "MATCHED", best, "SCORE", bestScore);
   }
   return [...labels[best]];
+}
+
+/*
+Find the upper indent context of the code.
+It assumes code is indented with 2 spaces.
+*/
+function _getContextRange(cur) {
+  if (cur.range[1] == 0) return [0, cur.code.length];
+
+  let indent = 1e9;
+  for (let l = cur.range[0]; l < cur.range[0] + cur.range[1]; ++l) {
+    if (cur.code[l].length == 0) continue;
+    const id = cur.code[l].search(/\S|$/);
+    indent = Math.min(indent, id);
+  }
+  indent = 2 * (Math.ceil(indent / 2) - 1);
+
+  let start;
+  for (start = cur.range[0] - 1; start >= 0; --start) {
+    if (cur.code[start].length == 0) continue;
+    const id = cur.code[start].search(/\S|$/);
+    if (id <= indent) break;
+  }
+
+  let end;
+  for (end = cur.range[0] + cur.range[1]; end < cur.code.length; ++end) {
+    if (cur.code[end].length == 0) continue;
+    const id = cur.code[end].search(/\S|$/);
+    if (id <= indent) break;
+  }
+
+  start = Math.max(0, start);
+  end = Math.min(cur.code.length, end);
+
+  return [start, end - start + 1];
 }
 
 // label-3+4
@@ -44,6 +82,8 @@ function _label(prev, out, str) {
     rng = [cur.range[0], cur.range[1]];
   } else if (order.label == "last") {
     rng = [prev.range[0], prev.range[1]];
+  } else if (order.label == "ctx") {
+    rng = _getContextRange(cur);
   } else {
     if (order.label[0] == '#') {
       autoGenerateLabels(out, prev);
@@ -255,7 +295,7 @@ function autoGenerateLabels(out, prev) {
 Update @out.lens, either with the current edit, or by using new labels.
 */
 function calculateLens(prev, cmd, out) {
-  let req = out.lensCmd = cmd.lens ?? prev.lensCmd ?? "";
+  const req = out.lensCmd = cmd.lens ?? prev.lensCmd ?? "";
   out.lens = null;
 
   // reset lens.

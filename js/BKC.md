@@ -29,6 +29,7 @@ everything after is the value.
     * `edit` the range of the current edited text
     * `last` the range of the last edited text
     * `this` same as `edit`, except it's sticky (i.e., it doesn't get updated).
+    * `ctx` one indentation above the current edit.
     * `all` the whole code content
 
   * you can reference the end of a range by appending `.` to the end label.
