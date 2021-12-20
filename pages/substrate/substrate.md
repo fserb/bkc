@@ -506,7 +506,7 @@ We keep track of how far to go on the maximum position
 
 and update it slightly every step.
 
-```add:#Crack#paintRegion+7,lens:#Crack#paintRegion,spawn:3
+```add:#Crack#paintRegion+7,lens:ctx,spawn:3
 
     this.mod = Math.clamp(this.mod + 0.05 * normal(), 0, 1.0);
 ```
@@ -538,7 +538,7 @@ near the end of the stroke. For this, we can create a linear gradient with
 alpha changing in power function ($a = 0.25(1 - f)^{0.25}$, where $f$ is the
 fraction of the total line).
 
-```add:last-0,spawn:2
+```add:last-0
 
     const grad = ctx.createLinearGradient(this.pos.x, this.pos.y, t.x, t.y);
     const S = 5;
@@ -559,7 +559,7 @@ const {gridRaystep, normal, Color} =
 ```
 
 We are almost ready to see the final result. The last thing we need to do
-is to pick some initial values for our effect.
+is to pick some initial color values.
 
 ```sub:instance+0+2,label:instance+3,lens:this
 function basicEffect(ss) {
@@ -573,18 +573,57 @@ const ss = new Substrate();
 basicEffect(ss);
 ```
 
-We nee
+Apart from the background and line color, we want to have a distribution of
+colors to draw the paint effect. The original Substrate effect used to sample
+colors from an image. Instead of that, we are going to craft a range of colors.
+
+We start with a basic yellow gradient @[color-show]{"grad":"#000000,#FFFF00"},
+on which we will apply a series of transforms.
 
 ```add:#basicEffect+3
   const colors = Color('#000000').steps(256, '#FFFF00');
   for (let i = 0; i < colors.length; ++i) {
     const f = i / (colors.length - 1);
-    colors[i] = colors[i].luminance(f ** 1.2)
-      .saturate(2 * Math.abs(Math.sin(f * 7)))
-      .rotate(-40 + 50 * (Math.cos(f * 5)))
-      .multiply(Color('#FFFF0050'))
   }
   ss.colors = colors;
 ```
 
+First we brighten the whole range to @[color-show]{"grad":"#000000, #58594D, #82836D, #A3A484, #BEC098, #D7D9A9, #ECEFBB, #FFFFFF"}.
+
+
+```add:last+3
+    colors[i] = colors[i].luminance(f ** 1.2)
+```
+
+We then crank up the saturation a bit but not uniformly @[color-show]{"grad": "#000000, #38382D, #565738, #6D6E39, #80813D, #90924E, #9EA06C, #ABAD82, #BABC65, #C9CA3F, #D6D615, #E0E130, #E8EA6A, #EFF2A6, #F9FBB2, #FFFFFF"}.
+
+```add:
+      .saturate(2 * Math.abs(Math.sin(f * 7)))
+```
+
+We rotate the hue a bit to include some oranges, @[color-show]{"grad":"#000000, #37392E, #51583A, #6E6D39, #867F3A, #A08B48, #B8946B, #C6A184, #ECA36F, #FFA25B, #FFA25E, #FFB450, #FFCA72, #FFE3A3, #FFF5AD, #FFFFFF"}
+
+```add:
+      .rotate(-40 + 50 * (Math.cos(f * 5)))
+```
+
+and finally, we tint it with @[color-show]{"color":"#FFFF50"} to make the colors a bit more uniform @[color-show]{"grad":"#000000, #373925, #515830, #6E6D2E, #867F30, #A08B3C, #B89459, #C6A16E, #ECA35D, #FFA24C, #FFA24E, #FFB442, #FFCA60, #FFE38A, #FFF592, #FFFFD8"}.
+
+```add:,spawn:7
+      .multiply(Color('#FFFF0050'))
+```
+
+This brings to a gradient relatively similar to the original effect.
+
+```add:,lens:
+```
+
 @[canvas-demo]
+
+And there you have it. This was a bit long, but I hope it was still okey to
+follow.
+
+There is still some extra cool stuff that can be explored with this algorithm.
+What if we play with masks or with the initial condition? In the next part, we
+will create a masking system and play with it. For now, hack away.
+
