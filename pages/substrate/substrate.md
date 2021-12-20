@@ -153,7 +153,7 @@ import them both. Both of those functions are super interesting, but we won't
 go in detail on how they work right now. Eventually we will have a separate
 article on support functions.
 
-```add:all+0,lens:all+0+5&#Crack,spawn:2
+```add:all+0,lens:all+0+5,spawn:2
 const {gridRaystep, normal} =
   await import("{{baseURL}}/js/extend.js");
 
@@ -306,7 +306,7 @@ cracks and remove it from the array. Otherwise we keep it.
 In the end, we want to signal to `frame` that we want to keep on RAF while there
 are still cracks left.
 
-```sub:#Sub#update,spawn:2,lens:#Sub+0+1&#Sub#update
+```sub:#Sub#update,spawn:2,lens:#Sub#update
   update() {
     this.cracks.filterIn(c => {
       if (!c.move()) {
