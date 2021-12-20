@@ -88,7 +88,7 @@ function scrollToFocus() {
     return false;
   }
 
-  const lens = applyState.state.lens ?? [[0, applyState.state.code.length]];
+  const lens = applyState.state.lens ?? [0, applyState.state.code.length];
 
   const quick = (applyState.ol.children.length == 0);
   const aside = applyState.aside;
@@ -97,14 +97,7 @@ function scrollToFocus() {
     parseFloat(window.getComputedStyle(aside).fontSize) * LINE_HEIGHT_EM;
   const viewportHeight = parseFloat(window.getComputedStyle(aside).height);
 
-  let minLens = 1e9;
-  let maxLens = 0;
-  for (const l of lens) {
-    minLens = Math.min(l[0], minLens);
-    maxLens = Math.max(l[0] + l[1] - 1, maxLens);
-  }
-  const lensFocus = (minLens + maxLens) / 2;
-
+  const lensFocus = lens[0] + lens[1] / 2;
   const s = viewportHeight / 2 + (lensFocus + 0.5) * lineHeight;
 
   aside.scrollTo({top: s, left: 0, behavior: quick ? "auto" : "smooth"});
@@ -286,10 +279,9 @@ export function clearLine(s) {
 function lensMatch(pos) {
   if (applyState.state.lens === null) return true;
 
-  for (const d of applyState.state.lens) {
-    if (pos >= d[0] && pos < d[0] + d[1]) {
-      return true;
-    }
+  const l = applyState.state.lens;
+  if (pos >= l[0] && pos < l[0] + l[1]) {
+    return true;
   }
   return false;
 }

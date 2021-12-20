@@ -28,7 +28,7 @@ function to generate color strings. You can check the commented [source
 code](https://github.com/fserb/bkc/blob/master/js/extend.js), but the
 functions should be fairly obvious.
 
-```add:
+```add:,lens:all
 const {rgba} = await import("{{baseURL}}/js/extend.js");
 ```
 

@@ -265,34 +265,31 @@ function calculateLens(prev, cmd, out) {
   }
 
   if (req === "fixed") {
-    out.lens = [];
-    for (const d of prev.lens) {
-      const o = [...d];
-      if (o[0] > out.range[0]) {
-        o[0] += out.range[1];
-      } else if (out.range[0] >= o[0] && out.range[0] < o[0] + o[1]) {
-        o[1] += out.range[2];
-      }
-      out.lens.push(o);
+    const o = out.lens = [...prev.lens];
+    if (o[0] > out.range[0]) {
+      o[0] += out.range[1];
+    } else if (out.range[0] >= o[0] && out.range[0] < o[0] + o[1]) {
+      o[1] += out.range[2];
     }
     return;
   }
 
-  req = req.replace('&', '>');
+  if (req.indexOf('&') !== -1) {
+    console.error(`Lens has & operator: "${req}"`);
+  }
 
-  out.lens = [];
-  let dis = null;
+  out.lens = null;
   for (const l of req.split('>')) {
     const t = range(prev, out, l);
-    if (dis === null) {
-      dis = [...t];
+    if (out.lens === null) {
+      out.lens = [...t];
       continue;
     }
-    const start = Math.min(dis[0], t[0]);
-    const end = Math.max(dis[0] + dis[1], t[0] + t[1]);
-    dis = [start, end - start];
+    const start = Math.min(out.lens[0], t[0]);
+    const end = Math.max(out.lens[0] + out.lens[1], t[0] + t[1]);
+    out.lens[0] = start;
+    out.lens[1] = end - start;
   }
-  out.lens.push(dis);
 
   if (out.lensCmd === "this") {
     out.lensCmd = "fixed";
@@ -328,7 +325,7 @@ export function buildState(prev, cmd) {
     code: null,        // [] of lines of code.
     highlight: [],     // [] of lines to be highlighted.
     labels: {},        // {label: [start, length]} of references.
-    lens: null,        // null|[[start, length]...] of lines to show.
+    lens: null,        // null|[start, length] of lines to show.
     lensCmd: null,     // actual request for lens.
     range: null,       // [start, length, difflength] of current edit.
     focus: new Set(),  // Elements that are mapped to this state.
