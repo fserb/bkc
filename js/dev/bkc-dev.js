@@ -174,18 +174,16 @@ function buildDev(system) {
   }
 
   if (state.lens) {
-    for (const range of state.lens) {
-      const l = document.createElement("div");
-      const t = document.createElement("span");
-      l.appendChild(t);
-      const m = 2;
-      l.style.top = `${LINE_HEIGHT * range[0] + m}px`;
-      l.style.height = `${LINE_HEIGHT * range[1] - 2 * m}px`;
-      l.classList.add("lens");
-      l.style.left = `10px`;
-      l.style.width = `10px`;
-      labels.appendChild(l);
-    }
+    const l = document.createElement("div");
+    const t = document.createElement("span");
+    l.appendChild(t);
+    const m = 2;
+    l.style.top = `${LINE_HEIGHT * state.lens[0] + m}px`;
+    l.style.height = `${LINE_HEIGHT * state.lens[1] - 2 * m}px`;
+    l.classList.add("lens");
+    l.style.left = `10px`;
+    l.style.width = `10px`;
+    labels.appendChild(l);
   }
 }
 

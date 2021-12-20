@@ -98,19 +98,18 @@ function scrollToFocus() {
   const viewportHeight = parseFloat(window.getComputedStyle(aside).height);
 
   const lensFocus = lens[0] + lens[1] / 2;
-  const s = viewportHeight / 2 + (lensFocus + 0.5) * lineHeight;
+  const s = (lensFocus + 0.5) * lineHeight;
 
   aside.scrollTo({top: s, left: 0, behavior: quick ? "auto" : "smooth"});
 
   // If we tried to scroll past the height of the content, let's allow merge to
   // execute and then redo the scrolling after.
   // The reason we remove viewportHeight, is that the content includes a padding
-  // of viewportHeight on top and on the bottom. As long as we have enough
-  // content to fill half of the screen with this scroll, we are good.
+  // of viewportHeight/2 on top and on the bottom.
 
   // There's a chance that even after merge we don't have enough scrolling to
   // get to where we want. So we only do this when merging hasn't happened yet.
-  if (s > aside.scrollHeight - viewportHeight * 3 / 2) {
+  if (s > aside.scrollHeight - viewportHeight) {
     return false;
   }
 
@@ -119,7 +118,7 @@ function scrollToFocus() {
   // if the scroll will keep us at the same screen area, we don't block until
   // the scrolling is over.
   const delta = Math.abs(s - applyState.aside.scrollTop);
-  return delta > viewportHeight / 4;
+  return delta > viewportHeight / 8;
 }
 
 function mergeCode() {

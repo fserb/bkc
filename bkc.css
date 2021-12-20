@@ -326,7 +326,7 @@ aside ol {
   counter-reset: code-line;
   list-style: none;
   width: 84ch;
-  padding: 100vh;
+  padding: 50vh 0;
   margin: auto;
   top: 0;
   max-width: calc(var(--split-size) - 50px);
