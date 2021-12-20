@@ -274,10 +274,6 @@ function calculateLens(prev, cmd, out) {
     return;
   }
 
-  if (req.indexOf('&') !== -1) {
-    console.error(`Lens has & operator: "${req}"`);
-  }
-
   out.lens = null;
   for (const l of req.split('>')) {
     const t = range(prev, out, l);
