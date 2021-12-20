@@ -257,7 +257,7 @@ main .ruler {
   opacity: 0;
 }
 
-main .ruler:nth-of-type(1) {
+main .ruler:nth-of-type(1), main .ruler:nth-last-of-type(1) {
   opacity: 0 !important;
 }
 

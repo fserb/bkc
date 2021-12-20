@@ -1,7 +1,6 @@
 // color-show.js
 import Tonic from "./tonic.js";
 
-
 class ColorShow extends Tonic {
   constructor() {
     super();

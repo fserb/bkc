@@ -327,6 +327,13 @@ class Color {
     return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${this.a})`;
   }
 
+  toHex() {
+    const rgb = toRGB(this.lin);
+    const h = x => x.toString(16).toUpperCase().padStart(2, "0");
+
+    return `#${h(rgb[0])}${h(rgb[1])}${h(rgb[2])}`;
+  }
+
   lighten(amount = 0.25) {
     const lab = toOKLAB(this.lin);
     lab[0] *= (1 + amount);
