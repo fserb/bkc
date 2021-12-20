@@ -22,8 +22,12 @@ date: 6/11/2021
 {{ content }}
 
 <footer>
-<span><a href=""><b class='arrow'>&lt;--</b> back</a></span>
-
+<span>{% if prevPage %}
+<a style="float:left" href="{{prevPage}}"><b class='larrow'>&lt;--</b> prev</a>
+{% endif %}{% if nextPage %}
+<a style="float:right" href="{{nextPage}}">next<b class='rarrow'>&lt;--&nbsp;</b></a>
+{% endif %}</span>
+<span><a href=""><b class='uarrow'>&lt;--</b> home</a></span>
 <p>
 <a href='https://github.com/fserb/bkc/blob/master{{ srcFile }}?plain=1'>
 <img alt="github" src="assets/github.webp" width=16 height=16 class='github'></a>
