@@ -27,6 +27,12 @@ function png2webp {
   cwebp -q 80 "$1" -o "$2"
 }
 
+function webm2twitter {
+  ffmpeg -i "$@" -pix_fmt yuv420p -vcodec libx264 -vf scale=640:-1 \
+    -acodec aac -vb 1024k -minrate 1024k -maxrate 1024k -bufsize 1024k \
+    -ar 44100 -ac 2 -strict experimental -r 30 twitter.mp4
+}
+
 function help {
   echo "$0 <task> <args>"
   echo "Tasks:"
