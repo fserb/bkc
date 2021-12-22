@@ -19,6 +19,10 @@ date: 6/11/2021
 <div class="author">by <a href="{{ author_link }}">{{ author }}</a><br>
 {{ date | date("MMMM y") }}<br></div>
 
+<video poster="{{relativePath}}/shot.webp" muted playsinline loop=true>
+<source src="{{relativePath}}/video.webm" type="video/webm">
+</video>
+
 {{ content }}
 
 <footer>
@@ -38,6 +42,17 @@ date: 6/11/2021
 </div>
 
 <script type="module">
+const io = new IntersectionObserver(entries => {
+  for (const e of entries) {
+    if (e.isIntersecting) {
+      e.target.play();
+    } else {
+      e.target.load();
+    }
+  }
+}, {rootMargin: '-50% 0% -50% 0%'});
+io.observe(document.querySelector("video"));
+
 import {BKC, SYSTEM} from "./js/bkc.js";
 BKC();
 
@@ -46,7 +61,6 @@ import BKCdev from "./js/dev/bkc-dev.js";
 BKCdev(SYSTEM);
 
 import "./js/dev/capture.js";
-
 {% endif %}
 
 import polyfillWarning from "./js/canvas-polyfill.js";

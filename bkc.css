@@ -160,6 +160,12 @@ main footer span {
   margin-bottom: 3.125em;
 }
 
+main video {
+  border: 1px solid #181923;
+  box-sizing: border-box;
+  width: 100%;
+}
+
 #home footer img, main footer img {
   display: inline-block;
   vertical-align: baseline;

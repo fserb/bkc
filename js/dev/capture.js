@@ -27,7 +27,7 @@ cursor: pointer;
     const ofc = document.createElement("canvas");
     const ofc2d = ofc.getContext("2d");
 
-    const S = 1;
+    const S = 2;
     ofc.width = 1920 / S;
     ofc.height = 1080 / S;
 
