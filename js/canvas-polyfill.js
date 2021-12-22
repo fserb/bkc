@@ -6,13 +6,13 @@ import boxBlurCanvasRGBA from "./lib/canvasFastBoxBlur.js";
 const polyfilled = new Set();
 
 export default function polyfillWarning(target) {
-  if (polyfilled.size == 0) return;
+  if (globalThis.canvasPolyfill.size == 0) return;
 
   const d = document.createElement("div");
   d.id = "polyfillWarning";
 
   const polys = [];
-  for (const v of polyfilled) {
+  for (const v of globalThis.canvasPolyfill) {
     if (v == "OffscreenCanvas") {
       polys.push(`<a href='https://caniuse.com/mdn-api_offscreencanvasrenderingcontext2d'>OffscreenCanvas</a>`);
     } else if (v == 'CanvasFilter') {
@@ -33,6 +33,10 @@ export default function polyfillWarning(target) {
   if (navigator.userAgent.indexOf("Chrome") > -1) browser = "Chrome";
   if (navigator.userAgent.indexOf("Firefox") > -1) browser = "Firefox";
   if (navigator.userAgent.indexOf("MSIE") > -1) browser = "Internet Explorer";
+
+  if (browser == "Safari") {
+    polys.push('as well as some basic HTML/CSS features');
+  }
 
   let html = `
 <p>The following features are not supported by your browser and were
@@ -61,7 +65,7 @@ ${polys.join(", ")}.
   d.innerHTML = html;
 
   target.insertBefore(d, target.firstElementChild);
-};
+}
 
 let has2DOffscreenCanvas = true;
 try {

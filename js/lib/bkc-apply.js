@@ -21,7 +21,9 @@ let lastState = null;
 export function apply(state = null) {
   const mustStart = applyState == null || applyState.pending == 0;
 
-  prepareApply(state ?? lastState.state);
+  const s = state ?? lastState?.state;
+  if (!s) return;
+  prepareApply(s);
 
   if (mustStart) {
     runApply();
