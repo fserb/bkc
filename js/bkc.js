@@ -38,7 +38,9 @@ function keypress(ev) {
   let down;
 
   const t = performance.now();
-  const behavior = t - lastScroll < 500 ? "auto" : "smooth";
+  // smooth scrolling is being cancelled for some weird reason :/
+  // const behavior = t - lastScroll < 500 ? "auto" : "smooth";
+  const behavior = "auto";
   lastScroll = t;
 
   if (ev.key == "j" || ev.key == "k") {
@@ -66,6 +68,7 @@ function keypress(ev) {
   for (const el of document.querySelectorAll(selector)) {
     const top = el.offsetTop;
     const bottom = el.offsetTop + el.offsetHeight;
+
     if (passed) {
       next = el;
       break;
@@ -86,8 +89,7 @@ function keypress(ev) {
   if (target === null) {
     return;
   }
-
-  target.scrollIntoView({behavior, block: "center"});
+  target.scrollIntoView({behavior, block: "center", inline: "center"});
 }
 
 function resizeRulers() {
