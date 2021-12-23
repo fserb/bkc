@@ -3,6 +3,7 @@ layout: main.njk
 author: Fernando Serboncini
 author_link: https://fserb.com
 date: 6/11/2021
+preview: true
 ---
 
 <div id="bkc">
@@ -19,9 +20,11 @@ date: 6/11/2021
 <div class="author">by <a href="{{ author_link }}">{{ author }}</a><br>
 {{ date | date("MMMM y") }}<br></div>
 
+{% if preview %}
 <video poster="{{relativePath}}/shot.webp" muted playsinline loop=true>
 <source src="{{relativePath}}/video.webm" type="video/webm">
 </video>
+{% endif %}
 
 {{ content }}
 
@@ -42,6 +45,7 @@ date: 6/11/2021
 </div>
 
 <script type="module">
+{% if preview %}
 const io = new IntersectionObserver(entries => {
   for (const e of entries) {
     if (e.isIntersecting) {
@@ -52,6 +56,7 @@ const io = new IntersectionObserver(entries => {
   }
 }, {rootMargin: '-50% 0% -50% 0%'});
 io.observe(document.querySelector("video"));
+{% endif %}
 
 import {BKC, SYSTEM} from "./js/bkc.js";
 BKC();
