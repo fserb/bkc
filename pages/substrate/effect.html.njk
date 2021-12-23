@@ -360,7 +360,6 @@ function bezier(ss) {
 
   const m = new Mask();
 
-
   ctx.strokeStyle = "rgba(255,0,0,0.05)";
 
   const p = [
@@ -404,11 +403,11 @@ function bezier(ss) {
 }
 
 const ss = new Substrate();
-basicEffect(ss);
+// basicEffect(ss);
 // blueDiamond(ss);
 // cube(ss);
 // area(ss);
-// bezier(ss);
+bezier(ss);
 
 function frame() {
   if (ss.update()) {
