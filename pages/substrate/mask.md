@@ -261,13 +261,102 @@ and many initial lines to demo has.
 
 ### Mask
 
-Intuition
+We are going to create a helper `Mask` class, that is going to have a separate
+`canvas` element where we will draw shapes that will eventually be moved into
+Substrate's `grid`. There are two things we may want to represent on the image:
+areas where the effect should not run (`INVALID` parts) and areas where there's
+a particular line/angle.
 
-Base class
+```add:#Crack.,lens:#Mask
 
-applyMask, usage on begin()
+class Mask {
+}
+```
+
+We create a canvas the same size as the original canvas. We will also keep a
+list of initial cracks that we may want to add to `Substrate`.
+
+```add:#Mask+1
+  constructor() {
+    this.ofc = new OffscreenCanvas(W, H);
+    this.ctx = this.ofc.getContext("2d");
+    this.ctx.fillStyle = "#000";
+    this.ctx.fillRect(0, 0, W, H);
+    this.ctx.fillStyle = "#FFF";
+
+    this.toAdd = [];
+  }
+```
+
+The mask will be applied during begin, where we will invoke it and create the
+cracks.
+
+```sub:#Sub#begin+0+1,lens:#Sub#begin
+  begin({random = 0, start = 0, mask = null}) {
+    if (mask !== null) {
+      const add = mask.applyMask(this);
+      for (const a of add) {
+        this.cracks.push(new Crack(this, ...a));
+        this.totalCracks++;
+      }
+    }
+
+```
+
+The core of the mask is `applyMask()`,
+
+```add:#Mask#cons.,lens:#Mask#applyMask
+
+  applyMask(ss) {
+  }
+```
+
+where we use the internal `ofc` canvas to update Substrate's `grid` by grabbing
+each pixel and reading the red channel.
+
+```add:#Mask#apply+1,spawn:3
+    const im = this.ctx.getImageData(0, 0, W, H).data;
+
+    for (let y = 0; y < H; ++y) {
+      for (let x = 0; x < W; ++x) {
+        const p = (x + y * W) * 4;
+        const c = im[p];
+      }
+    }
+
+    return this.toAdd;
+```
+
+There are multiple ways we could have decided to do this translation. One thing
+to keep in mind is that canvas rendering uses antialiasing, which mean that
+whatever we trry to draw, we will have "border" pixels that won't be the same
+value that we used to fill in.
+
+To solve this, it's good to leave a bit of room for each value range. The
+encoding we decide on is: $[0,5]$ @[color-show]{"color":"#000"} is invalid
+(i.e., no crack can pass there), $[250,255]$ @[color-show]{"color":"#F00"} is a
+valid empty space (i.e., cracks can pass there).
+
+```add:last.-4,spawn:2
+        if (c <= 5) {
+          ss.set(x, y, INVALID);
+        } else if (c >= 250) {
+          ss.set(x, y, EMPTY);
+        }
+```
+
+And then everything in the middle
+
+```sub:last.-1
+        } else if (c >= 10 && c <= 245) {
+          ss.set(x, y, Math.TAU * (c - 10) / 235);
+        }
+```
 
 line
+
+```add:
+```
 
 poly
 

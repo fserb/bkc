@@ -205,7 +205,6 @@ class Mask {
   constructor() {
     this.ofc = new OffscreenCanvas(W, H);
     this.ctx = this.ofc.getContext("2d");
-    this.ctx.reset();
     this.ctx.fillStyle = "#000";
     this.ctx.fillRect(0, 0, W, H);
     this.ctx.fillStyle = "#FFF";
@@ -229,6 +228,7 @@ class Mask {
         }
       }
     }
+
     return this.toAdd;
   }
 
