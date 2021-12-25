@@ -234,36 +234,41 @@ function propagateOldLabels(prev, out) {
 Super-hacky JS parser, to get functions, class names and methods.
 */
 const HTML_RE = /<[^>]+>/gm;
-const JS_RE =
-  /^((function\s+(?<fname>.+?)\s*\()|(class\s+(?<cname>.+?)\s)|((?<mname>.*?)\s*\(.*?\)\s*\{)|(?<close>}$))/;
-const JS_INVALID = new Set(["for", "while", "switch", "if"]);
+const JS_TOP_RE = new RegExp([
+  /^(class\s+(?<cname>[^\s]+))/,                     // class X
+  /^((async\s+)?function\s*\*?\s*(?<fname>[^\s.(]+))/,  // function Y()
+].map(r => r.source).join('|'));
+const JS_CLASS_RE = new RegExp([
+  /^(async\s*)?\*?\s*(?<mname>[^\s(]+)\s*\(/,              // method()
+].map(r => r.source).join('|'));
+
 function* _autogenJS(code) {
   if (!code) return;
   const stack = [];
-  const starts = [];
   for (let i = 0; i < code.length; ++i) {
     const l = code[i];
     if (l.length == 0) continue;
-    if (l.startsWith("  ".repeat(stack.length + 1))) continue;
 
-    const c = l.replace(HTML_RE, '').trim();
+    const s = l.replace(HTML_RE, '').split(/([{}])/);
 
-    const M = JS_RE.exec(c);
-    if (!M) continue;
-    const g = M.groups;
-
-    const name = g.fname ?? g.cname ?? g.mname;
-
-    if (name) {
-      stack.push(name);
-      starts.push(i);
-    } else if (g.close) {
-      if (stack.length == 0) continue;
-      const final = '#' + stack.join('#');
-      const bname = stack.pop();
-      const start = starts.pop();
-      if (JS_INVALID.has(bname)) continue;
-      yield [final, [start, i - start + 1]];
+    let lastName = null;
+    for (const p of s) {
+      if (p == "{") {
+        const m = stack.length > 0 && stack[stack.length - 1].isClass ?
+          JS_CLASS_RE.exec(lastName) : JS_TOP_RE.exec(lastName);
+        const g = m?.groups;
+        const name = g?.cname ?? g?.fname ?? g?.mname;
+        stack.push({name: name, start: i, isClass: g?.cname !== undefined });
+      } else if (p == "}") {
+        if (stack.length == 0) continue;
+        const invalid = stack.some(n => n.name === undefined);
+        const name = '#' + stack.map(n => n.name).join('#');
+        const last = stack.pop();
+        if (invalid) continue;
+        yield [name, [last.start, i - last.start + 1]];
+      } else {
+        lastName = p.trim();
+      }
     }
   }
 }
