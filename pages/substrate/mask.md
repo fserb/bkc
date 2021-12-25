@@ -235,7 +235,10 @@ replace.
 ```sub:#basicEffect,lens:#frame-2
 ```
 
-```sub:frame-2+1,spawn:4
+```sub:#frame-5+1
+```
+
+```sub:frame-2+1,spawn:5
 ```
 
 We allow `begin()` to be parametrized, so we can choose how many starting points
@@ -337,7 +340,7 @@ encoding we decide on is: $[0,5]$ @[color-show]{"color":"#000"} is invalid
 (i.e., no crack can pass there), $[250,255]$ @[color-show]{"color":"#F00"} is a
 valid empty space (i.e., cracks can pass there).
 
-```add:last.-4,spawn:2
+```add:last.-4
         if (c <= 5) {
           ss.set(x, y, INVALID);
         } else if (c >= 250) {
@@ -345,24 +348,83 @@ valid empty space (i.e., cracks can pass there).
         }
 ```
 
-And then everything in the middle
+And then everything in the middle $[10, 245]$ will be mapped to an angle (i.e., a fraction of $\tau$).
 
-```sub:last.-1
+```sub:last.-1,spawn:3
         } else if (c >= 10 && c <= 245) {
           ss.set(x, y, Math.TAU * (c - 10) / 235);
         }
 ```
 
-line
+This is all. Now, as long as we build a proper mask canvas, the effect will work
+as expected. Before we delve into examples, we can add a couple helper
+functions to render lines and polygons to the canvas.
 
-```add:
+One other thing to keep in mind, is that sometimes we may want to update the final `ctx` as well as the mask. This is just to guarantee the shapes we have
+in mind are already rendered in the screen.
+
+For `line()`, we want a line from `(x0, y0)` to `(x1, y1)`, render it on the main canvas and set up a new line on `(x0, y0)` with the right angle.
+
+```add:#Mask#apply.,lens:#Mask#line
+
+  line(x0, y0, x1, y1) {
+    const ang = Math.atan2(y1 - y0, x1 - x0);
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+    this.toAdd.push([x0, y0, ang]);
+  }
 ```
 
-poly
+For rendering a polygon, we want to `line()` all edges but also make sure that
+the inside of the polygon is marked as `EMPTY`.
+
+```add:,lens:#Mask#poly
+
+  poly(...points) {
+    this.ctx.fillStyle = "#FFF";
+    this.ctx.strokeStyle = '#FFF';
+    this.ctx.beginPath();
+    for (let i = 0; i < points.length; i += 2) {
+      const n = (i + 2) % points.length;
+      this.ctx.lineTo(points[i], points[i+1]);
+      this.line(points[i], points[i+1], points[n], points[n+1]);
+    }
+    this.ctx.closePath();
+    this.ctx.fill();
+    this.ctx.stroke();
+  }
+```
+
+Now we are ready to use our effect.
+
 
 ### The Cube
 
+xx
 
+```add:#frame-3,lens:#cube>#frame-2+2
+
+function cube(ss) {
+  ss.colors = null;
+  ss.clear('#FFFFFF');
+  ss.lineColor = ctx.strokeStyle = '#083648';
+  ss.maxTotalCracks = 4000;
+  ss.angleVariance = 0;
+
+  const m = new Mask();
+  ctx.lineWidth = 4;
+  m.poly(964,167, 1288,353, 964,545, 638,353);
+  m.poly(1288,353, 1288,739, 964,923, 964,545);
+  m.poly(638,353, 964,545, 964,923, 638, 739);
+  ss.begin({mask: m, random: 16});
+}
+```
+
+```add:#frame-1
+cube(ss);
+```
 
 
 
