@@ -16,15 +16,18 @@ const EMPTY = Infinity;
 const INVALID = null;
 
 class Substrate {
-  constructor() {
+  constructor(ctx) {
+    this.ctx = ctx;
     this.totalCracks = 0;
     this.maxTotalCracks = -1;
     this.maxActiveCracks = 128;
     this.cracks = [];
     this.angleVariance = 0.025;
+    this.width = this.ctx.canvas.width;
+    this.height = this.ctx.canvas.height;
 
-    this.grid = new Array(W * H);
-    for (let i = 0; i < W * H; ++i) {
+    this.grid = new Array(this.width * this.height);
+    for (let i = 0; i < this.width * this.height; ++i) {
       this.grid[i] = EMPTY;
     }
 
@@ -33,9 +36,9 @@ class Substrate {
   }
 
   clear(bgColor) {
-    ctx.reset();
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, W, H);
+    this.ctx.reset();
+    this.ctx.fillStyle = bgColor;
+    this.ctx.fillRect(0, 0, this.width, this.height);
   }
 
   begin({random = 0, start = 0, mask = null}) {
@@ -49,8 +52,8 @@ class Substrate {
 
     let k = 0;
     while (k < random) {
-      const x = Math.random() * W;
-      const y = Math.random() * H;
+      const x = Math.random() * this.width;
+      const y = Math.random() * this.height;
       if (this.get(x, y) !== EMPTY) continue;
 
       this.set(x, y, Math.random() * Math.TAU);
@@ -84,9 +87,9 @@ class Substrate {
     let y = 0;
 
     let found = false;
-    for (let i = 0; i < W * H; ++i) {
-      x = Math.random() * W;
-      y = Math.random() * H;
+    for (let i = 0; i < this.width * this.height; ++i) {
+      x = Math.random() * this.width;
+      y = Math.random() * this.height;
       const p = this.get(x, y);
       if (p != EMPTY && p != INVALID) {
         found = true;
@@ -111,15 +114,15 @@ class Substrate {
   get(x, y) {
     x = Math.floor(x);
     y = Math.floor(y);
-    if (x < 0 || x >= W || y < 0 || y >= H) return INVALID;
-    return this.grid[x + y * W];
+    if (x < 0 || x >= this.width || y < 0 || y >= this.height) return INVALID;
+    return this.grid[x + y * this.width];
   }
 
   set(x, y, v) {
     x = Math.floor(x);
     y = Math.floor(y);
-    if (x < 0 || x >= W || y < 0 || y >= H) return;
-    this.grid[x + y * W] = v;
+    if (x < 0 || x >= this.width || y < 0 || y >= this.height) return;
+    this.grid[x + y * this.width] = v;
   }
 }
 
@@ -145,8 +148,8 @@ class Crack {
     }
 
     for (let i = 0 ; i < 2; ++i) {
-      ctx.fillStyle = this.ss.lineColor;
-      ctx.fillRect(
+      this.ss.ctx.fillStyle = this.ss.lineColor;
+      this.ss.ctx.fillRect(
         this.pos.x + 0.33 * normal(),
         this.pos.y + 0.33 * normal(),
         1, 1);
@@ -184,47 +187,52 @@ class Crack {
       y: this.pos.y + (r.y - this.pos.y) * this.mod
     };
 
-    const grad = ctx.createLinearGradient(this.pos.x, this.pos.y, t.x, t.y);
+    const grad = this.ss.ctx.createLinearGradient(
+      this.pos.x, this.pos.y, t.x, t.y);
     const S = 5;
     for (let i = 0; i < S; ++i) {
       const f = i / (S - 1);
       const a = 0.25 * ((1 - f) ** 0.25);
       grad.addColorStop(f, this.color.alpha(a));
     }
-    ctx.strokeStyle = grad;
+    this.ss.ctx.strokeStyle = grad;
 
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(this.pos.x, this.pos.y);
-    ctx.lineTo(t.x, t.y);
-    ctx.stroke();
+    this.ss.ctx.lineWidth = 2;
+    this.ss.ctx.beginPath();
+    this.ss.ctx.moveTo(this.pos.x, this.pos.y);
+    this.ss.ctx.lineTo(t.x, t.y);
+    this.ss.ctx.stroke();
   }
 }
 
 class Mask {
-  constructor() {
-    this.ofc = new OffscreenCanvas(W, H);
+  constructor(ctx) {
+    this.octx = ctx;
+    this.width = ctx.canvas.width;
+    this.height = ctx.canvas.height;
+    this.ofc = new OffscreenCanvas(this.width, this.height);
     this.ctx = this.ofc.getContext("2d");
     this.ctx.fillStyle = "#000";
-    this.ctx.fillRect(0, 0, W, H);
+    this.ctx.fillRect(0, 0, this.width, this.height);
     this.ctx.fillStyle = "#FFF";
 
     this.toAdd = [];
   }
 
   applyMask(ss) {
-    const im = this.ctx.getImageData(0, 0, W, H).data;
+    const im = this.ctx.getImageData(0, 0, this.width, this.height).data;
 
-    for (let y = 0; y < H; ++y) {
-      for (let x = 0; x < W; ++x) {
-        const p = (x + y * W) * 4;
-        const c = im[p];
-        if (c <= 5) {
+    for (let y = 0; y < this.height; ++y) {
+      for (let x = 0; x < this.width; ++x) {
+        const p = (x + y * this.width) * 4;
+        const r = im[p];
+        if (r <= 5) {
           ss.set(x, y, INVALID);
-        } else if (c >= 250) {
+        } else if (r >= 250) {
           ss.set(x, y, EMPTY);
-        } else if (c >= 10 && c <= 245) {
-          ss.set(x, y, Math.TAU * (c - 10) / 235);
+        } else if (r >= 10 && r <= 245) {
+
+          ss.set(x, y, Math.TAU * (r - 10) / 235);
         }
       }
     }
@@ -234,10 +242,10 @@ class Mask {
 
   line(x0, y0, x1, y1) {
     const ang = Math.atan2(y1 - y0, x1 - x0);
-    ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x1, y1);
-    ctx.stroke();
+    this.octx.beginPath();
+    this.octx.moveTo(x0, y0);
+    this.octx.lineTo(x1, y1);
+    this.octx.stroke();
     this.toAdd.push([x0, y0, ang]);
   }
 
@@ -256,27 +264,26 @@ class Mask {
   }
 }
 
-function basicEffect(ss) {
+function basicEffect() {
+  const ss = new Substrate(ctx);
   ss.clear('#FFFFFF');
   ss.lineColor = '#3B2618';
   ss.maxTotalCracks = 12000;
-  // const colors = Color('#000000').steps(256, '#FFFF00');
-  // for (let i = 0; i < colors.length; ++i) {
-  //   const f = i / (colors.length - 1);
-  //   colors[i] = colors[i].luminance(f ** 1.2)
-  //     .saturate(2 * Math.abs(Math.sin(f * 7)))
-  //     .rotate(-40 + 50 * (Math.cos(f * 5)))
-  //     .multiply(Color('#FFFF0050'))
-  // }
-  // ss.colors = colors;
-  // console.log(colors.map(x => x.toHex()).join(', '));
-
-  ss.colors = null;
-
+  const colors = Color('#000000').steps(256, '#FFFF00');
+  for (let i = 0; i < colors.length; ++i) {
+    const f = i / (colors.length - 1);
+    colors[i] = colors[i].luminance(f ** 1.2)
+      .saturate(2 * Math.abs(Math.sin(f * 7)))
+      .rotate(-40 + 50 * (Math.cos(f * 5)))
+      .multiply(Color('#FFFF0050'))
+  }
+  ss.colors = colors;
   ss.begin({start: 3, random: 16});
+  return () => ss.update();
 }
 
-function blueDiamond(ss) {
+function blueDiamond() {
+  const ss = new Substrate(ctx);
   const colors = Color('#000000').steps(256, '#00AAFF');
   for (let i = 0; i < colors.length; ++i) {
     const f = i / (colors.length - 1);
@@ -290,55 +297,87 @@ function blueDiamond(ss) {
   ss.maxTotalCracks = 4000;
   ss.maxActiveCracks = 64;
 
-  ctx.strokeStyle = ss.lineColor;
-  const m = new Mask();
-  m.poly(960, 88, 1177, 273, 1177, 549, 1177, 825, 960, 993, 742, 825, 742, 549, 742, 273);
+  ctx.strokeStyle = '#323E51';
+  ctx.lineCap = "round";
+  ctx.lineWidth = 4;
+  const m = new Mask(ctx);
+  m.poly(960, 88, 1177, 273, 1177, 549, 1177, 825,
+    960, 993, 742, 825, 742, 549, 742, 273);
   ss.begin({mask: m});
+  return () => ss.update();
 }
 
 function cube(ss) {
-  ss.colors = null;
-  ss.clear('#FFFFFF');
-  ss.lineColor = ctx.strokeStyle = '#083648';
-  ss.maxTotalCracks = 1000;
+  const faces = [];
 
-  const m = new Mask();
-  m.poly(964,167, 1288,353, 964,545, 638,353);
-  m.poly(1288,353, 1288,739, 964,923, 964,545);
-  m.poly(638,353, 964,545, 964,923, 638, 739);
-  ss.begin({mask: m, random: 16});
-}
+  const D = 640;
+  for (let i = 0; i < 3; ++i) {
+    const can = new OffscreenCanvas(D, D);
+    const c = can.getContext("2d");
+    const ss = new Substrate(c);
+    const m = new Mask(c);
+    m.ctx.fillRect(0,0, D, D);
 
-function area(ss) {
-  ss.clear('#FFF');
-  ss.maxTotalCracks = 4000;
-  ss.maxActiveCracks = 32;
-  ss.lineColor = ctx.strokeStyle = '#083648';
-  ss.angleVariance = 0;
+    m.line(1, 1, D - 1, 1);
+    m.line(D - 1, 1, D - 1, D - 1);
+    m.line(D - 1, D - 1, 1, D - 1);
+    m.line(1, D - 1, 1, 1);
 
-  const colors = Color('#28C9FF').steps(64, '#E313AF');
-  for (let i = 0; i < colors.length; ++i) {
-    const f = i / (colors.length - 1);
-    colors[i] = colors[i].luminance(Math.abs(Math.sin(f * 4)) * 0.65)
-      .saturate(0.25 * Math.abs(Math.sin(f * 7)))
+    ss.colors = null;
+    ss.clear('#FFFFFF');
+    ss.lineColor = c.strokeStyle = '#083648';
+    ss.angleVariance = 0;
+    ss.maxTotalCracks = 1000;
+    ss.maxActiveCracks = 64;
+    ss.begin({mask: m});
+    faces.push({ss, ctx: c, canvas: can, mask: m});
   }
-  ss.colors = colors;
 
-  const m = new Mask();
-  const a = 50;
-  const b = 200;
+  return () => {
+    ctx.reset();
+    ctx.lineWidth = 4;
+    ctx.fillStyle = '#FFF';
+    ctx.fillRect(0, 0, W, H);
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = '#083648';
+    ctx.lineWidth = 24;
 
-  m.poly(a + b, a,
-    W - a, a,
-    W - a, H - a - b,
-    W - a - b, H - a,
-    a, H - a,
-    a, a + b);
+    ctx.save();
+    ctx.translate(964, 160);
+    ctx.scale(0.71, 0.417);
+    ctx.rotate(Math.TAU / 8);
+    ctx.strokeRect(0, 0, D, D);
+    ctx.drawImage(faces[0].canvas, 0, 0);
+    ctx.restore();
 
-  ss.begin({mask: m});
+    ctx.save();
+    ctx.transform(0.505, -0.3, 0, 0.6, 964, 545);
+    ctx.strokeRect(0, 0, D, D);
+    ctx.drawImage(faces[1].canvas, 0, 0);
+    ctx.fillStyle = '#083648';
+    ctx.globalAlpha = 0.35;
+    ctx.fillRect(0, 0, D, D);
+    ctx.restore();
+
+    ctx.save();
+    ctx.transform(0.505, 0.3, 0, 0.6, 638, 353);
+    ctx.strokeRect(0, 0, D, D);
+    ctx.drawImage(faces[2].canvas, 0, 0);
+    ctx.fillStyle = '#083648';
+    ctx.globalAlpha = 0.1;
+    ctx.fillRect(0, 0, D, D);
+    ctx.restore();
+
+    let r = false;
+    for (const f of faces) {
+      if (f.ss.update()) r = true;
+    }
+    return r;
+  };
 }
 
-function bezier(ss) {
+function bezier() {
+  const ss = new Substrate(ctx);
   ss.maxTotalCracks = 10000;
   ss.maxActiveCracks = 400;
   ss.angleVariance = 0;
@@ -358,7 +397,7 @@ function bezier(ss) {
     return layer[0];
   }
 
-  const m = new Mask();
+  const m = new Mask(ctx);
 
   ctx.strokeStyle = "rgba(255,0,0,0.05)";
 
@@ -400,50 +439,19 @@ function bezier(ss) {
   }
 
   ss.begin({mask: m, start: 32});
+
+  return () => ss.update();
 }
 
-const ss = new Substrate();
-// basicEffect(ss);
-// blueDiamond(ss);
-// cube(ss);
-// area(ss);
-bezier(ss);
+// const update = basicEffect();
+const update = blueDiamond();
+// const update = cube();
+// const update = bezier();
 
 function frame() {
-  if (ss.update()) {
+  if (update()) {
     requestAnimationFrame(frame);
   }
-
-  // const r = [432,347,20,20];
-
-  // ctx.strokeStyle = 'red';
-  // ctx.strokeRect(...r);
-
-  // for (let x = r[0]; x < r[0] + r[2]; x++) {
-  //   for (let y = r[1]; y < r[1] + r[3]; y++) {
-  //     const g = ss.grid[x + y * W];
-  //     const px = 900 + (x - r[0]) * 50;
-  //     const py = 50 + (y - r[1]) * 50;
-  //     ctx.textAlign = "center";
-  //     ctx.textBaseline = "middle";
-
-  //     ctx.fillStyle = "#FFF";
-  //     ctx.fillRect(px, py, 50, 50);
-  //     ctx.strokeRect(px, py, 50, 50);
-
-  //     ctx.fillStyle = "#000";
-
-  //     let val = "";
-  //     if (val != EMPTY) {
-  //       val = Math.round(360 * g / Math.TAU);
-  //     }
-
-  //     ctx.fillText(val, px + 25, py + 25);
-
-  //   }
-  // }
-
-
 }
 frame();
 </script>
