@@ -5,11 +5,18 @@ class EngineSquence {
   constructor(site, seq) {
     this.engines = [];
     for (const s of seq) {
-      this.engines.push(site.renderer.engines.getEngine(`.${s}`, {templateEngine: null}));
+      for (const e of site.renderer.engines.getEngine(`.${s}`,
+        {templateEngine: undefined})) {
+        this.engines.push(e);
+      }
     }
   }
 
-  deleteCache() {}
+  deleteCache(file) {
+    for (const e of this.engines) {
+      e.deleteCache(file);
+    }
+  }
 
   async render(content, data, path) {
     for (const e of this.engines) {
@@ -18,7 +25,18 @@ class EngineSquence {
     return content;
   }
 
-  addHelper(_name, _fn, _options) {}
+  renderSync(content, data, path) {
+    for (const e of this.engines) {
+      content = e.renderSync(content, data, path);
+    }
+    return content;
+  }
+
+  addHelper(name, fn, options) {
+    for (const e of this.engines) {
+      e.addHelper(name, fn, options);
+    }
+  }
 }
 
 export default function() {
