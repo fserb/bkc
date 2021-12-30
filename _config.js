@@ -1,4 +1,3 @@
-
 import lume from "lume/mod.ts";
 import date from "lume/plugins/date.ts";
 import slugifyUrls from "lume/plugins/slugify_urls.ts";
@@ -15,10 +14,10 @@ import NunjucksSVG from "./_plugins/nunjucks-svg.js";
 
 import postcssCSSO from "https://esm.sh/postcss-csso";
 
-import markdownItMathJaxTexSvg from
-  "./_plugins/markdown-it-mathjax-texsvg.js";
-import markdownItComponent from
-  "./_plugins/markdown-it-component.js";
+import markdownItMathJaxTexSvg from "./_plugins/markdown-it-mathjax-texsvg.js";
+import markdownItComponent from "./_plugins/markdown-it-component.js";
+
+const dev = Deno.args.indexOf('--dev') != -1;
 
 const site = lume({
   watcher: {
@@ -26,28 +25,26 @@ const site = lume({
   }
 }, {
   verbose: 2,
+  nunjucks: {
+    options: {
+      autoescape: false
+    },
+    plugins: {
+      "svg": new NunjucksSVG(dev),
+    }
+  },
+  markdown: {
+    options: {
+      typographer: true,
+    },
+    plugins: [
+      markdownItComponent(),
+      markdownItMathJaxTexSvg({quick: dev}),
+    ]
+  },
 });
 
-site.use(nunjucks({
-  options: {
-    autoescape: false,
-  },
-  plugins: {
-    "svg": new NunjucksSVG(site.options.dev),
-  }
-}));
-
-site.use(markdown({
-  options: {
-    typographer: true,
-  },
-  plugins: [
-    markdownItComponent(),
-    markdownItMathJaxTexSvg({quick: site.options.dev}),
-  ]
-}));
-
-if (site.options.dev) {
+if (dev) {
   site.options.location = new URL("https://dev.metaphora.co/bkc/_site");
 } else {
   site.options.location = new URL("https://canvas.rocks");
@@ -74,7 +71,7 @@ site.use(prism());
 site.use(postcss({
   plugins: [postcssCSSO()],
   keepDefaultPlugins: true,
-  sourceMap: site.options.dev ? {inline: true} : false,
+  sourceMap: dev ? {inline: true} : false,
   }));
 
 site.use(basic());

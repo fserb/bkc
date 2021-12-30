@@ -9,6 +9,8 @@ class EngineSquence {
     }
   }
 
+  deleteCache() {}
+
   async render(content, data, path) {
     for (const e of this.engines) {
       content = await e.render(content, data, path);
