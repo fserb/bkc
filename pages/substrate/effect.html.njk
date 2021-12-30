@@ -282,7 +282,7 @@ function basicEffect() {
   return () => ss.update();
 }
 
-function blueDiamond() {
+function prism() {
   const ss = new Substrate(ctx);
   const colors = Color('#000000').steps(256, '#00AAFF');
   for (let i = 0; i < colors.length; ++i) {
@@ -300,9 +300,11 @@ function blueDiamond() {
   ctx.strokeStyle = '#323E51';
   ctx.lineCap = "round";
   ctx.lineWidth = 4;
+
   const m = new Mask(ctx);
   m.poly(960, 88, 1177, 273, 1177, 549, 1177, 825,
     960, 993, 742, 825, 742, 549, 742, 273);
+
   ss.begin({mask: m});
   return () => ss.update();
 }
@@ -444,7 +446,7 @@ function bezier() {
 }
 
 // const update = basicEffect();
-const update = blueDiamond();
+const update = prism();
 // const update = cube();
 // const update = bezier();
 

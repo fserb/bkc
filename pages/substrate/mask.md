@@ -26,15 +26,18 @@ const EMPTY = Infinity;
 const INVALID = null;
 
 class Substrate {
-  constructor() {
-    this.cracks = [];
+  constructor(ctx) {
+    this.ctx = ctx;
     this.angleVariance = 0.025;
     this.maxActiveCracks = 128;
     this.totalCracks = 0;
     this.maxTotalCracks = 12000;
+    this.cracks = [];
+    this.width = this.ctx.canvas.width;
+    this.height = this.ctx.canvas.height;
 
-    this.grid = new Array(W * H);
-    for (let i = 0; i < W * H; ++i) {
+    this.grid = new Array(this.width * this.height);
+    for (let i = 0; i < this.width * this.height; ++i) {
       this.grid[i] = EMPTY;
     }
 
@@ -43,17 +46,18 @@ class Substrate {
   }
 
   clear(bgColor) {
-    ctx.reset();
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, W, H);
+    this.ctx.reset();
+    this.ctx.fillStyle = bgColor;
+    this.ctx.fillRect(0, 0, this.width, this.height);
   }
 
   begin() {
     let k = 0;
     while (k < 16) {
-      const x = Math.random() * W;
-      const y = Math.random() * H;
+      const x = Math.random() * this.width;
+      const y = Math.random() * this.height;
       if (this.get(x, y) !== EMPTY) continue;
+
       this.set(x, y, Math.random() * Math.TAU);
       k++;
     }
@@ -73,9 +77,9 @@ class Substrate {
     let y = 0;
 
     let found = false;
-    for (let i = 0; i < W * H; ++i) {
-      x = Math.random() * W;
-      y = Math.random() * H;
+    for (let i = 0; i < this.width * this.height; ++i) {
+      x = Math.random() * this.width;
+      y = Math.random() * this.height;
       const p = this.get(x, y);
       if (p != EMPTY && p != INVALID) {
         found = true;
@@ -112,15 +116,15 @@ class Substrate {
   get(x, y) {
     x = Math.floor(x);
     y = Math.floor(y);
-    if (x < 0 || x >= W || y < 0 || y >= H) return INVALID;
-    return this.grid[x + y * W];
+    if (x < 0 || x >= this.width || y < 0 || y >= this.height) return INVALID;
+    return this.grid[x + y * this.width];
   }
 
   set(x, y, v) {
     x = Math.floor(x);
     y = Math.floor(y);
-    if (x < 0 || x >= W || y < 0 || y >= H) return;
-    this.grid[x + y * W] = v;
+    if (x < 0 || x >= this.width || y < 0 || y >= this.height) return;
+    this.grid[x + y * this.width] = v;
   }
 }
 
@@ -146,8 +150,8 @@ class Crack {
     }
 
     for (let i = 0 ; i < 2; ++i) {
-      ctx.fillStyle = this.ss.lineColor;
-      ctx.fillRect(
+      this.ss.ctx.fillStyle = this.ss.lineColor;
+      this.ss.ctx.fillRect(
         this.pos.x + 0.33 * normal(),
         this.pos.y + 0.33 * normal(),
         1, 1);
@@ -185,26 +189,27 @@ class Crack {
       y: this.pos.y + (r.y - this.pos.y) * this.mod
     };
 
-    const grad = ctx.createLinearGradient(this.pos.x, this.pos.y, t.x, t.y);
+    const grad = this.ss.ctx.createLinearGradient(
+      this.pos.x, this.pos.y, t.x, t.y);
     const S = 5;
     for (let i = 0; i < S; ++i) {
       const f = i / (S - 1);
       const a = 0.25 * ((1 - f) ** 0.25);
       grad.addColorStop(f, this.color.alpha(a));
     }
-    ctx.strokeStyle = grad;
+    this.ss.ctx.strokeStyle = grad;
 
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(this.pos.x, this.pos.y);
-    ctx.lineTo(t.x, t.y);
-    ctx.stroke();
+    this.ss.ctx.lineWidth = 2;
+    this.ss.ctx.beginPath();
+    this.ss.ctx.moveTo(this.pos.x, this.pos.y);
+    this.ss.ctx.lineTo(t.x, t.y);
+    this.ss.ctx.stroke();
   }
 }
 
-function basicEffect(ss) {
+function basicEffect() {
+  const ss = new Substrate(ctx);
   ss.clear('#FFFFFF');
-  ss.lineColor = '#3B2618';
   const colors = Color('#000000').steps(256, '#FFFF00');
   for (let i = 0; i < colors.length; ++i) {
     const f = i / (colors.length - 1);
@@ -214,31 +219,26 @@ function basicEffect(ss) {
       .multiply(Color('#FFFF0050'))
   }
   ss.colors = colors;
+  ss.lineColor = '#3B2618';
 
   ss.begin();
+  return () => ss.update();
 }
 
-const ss = new Substrate();
-basicEffect(ss);
+const update = basicEffect();
 
 function frame() {
-  if (ss.update()) {
+  if (update()) {
     requestAnimationFrame(frame);
   }
 }
 frame();
 ```
 
-We remove the `basicEffect()` code, since this is the code we are going to
+We remove the `basicEffect()` call, since this is the code we are going to
 replace.
 
-```sub:#basicEffect,lens:#frame-2
-```
-
-```sub:#frame-5+1
-```
-
-```sub:frame-2+1,spawn:5
+```sub:frame-2+1,spawn:3
 ```
 
 We allow `begin()` to be parametrized, so we can choose how many starting points
@@ -248,8 +248,8 @@ and many initial lines to demo has.
   begin({random = 0, start = 0}) {
     let k = 0;
     while (k < random) {
-      const x = Math.random() * W;
-      const y = Math.random() * H;
+      const x = Math.random() * this.width;
+      const y = Math.random() * this.height;
       if (this.get(x, y) !== EMPTY) continue;
 
       this.set(x, y, Math.random() * Math.TAU);
@@ -280,11 +280,14 @@ We create a canvas the same size as the original canvas. We will also keep a
 list of initial cracks that we may want to add to `Substrate`.
 
 ```add:#Mask+1
-  constructor() {
-    this.ofc = new OffscreenCanvas(W, H);
+  constructor(ctx) {
+    this.octx = ctx;
+    this.width = ctx.canvas.width;
+    this.height = ctx.canvas.height;
+    this.ofc = new OffscreenCanvas(this.width, this.height);
     this.ctx = this.ofc.getContext("2d");
     this.ctx.fillStyle = "#000";
-    this.ctx.fillRect(0, 0, W, H);
+    this.ctx.fillRect(0, 0, this.width, this.height);
     this.ctx.fillStyle = "#FFF";
 
     this.toAdd = [];
@@ -318,11 +321,11 @@ where we use the internal `ofc` canvas to update Substrate's `grid` by grabbing
 each pixel and reading the red channel.
 
 ```add:#Mask#apply+1,spawn:3
-    const im = this.ctx.getImageData(0, 0, W, H).data;
+    const im = this.ctx.getImageData(0, 0, this.width, this.height).data;
 
-    for (let y = 0; y < H; ++y) {
-      for (let x = 0; x < W; ++x) {
-        const p = (x + y * W) * 4;
+    for (let y = 0; y < this.height; ++y) {
+      for (let x = 0; x < this.width; ++x) {
+        const p = (x + y * this.width) * 4;
         const c = im[p];
       }
     }
@@ -334,6 +337,9 @@ There are multiple ways we could have decided to do this translation. One thing
 to keep in mind is that canvas rendering uses antialiasing, which mean that
 whatever we trry to draw, we will have "border" pixels that won't be the same
 value that we used to fill in.
+
+```add:
+```
 
 To solve this, it's good to leave a bit of room for each value range. The
 encoding we decide on is: $[0,5]$ @[color-show]{"color":"#000"} is invalid
@@ -359,6 +365,9 @@ And then everything in the middle $[10, 245]$ will be mapped to an angle (i.e., 
 This is all. Now, as long as we build a proper mask canvas, the effect will work
 as expected. Before we delve into examples, we can add a couple helper
 functions to render lines and polygons to the canvas.
+
+```add:
+```
 
 One other thing to keep in mind, is that sometimes we may want to update the final `ctx` as well as the mask. This is just to guarantee the shapes we have
 in mind are already rendered in the screen.
@@ -400,32 +409,84 @@ the inside of the polygon is marked as `EMPTY`.
 Now we are ready to use our effect.
 
 
-### The Cube
+### The Prism
 
-xx
+Our first extra effect is simply exercising our new `Mask`. It's a prism-shaped
+mask, with a new palette. We start setting up the basic `Substrate` effect.
 
-```add:#frame-3,lens:#cube>#frame-2+2
+```add:#frame-2,lens:#prism>#frame.+0+1
 
-function cube(ss) {
-  ss.colors = null;
-  ss.clear('#FFFFFF');
-  ss.lineColor = ctx.strokeStyle = '#083648';
-  ss.maxTotalCracks = 4000;
-  ss.angleVariance = 0;
+function prism() {
+  const ss = new Substrate(ctx);
 
-  const m = new Mask();
-  ctx.lineWidth = 4;
-  m.poly(964,167, 1288,353, 964,545, 638,353);
-  m.poly(1288,353, 1288,739, 964,923, 964,545);
-  m.poly(638,353, 964,545, 964,923, 638, 739);
-  ss.begin({mask: m, random: 16});
+  return () => ss.update();
 }
 ```
 
 ```add:#frame-1
-cube(ss);
+const update = prism();
 ```
 
+We start by building a color palette from @[color-show]{"grad":"#000000,#00AAFF"},
+similarly to what we did on the basic effect.
 
+```add:#prism+2
+  const colors = Color('#000000').steps(16, '#00AAFF');
+  for (let i = 0; i < colors.length; ++i) {
+    const f = i / (colors.length - 1);
+    colors[i] = colors[i]
+  }
+  ss.colors = colors;
+```
+
+We brighten the range to @[color-show]{"grad":"#000000, #4B545A, #6E7C88, #889CAC, #9EB6C9, #B4CDE1, #CAE2F5, #E3F4FF"}.
+
+```add:#prism+6
+      .luminance((f * 0.9) ** 1.2)
+```
+
+Then saturate using a `sin()` to @[color-show]{"grad":"#000000, #2A353E, #30536D, #296A96, #277CB4, #418CC1, #6A99BD, #84A5BE, #62B5F1, #2EC2FF, #00CDFF, #3AD8FF, #7EE0FF, #B9E6FF, #C4EEFF, #BDF9FF"}
+
+```add:
+      .saturate(4 * Math.abs(Math.sin(f * 7)))
+```
+
+Finally we multiply everything by @[color-show]{"color": "#FF00FF40"}, tainting the whole range a bit to @[color-show]{"grad":"#000000, #2A2E3E, #30486D, #295C96, #276DB4, #417BC1, #6A86BD, #8490BE, #629FF1, #2EAAFF, #00B4FF, #3ABEFF, #7EC5FF, #B9CAFF, #C4D2FF, #BDDBFF"}.
+
+```add:,spawn:5
+      .multiply(Color('#FF00FF40'))
+```
+
+We set the background to @[color-show]{"color":"#FFF"} and the line to @[color-show]{"color": "#323E51AA"}. We also reduce a bit the number of cracks, as the prism area is much
+smaller than the screen.
+
+```add:last+3
+  ss.clear('#FFFFFF');
+  ss.lineColor = '#323E51AA';
+  ss.maxTotalCracks = 4000;
+  ss.maxActiveCracks = 64;
+
+```
+
+Now we need to actually draw the prism. On the main `ctx`, we will render the
+outline.
+
+```add:
+  ctx.strokeStyle = '#323E51';
+  ctx.lineCap = "round";
+  ctx.lineWidth = 4;
+```
+
+For our `Mask`, we will pass the points (sequence of `x, y`) of a polygon that
+forms the shape. The actual numbers came from a vector rendering that I
+manually created and copied the points over.
+
+```add:
+
+  const m = new Mask(ctx);
+  m.poly(960, 88, 1177, 273, 1177, 549, 1177, 825,
+    960, 993, 742, 825, 742, 549, 742, 273);
+  ss.begin({mask: m});
+```
 
 @[canvas-demo]

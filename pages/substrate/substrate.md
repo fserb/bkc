@@ -47,23 +47,26 @@ function frame() {
 frame();
 ```
 
-We are going to hold the state of this effect in a class. Even though it won't
-be a perfect encapsulation (as we will use the global `ctx` for rendering), this
-will still allow us to experiment with the effect later on.
+We are going to hold the state of this effect in a class. We will pass a
+`Canvas2D` context to it. All of this will allow us to experiment with the
+effect later on.
 
 Since our effect builds up and then stops rendering, we will return from
 `update()` whether we want to continue the RAF or not. This also means that we
 will only end up cleaning the canvas once, and after that making each draw on
 top of the previous one.
 
-```sub:all+4,label:instance+6+1,spawn:2
+```sub:all+4,spawn:2
 class Substrate {
+  constructor(ctx) {
+  }
+
   update() {
     return false;
   }
 }
 
-const ss = new Substrate();
+const ss = new Substrate(ctx);
 
 function frame() {
   if (ss.update()) {
@@ -84,14 +87,17 @@ const EMPTY = Infinity;
 const INVALID = null;
 ```
 
-```add:#Substrate+1,lens:#Substrate-3
-  constructor() {
-    this.grid = new Array(W * H);
-    for (let i = 0; i < W * H; ++i) {
+```sub:#Substrate#cons,lens:#Substrate-3
+  constructor(ctx) {
+    this.ctx = ctx;
+    this.width = this.ctx.canvas.width;
+    this.height = this.ctx.canvas.height;
+
+    this.grid = new Array(this.width * this.height);
+    for (let i = 0; i < this.width * this.height; ++i) {
       this.grid[i] = EMPTY;
     }
   }
-
 ```
 
 When you have an abstract data structure, it's often useful to hide it behind
@@ -104,15 +110,15 @@ the integer positions and check for boundaries condition.
   get(x, y) {
     x = Math.floor(x);
     y = Math.floor(y);
-    if (x < 0 || x >= W || y < 0 || y >= H) return INVALID;
-    return this.grid[x + y * W];
+    if (x < 0 || x >= this.width || y < 0 || y >= this.height) return INVALID;
+    return this.grid[x + y * this.width];
   }
 
   set(x, y, v) {
     x = Math.floor(x);
     y = Math.floor(y);
-    if (x < 0 || x >= W || y < 0 || y >= H) return;
-    this.grid[x + y * W] = v;
+    if (x < 0 || x >= this.width || y < 0 || y >= this.height) return;
+    this.grid[x + y * this.width] = v;
   }
 ```
 
@@ -187,8 +193,8 @@ bit more natural, like a pen writing.
 ```add:#Crack#move+4
 
     for (let i = 0 ; i < 2; ++i) {
-      ctx.fillStyle = "#000000";
-      ctx.fillRect(
+      this.ss.ctx.fillStyle = "#000000";
+      this.ss.ctx.fillRect(
         this.pos.x + 0.33 * normal(),
         this.pos.y + 0.33 * normal(),
         1, 1);
@@ -234,9 +240,8 @@ check if that position is either empty or part of our line. Finally, we update t
 The last part missing is the dynamics of the effect: how to create cracks, how
 to set up the initial ones, how to update them over time, and when to stop.
 
-```add:#Substrate#constructor+1,lens:#Substrate#constructor-1>#Substrate#constructor
+```add:#Substrate#constructor+2,lens:#Substrate#constructor-1>#Substrate#constructor
     this.cracks = [];
-
 ```
 
 Every time we need to create a new crack, we find a random place in the grid
@@ -253,9 +258,9 @@ to an infinite loop, never finding a valid point. In practice, life is short.
     let y = 0;
 
     let found = false;
-    for (let i = 0; i < W * H; ++i) {
-      x = Math.random() * W;
-      y = Math.random() * H;
+    for (let i = 0; i < this.width * this.height; ++i) {
+      x = Math.random() * this.width;
+      y = Math.random() * this.height;
       const p = this.get(x, y);
       if (p != EMPTY && p != INVALID) {
         found = true;
@@ -327,7 +332,7 @@ are still cracks left.
 There's one more thing left before we can see the results: we need to set up an
 initial condition. We can have a `begin()` function of the effect.
 
-```add:instance+1,lens:instance+0+2
+```add:#frame-1,lens:#frame-3+9
 ss.begin();
 ```
 We can start by cleaning the canvas.
@@ -335,9 +340,9 @@ We can start by cleaning the canvas.
 ```add:#Sub#const.,lens:this,spawn:3
 
   begin() {
-    ctx.reset();
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, W, H);
+    this.ctx.reset();
+    this.ctx.fillStyle = '#FFFFFF';
+    this.ctx.fillRect(0, 0, this.width, this.height);
   }
 ```
 
@@ -349,8 +354,8 @@ it finds a point that is part of a line).
 
     let k = 0;
     while (k < 16) {
-      const x = Math.random() * W;
-      const y = Math.random() * H;
+      const x = Math.random() * this.width;
+      const y = Math.random() * this.height;
       if (this.get(x, y) !== EMPTY) continue;
 
       this.set(x, y, Math.random() * Math.TAU);
@@ -420,7 +425,7 @@ effect near the lines.
 The first thing is to allow for line colors and an array for
 potential paint colors.
 
-```add:#Sub#constructor+11,lens:#Sub#constructor-1>#Sub#begin-1+0
+```add:#Sub#constructor+14,lens:#Sub#constructor-1>#Sub#begin-1+0
 
     this.colors = null;
     this.lineColor = '#000000';
@@ -432,9 +437,9 @@ We will allow different background colors, so we can extract this from our
 ```add:#Sub#constructor.
 
   clear(bgColor) {
-    ctx.reset();
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, W, H);
+    this.ctx.reset();
+    this.ctx.fillStyle = bgColor;
+    this.ctx.fillRect(0, 0, this.width, this.height);
   }
 ```
 
@@ -465,7 +470,7 @@ the crack.
     }
 
     for (let i = 0 ; i < 2; ++i) {
-      ctx.fillStyle = this.ss.lineColor;
+      this.ss.ctx.fillStyle = this.ss.lineColor;
 ```
 
 So how `paintRegion()` does the watercolor effect?
@@ -532,11 +537,11 @@ This means we will draw a line from the current position `pos` to `t`.
 
 ```add:,spawn:5
 
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(this.pos.x, this.pos.y);
-    ctx.lineTo(t.x, t.y);
-    ctx.stroke();
+    this.ss.ctx.lineWidth = 2;
+    this.ss.ctx.beginPath();
+    this.ss.ctx.moveTo(this.pos.x, this.pos.y);
+    this.ss.ctx.lineTo(t.x, t.y);
+    this.ss.ctx.stroke();
 ```
 
 The final piece missing is the color. We want to make the color to fade away
@@ -547,14 +552,15 @@ fraction of the total line). @[color-show]{"grad":"#ffffff,#fbfbfb,#f6f6f6,#f1f1
 
 ```add:last-0
 
-    const grad = ctx.createLinearGradient(this.pos.x, this.pos.y, t.x, t.y);
+    const grad = this.ss.ctx.createLinearGradient(
+      this.pos.x, this.pos.y, t.x, t.y);
     const S = 5;
     for (let i = 0; i < S; ++i) {
       const f = i / (S - 1);
       const a = 0.25 * ((1 - f) ** 0.25);
       grad.addColorStop(f, this.color.alpha(a));
     }
-    ctx.strokeStyle = grad;
+    this.ss.ctx.strokeStyle = grad;
 ```
 
 You may notice the `color.alpha()`. This is part of the Color API we will be
@@ -565,19 +571,28 @@ const {gridRaystep, normal, Color} =
   await import("{{baseURL}}/js/extend.js");
 ```
 
-We are almost ready to see the final result. The last thing we need to do
-is to pick some initial color values.
+We are almost ready to see the final result. The last thing we need to do is to pick some initial color values. We can set up an effect building function that returns an
+`update` function.
 
-```sub:instance+0+2,label:instance+3,lens:this
-function basicEffect(ss) {
+```sub:#frame-3+2,lens:#basicEffect>#frame.+0+1
+function basicEffect() {
+  const ss = new Substrate(ctx);
   ss.clear('#FFFFFF');
   ss.lineColor = '#3B2618';
 
   ss.begin();
+  return () => ss.update();
 }
 
-const ss = new Substrate();
-basicEffect(ss);
+const update = basicEffect();
+```
+
+```sub:#frame
+function frame() {
+  if (update()) {
+    requestAnimationFrame(frame);
+  }
+}
 ```
 
 Apart from the background @[color-show]{"color":"#FFFFFF"} and line color @[color-show]{"color":"#3B2618"}, we want to have a distribution of
