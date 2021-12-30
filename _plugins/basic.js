@@ -5,7 +5,7 @@ class EngineSquence {
   constructor(site, seq) {
     this.engines = [];
     for (const s of seq) {
-      this.engines.push(site.renderer.engines.get(`.${s}`));
+      this.engines.push(site.renderer.engines.getEngine(`.${s}`, {templateEngine: null}));
     }
   }
 
