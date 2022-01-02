@@ -5,6 +5,7 @@ date: 2021-12-22
 subpage: true
 preview: false
 prevPage: substrate/
+nextPage: substrate/bezier
 ---
 
 On this second part we will create a `Mask` class that will allow us to set
