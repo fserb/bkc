@@ -89,3 +89,16 @@ export function gridRaystep(pos, angle) {
   };
 }
 
+/*
+Evaluate a 1d bezier function with any number of coefficients.
+*/
+export function bezier(t, coefs) {
+  const layer = [...coefs];
+  for (let j = 1; j < layer.length; ++j) {
+    for (let k = 0; k < layer.length - j; ++k) {
+      layer[k] = layer[k] * (1 - t) + layer[k + 1] * t;
+    }
+  }
+  return layer[0];
+}
+
