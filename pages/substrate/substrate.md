@@ -2,7 +2,7 @@
 title: Substrate
 layout: article
 date: 2021-12-21
-nextPage: substrate/mask
+nextPage: substrate/prism
 ---
 
 In 2001, I learned about [Processing](https://processing.org/) and was amazed by

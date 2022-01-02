@@ -6,7 +6,7 @@ draft: true
 <script type="module">
 const canvas = document.querySelector("canvas");
 
-const {gridRaystep, normal, Color} = await import("{{baseURL}}/js/extend.js");
+const {gridRaystep, normal, Color, bezier} = await import("{{baseURL}}/js/extend.js");
 
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
@@ -378,7 +378,7 @@ function cube(ss) {
   };
 }
 
-function bezier() {
+function bezierPath() {
   const ss = new Substrate(ctx);
   ss.maxTotalCracks = 10000;
   ss.maxActiveCracks = 400;
@@ -388,16 +388,6 @@ function bezier() {
   ss.colors = Color(c.luminance(0.05)).steps(32, c.luminance(0.8));
   ss.lineColor = ctx.strokeStyle = c.luminance(0.025);
   ss.clear(c.makeComplement().luminance(0.9));
-
-  function bezier(t, coefs) {
-    const layer = [...coefs];
-    for (let j = 1; j < layer.length; ++j) {
-      for (let k = 0; k < layer.length - j; ++k) {
-        layer[k] = layer[k] * (1 - t) + layer[k + 1] * t;
-      }
-    }
-    return layer[0];
-  }
 
   const m = new Mask(ctx);
 
@@ -446,9 +436,9 @@ function bezier() {
 }
 
 // const update = basicEffect();
-const update = prism();
+// const update = prism();
 // const update = cube();
-// const update = bezier();
+const update = bezierPath();
 
 function frame() {
   if (update()) {

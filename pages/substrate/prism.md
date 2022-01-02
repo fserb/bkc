@@ -1,5 +1,5 @@
 ---
-title: Substrate Mask
+title: Substrate Prism
 layout: article
 date: 2021-12-22
 subpage: true
@@ -8,7 +8,8 @@ prevPage: substrate/
 ---
 
 On this second part we will create a `Mask` class that will allow us to set
-different initial states for substrate and we will use it to create a few new effects.
+different initial states for substrate and we will use it to create a new
+effect.
 
 ### Cleanup
 
@@ -490,3 +491,7 @@ manually created and copied the points over.
 ```
 
 @[canvas-demo]
+
+Next, we are going for a `Substrate` variant with bezier curves.
+
+
