@@ -1,16 +1,20 @@
 ---
 title: Substrate Bezier
 layout: article
-date: 2021-12-23
+date: 2022-01-02
 subpage: true
 preview: false
 prevPage: substrate/prism
-draft: true
 ---
 
 Our next effect is a general `Substrate` variant. The idea is to build an
 initial bezier path that goes across the screen, and then let the substrate
 algorithm run on top of that. We also want to generate more random palettes.
+
+The substrate `Cracks` are supposed to leave perpendicular to the bezier curve,
+so we are both going to render the bezier curve on the main `ctx`, but also set
+up `grid` points with the correct angle.
+
 
 ### Setup
 
@@ -331,7 +335,150 @@ function frame() {
 frame();
 ```
 
+And create a new effect.
 
+```sub:#frame-2+1,lens:edit,spawn:3
+function bezierPath() {
+  const ss = new Substrate(ctx);
 
+  return () => ss.update();
+}
 
+const update = bezierPath();
+```
 
+We are also going to need a function to calculate the bezier curve. This is
+also one of those generic functions that could use its own tutorial someday.
+For now, we are simply going to import it from our support library.
+
+What we need to know it: this `bezier(t, coefs)` function evaluates a 1D bezier
+curve with coefficients `coefs` at point `t`.
+
+```sub:all+0+2,spawn:2
+const {gridRaystep, normal, Color, bezier} =
+  await import("https://dev.metaphora.co/bkc/_site/js/extend.js");
+```
+
+### Bezier path
+
+We start by setting up the basic parameters of the effect.
+
+```add:#bezierPath+2,lens:#bezierPath
+  ss.maxTotalCracks = 10000;
+  ss.maxActiveCracks = 400;
+  ss.angleVariance = 0;
+
+```
+
+The first thing we will do is generate a color palette for the effect. This
+time, we are also going to random select hues.
+
+We pick a random hue color and then choose differents levels of luminance for
+the gradient (from `0.05` to `0.8`) and the lines (`0.025`). For the background
+with choose a very bright (`0.9`) complement color.
+
+```add:
+  const col = Color(`hsv(${Math.random() * 360}, 50, 75)`);
+  ss.colors = Color(col.luminance(0.05)).steps(32, col.luminance(0.8));
+  ss.lineColor = ctx.strokeStyle = col.luminance(0.025);
+  ss.clear(col.makeComplement().luminance(0.9));
+
+```
+
+For the control points of our bezier curve, we want some randomness, but we also
+want curves that extend through the whole screen. For this, we split the screen
+in 4 columns (at point `240`, `960`, `1680`, and `1920`) and make sure that each
+of the 4 points stay inside those columns.
+
+The 1st and 4th points are actually part of the curve, but the 2nd and 3rd are
+simply control points (they define the initial and end slope), so we allow them
+to be outside the screen on the `y` axis.
+
+```add:,spawn:2
+  const c = [
+    [240 * Math.random(), Math.random() * H],
+    [240 + 720 * Math.random(), H * (-0.25 + 1.5 * Math.random())],
+    [960 + 720 * Math.random(), H * (-0.25 + 1.5 * Math.random())],
+    [1680 + 240 * Math.random(), Math.random() * H]];
+
+```
+
+The first thing we need to do is find a bunch of points inside the bezier curve.
+The number of sample points is arbirtrary, but it must be big enough not only
+to have a nice curve on screen, but also to have enough sample points on the
+`grid`.
+
+Also, remember that our `bezier()` function is 1D, so we need to calculate it
+separate for the `x` and `y` axis.
+
+```add:,spawn:2,lens:this
+  const points = [];
+  const TOTAL = 40000;
+  for (let t = 0; t < TOTAL; ++t) {
+    const f = t / TOTAL;
+    const x = bezier(f, [c[0][0], c[1][0], c[2][0], c[3][0]]);
+    const y = bezier(f, [c[0][1], c[1][1], c[2][1], c[3][1]]);
+  }
+```
+
+Because we are going to both render and use them to set up the angle of
+`Cracks`, we need to calculate the derivative at each point as well. The
+derivative of a Bezier curve with control points $bezier(a, b, c, d)$ is
+$bezier(b, c, d) - bezier(a, b, c)$ at that point.
+
+```add:last.-1
+
+    const dx = 4 * (bezier(f, [c[1][0], c[2][0], c[3][0]]) -
+      bezier(f, [c[0][0], c[1][0], c[2][0]]));
+    const dy = 4 * (bezier(f, [c[1][1], c[2][1], c[3][1]]) -
+      bezier(f, [c[0][1], c[1][1], c[2][1]]));
+
+    points.push([x, y, dx, dy]);
+```
+
+We need to render the curve on the main `ctx`, this is simply connecting the
+points we already calculated.
+
+```add:last.+2,lens:edit
+  ctx.save();
+  ctx.strokeStyle = "#000";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (const p of points) {
+    ctx.lineTo(p[0], p[1]);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+```
+
+Finally, we need to build a mask with the correct angles over the bezier curve.
+First, let's create an empty `Mask` where all the points are valid.
+
+```add:,lens:this
+  const m = new Mask(ctx);
+  m.ctx.fillRect(0, 0, W, H);
+
+  ss.begin({mask: m, start: 32});
+
+```
+
+For each point, we calculate the angle based on the derivative and store it as
+the red channel in the range $[10, 245]$.
+
+```add:last+2
+
+  for (const p of points) {
+    const ang = (Math.atan2(p[3], p[2]) + Math.TAU) % Math.TAU;
+    const r = Math.round(235 * (ang / Math.TAU) + 10);
+    m.ctx.fillStyle = `rgb(${r}, 0, 0)`;
+    m.ctx.fillRect(Math.floor(p[0]), Math.floor(p[1]), 1, 1);
+  }
+```
+
+@[canvas-demo]
+
+```add:,lens:#bezierPath
+```
+
+And that's it! Up next, projections.

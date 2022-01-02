@@ -384,16 +384,12 @@ function bezierPath() {
   ss.maxActiveCracks = 400;
   ss.angleVariance = 0;
 
-  const c = Color(`hsv(${Math.random() * 360}, 50, 75)`);
-  ss.colors = Color(c.luminance(0.05)).steps(32, c.luminance(0.8));
-  ss.lineColor = ctx.strokeStyle = c.luminance(0.025);
-  ss.clear(c.makeComplement().luminance(0.9));
+  const col = Color(`hsv(${Math.random() * 360}, 50, 75)`);
+  ss.colors = Color(col.luminance(0.05)).steps(32, col.luminance(0.8));
+  ss.lineColor = ctx.strokeStyle = col.luminance(0.025);
+  ss.clear(col.makeComplement().luminance(0.9));
 
-  const m = new Mask(ctx);
-
-  ctx.strokeStyle = "rgba(255,0,0,0.05)";
-
-  const p = [
+  const c = [
     [240 * Math.random(), Math.random() * H],
     [240 + 720 * Math.random(), H * (-0.25 + 1.5 * Math.random())],
     [960 + 720 * Math.random(), H * (-0.25 + 1.5 * Math.random())],
@@ -403,16 +399,18 @@ function bezierPath() {
   const TOTAL = 40000;
   for (let t = 0; t < TOTAL; ++t) {
     const f = t / TOTAL;
-    const x = bezier(f, [p[0][0], p[1][0], p[2][0], p[3][0]]);
-    const y = bezier(f, [p[0][1], p[1][1], p[2][1], p[3][1]]);
+    const x = bezier(f, [c[0][0], c[1][0], c[2][0], c[3][0]]);
+    const y = bezier(f, [c[0][1], c[1][1], c[2][1], c[3][1]]);
 
-    const dx = 4 * (bezier(f, [p[1][0], p[2][0], p[3][0]]) -
-      bezier(f, [p[0][0], p[1][0], p[2][0]]));
-    const dy = 4 * (bezier(f, [p[1][1], p[2][1], p[3][1]]) -
-      bezier(f, [p[0][1], p[1][1], p[2][1]]));
+    const dx = 4 * (bezier(f, [c[1][0], c[2][0], c[3][0]]) -
+      bezier(f, [c[0][0], c[1][0], c[2][0]]));
+    const dy = 4 * (bezier(f, [c[1][1], c[2][1], c[3][1]]) -
+      bezier(f, [c[0][1], c[1][1], c[2][1]]));
 
     points.push([x, y, dx, dy]);
   }
+
+  ctx.save();
   ctx.strokeStyle = "#000";
   ctx.lineWidth = 2;
   ctx.beginPath();
@@ -420,8 +418,9 @@ function bezierPath() {
     ctx.lineTo(p[0], p[1]);
   }
   ctx.stroke();
-  ctx.lineWidth = 1;
+  ctx.restore();
 
+  const m = new Mask(ctx);
   m.ctx.fillRect(0, 0, W, H);
   for (const p of points) {
     const ang = (Math.atan2(p[3], p[2]) + Math.TAU) % Math.TAU;
