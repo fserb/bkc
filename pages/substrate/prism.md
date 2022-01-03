@@ -18,7 +18,7 @@ We start with the previous code.
 
 ```add:,lens:#basicEffect>#frame-2
 const {gridRaystep, normal, Color} =
-  await import("https://dev.metaphora.co/bkc/_site/js/extend.js");
+  await import("{{baseURL}}js/extend.js");
 
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;

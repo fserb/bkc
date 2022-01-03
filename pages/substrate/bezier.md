@@ -22,7 +22,7 @@ We start where we left off last time.
 
 ```
 const {gridRaystep, normal, Color} =
-  await import("https://dev.metaphora.co/bkc/_site/js/extend.js");
+  await import("{{baseURL}}js/extend.js");
 
 const ctx = canvas.getContext("2d");
 const W = canvas.width = 1920;
@@ -356,7 +356,7 @@ curve with coefficients `coefs` at point `t`.
 
 ```sub:all+0+2,spawn:2
 const {gridRaystep, normal, Color, bezier} =
-  await import("https://dev.metaphora.co/bkc/_site/js/extend.js");
+  await import("{{baseURL}}js/extend.js");
 ```
 
 ### Bezier path
